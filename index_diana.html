@@ -458,7 +458,7 @@
 				importBody();
 			};
 			
-			loader.load( 'res/models/diana_n.sea' );
+			loader.load( 'res/models/diana_head.sea' );
 
 		}
 
@@ -488,7 +488,7 @@
 				myEyeTimer = setInterval(function(){eyeActive()},5000);
 			};
 			
-			loader.load( 'res/models/body.sea' );
+			loader.load( 'res/models/diana_body.sea' );
 
 		}
 
@@ -612,8 +612,8 @@
 
 			// eye look
 			eyesTarget.position.set((mouse.x - window.innerWidth*0.5)*0.1,-(mouse.y - window.innerHeight*0.5)*0.1,50);
-			var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+1, eyesTarget.position.z);
-			var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-1, eyesTarget.position.z);
+			var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+0.2, eyesTarget.position.z);
+			var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-0.2, eyesTarget.position.z);
 			eyeR.lookAt(pos);
 			eyeL.lookAt(pos2);
 
@@ -824,14 +824,13 @@
 		//-----------------------------------------------------
 
 		function addGUI() {
-
 		    gui = new dat.GUI({autoPlace:false, width:204});
 			document.getElementById('gui').appendChild(gui.domElement);
 			gui.close();
 		}
+
 		function addGUIView() {
 			var f4 = gui.addFolder('View Option');
-
 			f4.add( viewConfig, 'withEffect' ).onChange( function() {initComposer();});
 		}
 
@@ -876,24 +875,12 @@
 				} 
 			});
 
-			f1.add( morphConfig, 'sadness', 0, 100 ).onChange( function() {
-				fullMorph("sad", morphConfig.sadness/100);
-			  });
-			f1.add( morphConfig, 'anger', 0, 100 ).onChange( function() {
-				fullMorph("anger", morphConfig.anger/100);
-			  });
-			f1.add( morphConfig, 'joy', 0, 100 ).onChange( function() { 
-				fullMorph("smileOpen", morphConfig.joy/100);
-			});
-			f1.add( morphConfig, 'fear', 0, 100 ).onChange( function() { 
-				fullMorph("fear", morphConfig.fear/100);
-				 });
-			f1.add( morphConfig, 'disgust', 0, 100 ).onChange( function() { 
-				fullMorph("disgust", morphConfig.disgust/100);
-				 });
-			f1.add( morphConfig, 'surprise', 0, 100 ).onChange( function() { 
-				fullMorph("surprise", morphConfig.surprise/100);
-				 });
+			f1.add( morphConfig, 'sadness', 0, 100 ).onChange( function() { fullMorph("sad", morphConfig.sadness/100); });
+			f1.add( morphConfig, 'anger', 0, 100 ).onChange( function() { fullMorph("anger", morphConfig.anger/100); });
+			f1.add( morphConfig, 'joy', 0, 100 ).onChange( function() { fullMorph("smileOpen", morphConfig.joy/100); });
+			f1.add( morphConfig, 'fear', 0, 100 ).onChange( function() { fullMorph("fear", morphConfig.fear/100); });
+			f1.add( morphConfig, 'disgust', 0, 100 ).onChange( function() { fullMorph("disgust", morphConfig.disgust/100); });
+			f1.add( morphConfig, 'surprise', 0, 100 ).onChange( function() { fullMorph("surprise", morphConfig.surprise/100); });
 
 			var f2 = gui.addFolder('Phonemes');
 			f2.add( morphConfig, 'aah', 0, 100 ).listen().onChange( function() {fullMorph("aah", morphConfig.aah/100);});
