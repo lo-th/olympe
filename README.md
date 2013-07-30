@@ -1,12 +1,17 @@
 olympe
 ======
 
-full source of http://loth.olympe.in/
+Full source of http://loth.olympe.in/
 
-Is my 3D experiment with <a href='https://code.google.com/p/sea3d/'>sea3d format</a> on three.js and Away3d
+Is my 3D work for web with [sea3d format](href='https://code.google.com/p/sea3d/) on Three.js and Away3d
 
-1°/ Diana v0.1<br>
+<br>
 
-  full phoneme morph and talk<br> 
-  head is 1932 kb for 30000 faces and 28 morph target.<br>
-  body is 340 kb for 9666 faces and 3 animation.<br>
+
+**DIANA** version 0.1
+> Talking character 3d, full phoneme morph<br>
+> - head: 30000 faces and 28 morph target.<br>
+> - body: 9666 faces and 3 animation.<br>
+
+
+
