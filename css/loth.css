@@ -1,0 +1,102 @@
+html {
+	font-family:'Segoe UI';
+	font-size: 100%;
+	color: #fff;
+	background-color: #161616;
+	height: 100%;
+}
+body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	background-color: #161616;
+	overflow: hidden;
+}
+
+*{
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: -moz-none;
+  -o-user-select: none;
+  user-select: none; 
+}
+
+#myCanvas {
+	position: fixed;
+	display: block;
+}
+
+#viewport {
+    position: absolute;
+}
+#cursor {
+	pointer-events: none;
+}
+#hubs {
+}
+
+#gui {
+	position: absolute;
+	top: 4px;
+	left: -4px;
+}
+#my-stat {
+	position: fixed;
+	bottom:2px;
+	right:2px;
+}
+#my-stat-phy {
+	position: fixed;
+	bottom:52px;
+	right:2px;
+}
+#loading {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	margin-left: -24px;
+	margin-top: -24px;
+}
+#info {
+	position: absolute;
+	top: 6px;
+	left:275px;
+	color: #a2a2a2;
+	text-align: left;
+	font-size:11px;
+	font-weight:normal;
+}
+#intro {
+    position: fixed;
+    font-size:20px;
+	display: block;
+	top: 50%;
+	left: 50%;
+	width:400px;
+	height:30px;
+	text-align: center;
+}
+#debug {
+	color: #c2c2c2;
+	position: absolute;
+	font-size:11px;
+	bottom: 10px;
+	width: 300px;
+	margin-left: 10px;
+	left: 0px;
+}
+
+#home {
+	position: fixed;
+	left: 200px;
+	margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+a { color: #ffcc66; text-decoration:none; cursor: pointer}
+a:visited { color: #996633; text-decoration:none}
+
+#stats #fps { background: transparent !important }
+#stats #fps #fpsText { color: #c2c2c2 !important }
+#stats #fps #fpsGraph { display: none }

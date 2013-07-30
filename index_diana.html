@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>DIANA</title>
+	<meta charset="utf-8">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta property="og:image" content="http://loth.olympe.in/res/img/logo.png"/>
+	<meta property="og:title" content="Advanced Morphing"/>
+	<meta property="og:url" content="http://loth.olympe.in/"/>
+	<meta property="og:site_name" content="LOTH"/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:description" content="Experiment full morphing in webGl"/>
+	<meta name="language" content="en-us" />
+	<link rel="shortcut icon" href="res/img/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" type="text/css" href="css/loth.css" />
+	<link href="css/app.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="history/history.css" />
+	<script type="text/javascript" src="history/history.js"></script>
+</head>
+
+	<script src="js/three.min.js"></script>	
+	<script src="js/loaders/sea3d/SEA3D.js"></script>
+	<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+	<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+	<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>	
+	<script src="js/controls/OrbitControls.js"></script>
+	
+	<script src="js/postprocessing/EffectComposer.js"></script>
+	<script src="js/postprocessing/RenderPass.js"></script>
+	<script src="js/postprocessing/ShaderPass.js"></script>
+	<script src="js/postprocessing/MaskPass.js"></script> 
+	<script src="js/postprocessing/BloomPass.js"></script>
+
+	<script src="js/shaders/CopyShader.js"></script>
+	<script src="js/shaders/FresnelShader.js"></script>
+	<script src="js/shaders/ColorCorrectionShader.js"></script>
+	<script src="js/shaders/VignetteShader.js"></script>
+	<script src="js/shaders/SepiaShader.js"></script>
+	<script src="js/shaders/BleachBypassShader.js"></script>
+	<script src="js/shaders/ColorifyShader.js"></script>
+	<script src="js/shaders/ConvolutionShader.js"></script>
+	<script src="js/shaders/HorizontalBlurShader.js"></script>
+	<script src="js/shaders/VerticalBlurShader.js"></script>
+	<script src="js/postprocessing/TexturePass.js"></script>
+	
+	<script src='js/libs/dat.gui.min.js'></script>
+	<script src="js/libs/tween.min.js"></script>
+
+	<script src="js/libs/jquery-1.9.1.min.js"></script>
+	<script src="js/vendor/underscore.min.js"></script>
+	<script src="js/vendor/app.js"></script>
+
+	<script src="js/speak/speakClient.js"></script>
+
+	<script>
+	    var vsize = { x:100, y:100, z:0 };
+	    var mouse = { x:0, y:0 };
+
+	    var inRender = true, inResize = false, isNeedPause = false;
+	    var FAR = 2000;
+
+		var camera, controls, scene, renderer, composer, renderPass, delta;
+		var ambient, hemiLight, pointLight, light;
+		var body, bodyNeck, head, neck, hair, eyeR, eyeL, teethUp, teethDown, eyeTop, tongue, troat, eyesTarget;
+		var materials = []; 
+		var clock = new THREE.Clock();
+		var ground;
+
+		var gui;
+		var animConfig = {
+			neckmove:false, 
+			walk:false,
+			salut:false,
+			speed:0.1
+		}
+
+		var morphConfig = {
+			automove:false,
+			sadness: 0, anger: 0, joy: 0, fear: 0, disgust: 0, surprise: 0, blowing: 0,
+			aah: 0, bigaah: 0, ch_j_sh: 0, f_v: 0, i: 0, k: 0, ee: 0,
+			b_m_p: 0, n: 0, oh: 0, r: 0, d_s_t: 0, th: 0, w: 0, eh: 0, ooh_q:0
+		};
+
+		var voiceConfig = {
+			googleVoise : false,
+			amplitude: 50, wordgap: 0, pitch: 230, speed: 100 
+		};
+
+		var viewConfig = {
+			withEffect:false
+		};
+
+		var skyCube;
+
+		var imput, output, oldOutput;
+		var text;
+		var audio;
+		var phonemesSequency;
+		var tweenSequencyOpen, tweenSequencyClose;
+
+		var playButton = document.getElementById('play');
+
+		var morphsTables = [];
+		var currentColors;
+		var tweenSequencyEye = [];
+		var tweenSequencyHair = [];
+		var myHairTimer;
+		var myEyeTimer;
+		var eyes=[];
+		var isSongTest = false;
+		var soundSpeak;
+		var oldSound="";
+		var timeWav, timeProcess, timeComplete;
+		var processTimer;
+
+		function init() {
+
+			imput = document.getElementById("editor");
+			output = document.getElementById("output");
+			oldOutput = document.getElementById("oldOutput");
+			playButton = document.getElementById('play');
+			playButton.style.visibility = 'hidden';
+
+			setTimeout( initScene3D, 100);
+
+			addGUI(); 
+			addGUIVoise();
+			addGUIView();
+
+			animate();
+		}
+
+		function initScene3D() {
+			
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight;
+			vsize.z = vsize.x / vsize.y;
+			
+			// RENDERER
+			renderer = new THREE.WebGLRenderer({ antialias: false });
+			renderer.setSize( vsize.x, vsize.y );
+
+			renderer.setClearColor( 0x000000, 1 );
+			renderer.shadowMapEnabled = true;
+			renderer.shadowMapCullFace = THREE.CullFaceBack;
+			//renderer.shadowMapSoft = true;
+			renderer.physicallyBasedShading = true;
+			renderer.gammaInput = true;
+			renderer.gammaOutput = true;
+			//renderer.autoClear = false;
+			//renderer.shadowMapType = THREE.PCFSoftShadowMap;
+			document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+			renderer.domElement.style.top = 31 + "px";
+			 renderer.domElement.style.position = "absolute";
+
+			// SCENE
+			scene = new THREE.Scene();
+
+			// CAMERA
+			camera = new THREE.PerspectiveCamera( 45, vsize.z, 1, FAR );
+			camera.position.z = 30;
+			camera.position.y = 65;
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.center.set( 0, 64, 0 );
+			controls.keys = [];
+			controls.userRotateSpeed = 1.8;
+			controls.zoomSpeed = 1.6;
+			controls.userPanSpeed = 0.8;
+
+			if(viewConfig.withEffect)initComposer();
+
+			initLightAndSky();
+
+			addGround();
+
+			importHead();
+
+			window.addEventListener( 'resize', onWindowResize, false );
+
+		}
+
+		//-----------------------------------------------------
+		//
+		//  RENDER LOOP
+		//
+		//-----------------------------------------------------
+
+		function animate() {
+			
+			requestAnimationFrame( animate );
+
+			TWEEN.update();
+
+			// create morph sequence if change
+			countWords();
+
+			if(isSongTest) songReady();
+
+			// sea update
+			delta = clock.getDelta();
+			if(head && bodyNeck){
+				THREE.AnimationHandler.update( delta*animConfig.speed );
+				head.position.copy( bodyNeck.matrixWorld.getPosition() );
+				//head.rotation.setEulerFromRotationMatrix( bodyNeck.matrix);
+			//	head.rotation.x += toRad(180);
+			//	head.rotation.z +=toRad(90);
+				//head.rotation.copy( bodyNeck.rotation );
+				/*head.rotation.x = bodyNeck.rotation.x+toRad(-180);
+				head.rotation.y = bodyNeck.rotation.y;//+toRad(180);
+				head.rotation.z = bodyNeck.rotation.z+toRad(90);*/
+			}
+
+			// camera update
+			if(controls) controls.update();
+
+			// render update
+			if(viewConfig.withEffect) composer.render(delta);
+			else if(renderer) renderer.render( scene, camera );
+		}
+
+
+		//-----------------------------------------------------
+		//  LIGHT & SKY
+		//-----------------------------------------------------
+
+		function initLightAndSky(){
+
+			ambient = new THREE.AmbientLight( 0x000 );
+			scene.add( ambient );
+
+			hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+			hemiLight.position.set( 0, -10, 0 );
+			scene.add( hemiLight );
+
+			pointLight = new THREE.PointLight( 0x000, 1, 1000 );
+			pointLight.position.set( -200, 0, -100 );
+			scene.add( pointLight );
+
+			//light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
+			light = new THREE.DirectionalLight(0x000, 1.5);
+            light.position.set( 50, 200, 100 );
+			light.target.position.set(0, 0, 0);
+			light.castShadow = true;
+			light.onlyShadow = true;
+			light.shadowCameraNear = 50;
+			light.shadowCameraFar = 300;
+			//light.shadowCameraFov = 35;
+			light.shadowBias = -0.005;
+			light.shadowMapWidth = light.shadowMapHeight = 1024;
+			light.shadowDarkness = 0.35;
+
+			light.shadowCameraLeft = -60;
+			light.shadowCameraRight = 60;
+			light.shadowCameraTop = 60;
+			light.shadowCameraBottom = -60;
+			
+			//light.shadowCameraVisible = true; 
+
+			/*renderer.shadowMapCascade = true;
+			renderer.shadowMapSoft = true;
+			//
+			light.shadowCascadeOffset =  new THREE.Vector3( 0, 0, -50 )
+			light.shadowCascade = true;
+			light.shadowCascadeCount = 3;
+			//light.shadowCascadeNearZ = [ -2.000, 0.995, 1.998 ];
+			//light.shadowCascadeFarZ  = [  0.995, 1.998, 2.000 ];
+			light.shadowCascadeWidth = [ 2048, 2048, 2048 ];
+			light.shadowCascadeHeight = [ 2048, 2048, 2048 ];
+			*/
+
+			scene.add( light );
+
+			// SKYBOX
+			addSkyBox();
+
+		}	
+        
+		function lightColors( cc ){
+			ambient.color.setHex(cc[2]);
+
+			hemiLight.color.setHex( cc[2] );
+			hemiLight.groundColor.setHex( cc[0] );
+
+			pointLight.color.setHex( cc[1] );
+
+			light.color.setHex( cc[3] );
+
+			currentColors = cc;
+		}
+
+		function addGround() {
+			var groundMaterial = new THREE.MeshBasicMaterial( { shininess: 10, ambient: 0xFFFFFF, color: 0xFFFFFF, specular: 0xffffff, transparent: true } );
+			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
+			groundMaterial.blending = THREE[ blendings[ 4 ] ];
+			ground = new THREE.Mesh(new THREE.PlaneGeometry( 100, 100, 4, 4 ), groundMaterial);
+			ground.position.set( 0, 0, 0 );
+			ground.rotation.x = - Math.PI / 2;
+			ground.receiveShadow = true;
+			scene.add( ground );
+
+		}
+
+		function addSkyBox() {
+			var cubes = [2, 14, 26, 30,31,32,33];
+			var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a,0x9b8379, 0x6f7488, 0xffffd9],
+			                  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+			                  ];
+			var n = Math.floor(Math.random()*cubes.length);
+			lightColors( cubesColors[n] );
+
+			var format = ".jpg";
+			var r = "res/textures/cube/sky"+cubes[n]+"/";
+			var urls = [ r + "posx"+format, r + "negx"+format,
+						 r + "posy"+format, r + "negy"+format,
+						 r + "posz"+format, r + "negz"+format ];
+
+			skyCube = THREE.ImageUtils.loadTextureCube( urls );
+			skyCube.format = THREE.RGBFormat;
+			var shader = THREE.ShaderLib[ "cube" ];
+			shader.uniforms[ "tCube" ].value = skyCube;
+
+			var material = new THREE.ShaderMaterial( {
+			fragmentShader: shader.fragmentShader,
+			vertexShader: shader.vertexShader,
+			uniforms: shader.uniforms,
+			depthWrite: false,
+			side: THREE.BackSide
+			} );
+
+			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
+			sky.castShadow = false;
+	        sky.receiveShadow = false;
+			scene.add( sky );
+		}
+
+		//-----------------------------------------------------
+		//  COMPOSER
+		//-----------------------------------------------------
+
+		function initComposer(){
+			if(viewConfig.withEffect){
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.addPass( new THREE.RenderPass( scene, camera ));
+				
+				var vh = 1.6, vl = 1.2;
+				var mix =0.1;
+
+				var colorCorrectionPass = new THREE.ShaderPass( THREE.ColorCorrectionShader );
+				colorCorrectionPass.uniforms[ "powRGB" ].value = new THREE.Vector3( vh, vh, vh );
+				colorCorrectionPass.uniforms[ "mulRGB" ].value = new THREE.Vector3( vl, vl, vl );
+				composer.addPass( colorCorrectionPass );	
+
+				var shaderSepia = THREE.SepiaShader;
+				var effectSepia = new THREE.ShaderPass( shaderSepia );
+				effectSepia.uniforms[ "amount" ].value =0.3;
+				//effectSepia.renderToScreen = true;
+				composer.addPass(effectSepia);
+
+			//	var effectBloom = new THREE.BloomPass( 0.2, mix*25, mix*4.0  );
+			//	composer.addPass( effectBloom );
+
+				var vignettePass = new THREE.ShaderPass( THREE.VignetteShader );
+				vignettePass.uniforms[ "offset" ].value = 1.5;
+				vignettePass.uniforms[ "darkness" ].value = 1.0;
+				composer.addPass( vignettePass );
+
+				var copyPass = new THREE.ShaderPass( THREE.CopyShader );
+				copyPass.renderToScreen = true;
+				composer.addPass( copyPass );
+			}
+
+		}
+
+		
+		//-----------------------------------------------------
+		//
+		//  SEA3D IMPORT
+		//
+		//-----------------------------------------------------
+
+		function importHead(){
+
+			var loader = new THREE.SEA3D( false );
+			var size = 0.033;
+			var trace = "";
+
+			loader.onComplete = function( e ) {
+
+				head = loader.getMesh("skin_hi");
+				head.scale.set( size, size, -size );
+				//head.geometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ) );
+	            scene.add( head );
+
+	            head.setWeightByName("neck", 1);
+
+	            if(animConfig.neckmove) head.play("full");
+	            else head.play("front");
+
+	            head.position.set(0,-10,0);
+	            trace += 'Animation: '+ head.animations.length+ '   Morph: ' + head.geometry.morphTargets.length;
+
+	            neck = loader.getMesh("Neck");
+	            neck.castShadow = false;
+	            //neck.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
+
+
+	            hair = loader.getMesh("Hair");
+	            //hair.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
+	            //hair.visible = false;
+
+	            eyeR = loader.getMesh("Eye_R");
+	            eyeR.castShadow = false;
+
+	            eyeL = loader.getMesh("Eye_L");
+	            eyeL.castShadow = false;
+
+	            eyeL.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
+	            eyeR.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
+
+	            eyeTop = loader.getMesh("eye_top");
+	            eyeTop.castShadow = false;
+	            eyeTop.receiveShadow = false;
+
+	            teethUp = loader.getMesh("teethUpper");
+	            teethDown = loader.getMesh("teethLower");
+	            tongue = loader.getMesh("tongue");
+	            troat = loader.getMesh("sock");
+
+	            teethUp.castShadow = false;
+	            teethDown.castShadow = false;
+	            tongue.castShadow = false;
+	            troat.castShadow = false;
+
+	            eyesTarget =  new THREE.Object3D();
+	            eyesTarget.position.set(0,0,50);
+	            scene.add( eyesTarget ); 
+	            /*var eyebuble = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6,6), new THREE.MeshBasicMaterial( { color: 0x00000 } ));
+	            eyesTarget.add(eyebuble);*/
+
+	            // test if morph existe
+	            var mName;
+	            for (var j=0; j < head.geometry.morphTargets.length; j++){
+	            	mName = head.geometry.morphTargets[j].name;
+	            	morphsTables[mName] = { tup:testMorph(teethUp, mName), tdown:testMorph(teethDown, mName), eye: testMorph(eyeTop, mName), tongue: testMorph(tongue, mName),  troat:testMorph(troat, mName) };
+	            }
+
+	            // change materials
+	            for(var i=0; i< loader.materials.length; i++){
+	            	materials[i] = loader.materials[i];
+	            }
+
+	            initHeadMaterial();
+
+				importBody();
+			};
+			
+			loader.load( 'res/models/diana_n.sea' );
+
+		}
+
+
+		function importBody(){
+			var loader = new THREE.SEA3D( false );
+			loader.onComplete = function( e ) {
+
+				body = loader.getMesh("Body");
+				body.scale.set( 1, 1, -1 );
+				scene.add( body );
+
+				bodyNeck = loader.getMesh("AXE");
+
+				body.play("idle");
+
+				materials[9] = body.material;
+				initBodyMaterial();
+
+				document.addEventListener( 'mousemove', onMouseMove, false );
+				document.getElementById('loading').style.visibility = 'hidden';			
+				
+				addGUIAnimation();
+				addGUIMroph();
+
+				// eye open close
+				myEyeTimer = setInterval(function(){eyeActive()},5000);
+			};
+			
+			loader.load( 'res/models/body.sea' );
+
+		}
+
+
+		function initHeadMaterial(){
+
+			for(var i=0; i< materials.length; i++){
+            	if (i!= 2 && i!= 3 && i!= 6 && i!= 8){
+	            	materials[i].envMap = skyCube; 
+	            	materials[i].combine= THREE.MixOperation;
+	            	materials[i].reflectivity=1;
+	            	if(i==7) materials[i].side = THREE.DoubleSide;// hair doublesize
+	            }
+	        }
+
+			materials[0].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin.jpg'  );
+			materials[0].map.repeat.set( 1, -1 );
+			materials[0].map.wrapS = materials[0].map.wrapT = THREE.RepeatWrapping;
+			materials[0].reflectivity=0.1;
+			materials[0].shininess = 14;
+
+			materials[2].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/teethUp.png' );
+			materials[2].map.repeat.set( 1, -1 );
+			materials[2].map.wrapS = materials[2].map.wrapT = THREE.RepeatWrapping;
+			materials[2].transparent = true;
+
+			materials[3].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/tongue.jpg' );
+			materials[3].map.repeat.set( 1, -1 );
+			materials[3].map.wrapS = materials[3].map.wrapT = THREE.RepeatWrapping;
+
+			materials[4].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256.jpg' );
+			materials[4].map.repeat.set( 1, -1 );
+			materials[4].map.wrapS = materials[4].map.wrapT = THREE.RepeatWrapping;
+			initMaterialNormalMap();
+			materials[4].reflectivity=0.4;
+
+			materials[5].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_cont.png' );
+			materials[5].map.repeat.set( 1, -1 );
+			materials[5].map.wrapS = materials[5].map.wrapT = THREE.RepeatWrapping;
+			materials[5].transparent = true;
+			materials[5].reflectivity=0.3;
+
+			materials[6].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/sock.jpg' );
+			materials[6].map.repeat.set( 1, -1 );
+			materials[6].map.wrapS = materials[6].map.wrapT = THREE.RepeatWrapping;
+
+			materials[7].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/Hair_512.png' );
+			materials[7].map.repeat.set( 1, -1 );
+			materials[7].map.wrapS = materials[7].map.wrapT = THREE.RepeatWrapping;
+			materials[7].transparent = true;
+			materials[7].reflectivity=0.4;
+
+			materials[8].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/teethLow.png' );
+			materials[8].map.repeat.set( 1, -1 );
+			materials[8].map.wrapS = materials[8].map.wrapT = THREE.RepeatWrapping;
+			materials[8].transparent = true;
+
+		}
+
+		function initBodyMaterial(){
+
+			materials[9].envMap = skyCube; 
+	        materials[9].combine= THREE.MixOperation;
+	        materials[9].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_2048.jpg' );
+			materials[9].map.repeat.set( 1, -1 );
+			materials[9].map.wrapS = materials[9].map.wrapT = THREE.RepeatWrapping;
+
+			materials[9].reflectivity=0.1;
+			materials[9].shininess = 14;
+		}
+
+		function initMaterialNormalMap(){
+			//materials[4].normalMap = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256_n.jpg' );
+		    //materials[4].normalScale.x = materials[4].normalScale.y = 2;
+			//materials[4].normalMap.repeat.set( 1, -1 );
+			//materials[4].normalMap.wrapS = materials[4].normalMap.wrapT = THREE.RepeatWrapping;
+
+			materials[4].bumpMap = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256_b.jpg' );
+			materials[4].bumpMap.repeat.set( 1, -1 );
+			materials[4].bumpMap.wrapS = materials[4].bumpMap.wrapT = THREE.RepeatWrapping;
+			materials[4].bumpScale = 12;
+			materials[4].shininess = 30;
+			materials[4].metal = false;
+
+			materials[4].bumpMap.anisotropy = 4;
+			materials[4].bumpMap.repeat.set( 0.998, 0.998 );
+			materials[4].bumpMap.offset.set( 0.001, 0.001 );
+
+		}
+
+
+		//-----------------------------------------------------
+		//  MULTY MORPH
+		//-----------------------------------------------------
+
+		function fullMorph( name , value) {
+			if(!morphsTables[name])return;
+			 head.setWeightByName(name, value);
+			if( morphsTables[name].tup ) teethUp.setWeightByName(name, value);
+			if( morphsTables[name].tdown ) teethDown.setWeightByName(name, value);
+			if( morphsTables[name].eye ) eyeTop.setWeightByName(name, value);
+			if( morphsTables[name].tongue ) tongue.setWeightByName(name, value);
+			if( morphsTables[name].troat ) troat.setWeightByName(name, value);
+		}
+
+		function testMorph(m, name){
+			var result = false;
+			for (var j=0; j < m.geometry.morphTargets.length; j++){
+				if(m.geometry.morphTargets[j].name == name) result = true;
+			}
+			return result;
+		}
+
+		//-----------------------------------------------------
+		//  LISTENER
+		//-----------------------------------------------------
+
+		function onMouseMove( e ) {
+			mouse.x = e.clientX;
+			mouse.y = e.clientY;
+
+			// eye look
+			eyesTarget.position.set((mouse.x - window.innerWidth*0.5)*0.1,-(mouse.y - window.innerHeight*0.5)*0.1,50);
+			var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+1, eyesTarget.position.z);
+			var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-1, eyesTarget.position.z);
+			eyeR.lookAt(pos);
+			eyeL.lookAt(pos2);
+
+
+			// change morph weight
+			if(morphConfig.automove){
+				fullMorph("smileOpen", mouse.x / vsize.x );
+				fullMorph("fear", mouse.y / vsize.y);
+		    }
+		}
+
+		function onWindowResize( event ) {
+
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight-31;
+			vsize.z = vsize.x / vsize.y;
+
+			camera.aspect = vsize.z;
+			camera.updateProjectionMatrix();
+			renderer.setSize( vsize.x, vsize.y );
+		}
+
+
+		//-----------------------------------------------------
+		//  EYE
+		//-----------------------------------------------------
+
+		function eyeActive(){
+			var time = 300;
+			tweenSequencyEye[0] = new TWEEN.Tween( {  control: 0 }  ).to( { control: 1 } , time*0.6 ).easing( TWEEN.Easing.Linear.None )
+			tweenSequencyEye[1] = new TWEEN.Tween( {  control: 1 }  ).to( { control: 0 } , time*0.4 ).easing( TWEEN.Easing.Linear.None ).delay(time*0.6);
+
+			tweenSequencyEye[0].onUpdate(function(){
+				fullMorph( "blinkRight" , this.control); 
+				fullMorph( "blinkLeft" , this.control);
+				});
+			tweenSequencyEye[1].onUpdate(function(){
+				fullMorph( "blinkRight" , this.control); 
+				fullMorph( "blinkLeft" , this.control); 
+				});
+			tweenSequencyEye[0].start();
+			tweenSequencyEye[1].start();
+		}
+
+		/*function hairActive(){
+			var time = 3000;
+			tweenSequencyHair[0] = new TWEEN.Tween( {  control: 0 }  ).to( { control: 1 } , time*0.5 ).easing( TWEEN.Easing.Linear.None )
+			tweenSequencyHair[1] = new TWEEN.Tween( {  control: 1 }  ).to( { control: 0 } , time*0.5 ).easing( TWEEN.Easing.Linear.None ).delay(time*0.5);
+
+			tweenSequencyHair[0].onUpdate(function(){
+					hair.setWeightByName("Hair001", this.control );
+				});
+			tweenSequencyHair[1].onUpdate(function(){
+					hair.setWeightByName("Hair001", this.control );
+				});
+			tweenSequencyHair[0].start();
+			tweenSequencyHair[1].start();
+		}*/
+
+
+		//-----------------------------------------------------
+		//  SPEAK JS OR GOOGLE TRADUCTION
+		//-----------------------------------------------------
+
+		function say() {
+			if(voiceConfig.googleVoise){
+				testWithPHP();
+			} else {
+				timeWav=0;
+				timeProcess=0;
+				timeComplete = 0;
+				isSongTest = true;
+				speak(text, voiceConfig );
+			}
+		}
+
+		// test if sound is ready if use speak.js
+		function songReady(){
+
+			timeWav=parseFloat(document.getElementById('timeWav').innerHTML);
+			timeProcess=parseFloat(document.getElementById('timeProcess').innerHTML);
+			timeComplete = parseFloat(document.getElementById('timeComplete').innerHTML);
+
+			if(timeWav != 0 && timeProcess != 0 && timeComplete == 1){ 
+				//tell( 'wav:'+timeWav + "ms | worker process:" + timeProcess+'ms');
+				var tt = (timeWav+timeProcess);
+				tell('speak js finaltime: ' + tt + ' ms');
+				processTimer = setInterval(function(){startSequence()}, tt);
+				isSongTest = false; 
+			}
+		}
+
+		function countWords(){
+
+			if( output.childNodes.length > 0 ){
+				if(output.innerHTML != oldOutput.innerHTML){
+					phonemesSequency = [];
+					for(var i=0; i< output.childNodes.length; i++){
+						if(output.childNodes[i].nodeName=="#text") convert(0);
+						else if(output.childNodes[i].nodeName=="SPAN") convert( output.childNodes[i].textContent );
+					}
+					if(phonemesSequency.length>0){
+						text = imput.value;
+						playButton.style.visibility = 'visible';
+						tell( "seq: " + phonemesSequency );
+					}
+					else playButton.style.visibility = 'hidden';
+
+					oldOutput.innerHTML = output.innerHTML;
+			    }
+			}
+        }
+
+        // Phonemes
+        function convert(n) {
+        	if(n==0)phonemesSequency.push(n);
+			else {
+				var ph = n.split(' ');
+				var num = 1;
+				for (var i=0;i<ph.length;i++){
+					switch ( ph[i] ) {
+						case 'HH': num = 3; break;
+						case 'AH0': num = 1; break;
+						case 'AH1': num = 1; break;
+						case 'AY1': num = 5; break;
+						case 'AY2': num = 5; break;
+						case 'L': num = 15; break;
+						case 'W': num = 14; break;
+						case 'ER1': num = 11; break;
+						case 'ER0': num = 11; break;
+						case 'D': num = 12; break;
+						case 'M': num = 8; break;
+						case 'EY1': num = 7; break;
+						case 'EH1': num = 7; break;
+						case 'IH1': num = 5; break;
+						case 'IH0': num = 5; break
+						case 'IY1': num = 5; break;
+						case 'Z': num = 12; break;
+						case 'F': num = 4; break;
+						case 'K': num = 6; break;
+						case 'B': num = 8; break;
+						case 'R': num = 11; break;
+						case 'Y': num = 15; break;
+						case 'TH': num = 13; break;
+						case 'S': num = 12; break;
+						case 'T': num = 13; break;
+						case 'G': num = 6; break;
+						case 'OW1': num = 10; break;
+						case 'OY1': num = 10; break;
+						case 'UW1': num = 14; break;
+						case 'V': num = 4; break;
+						case 'JH': num = 3; break;
+						case 'P': num = 8; break;
+					}
+					phonemesSequency.push(num);
+				}
+			}
+		}
+
+		// Phonemes morph possibility
+		function phonemeNumber(Value) {
+			var t;
+			switch ( Value ) {
+				case 0: t = ''; break;
+				case 1: t = 'aah'; break;
+				case 2: t = 'bigaah'; break;
+				case 3: t = 'ch.j.sh'; break;
+				case 4: t = 'f.v'; break;
+				case 5: t = 'i'; break;
+				case 6: t = 'k'; break;
+				case 7: t = 'ee'; break;
+				case 8: t = 'b.m.p'; break;
+				case 9: t = 'n'; break;
+				case 10: t = 'oh'; break;
+				case 11: t = 'r'; break;
+				case 12: t = 'd.s.t'; break;
+				case 13: t = 'th'; break;
+				case 14: t = 'w'; break;
+				case 15: t = 'eh'; break;
+				case 16: t = 'ooh.q'; break;
+			}
+			return t;
+		}
+
+		function startSequence(){
+			clearInterval(processTimer);
+			sequencyPlay();
+		}
+
+		function sequencyPlay(){
+			tweenSequencyOpen = [];
+			tweenSequencyClose = [];
+			var time = 100;
+
+			for (var i=0; i< phonemesSequency.length; i++){
+				tweenSequencyOpen[i] = new TWEEN.Tween( { phoneme:phonemesSequency[i], control: 0 }  ).to( {phoneme:phonemesSequency[i], control: 0.8 } , time*0.75 ).easing( TWEEN.Easing.Linear.None ).delay(i*time);
+				tweenSequencyClose[i] = new TWEEN.Tween( { phoneme:phonemesSequency[i], control: 0.8 }  ).to( {phoneme:phonemesSequency[i], control: 0 } , time*0.25 ).easing( TWEEN.Easing.Linear.None ).delay(i*time + time*0.75);
+
+				tweenSequencyOpen[i].onUpdate(function(){ fullMorph( phonemeNumber(this.phoneme) , this.control); });
+				tweenSequencyClose[i].onUpdate(function(){ fullMorph( phonemeNumber(this.phoneme) , this.control); });
+				tweenSequencyOpen[i].start();
+				tweenSequencyClose[i].start();
+			}
+		}
+
+		//-----------------------------------------------------
+		//  GUI
+		//-----------------------------------------------------
+
+		function addGUI() {
+
+		    gui = new dat.GUI({autoPlace:false, width:204});
+			document.getElementById('gui').appendChild(gui.domElement);
+			gui.close();
+		}
+		function addGUIView() {
+			var f4 = gui.addFolder('View Option');
+
+			f4.add( viewConfig, 'withEffect' ).onChange( function() {initComposer();});
+		}
+
+		function addGUIAnimation() {	
+			var f0 = gui.addFolder('Animation');
+			f0.add( animConfig, 'neckmove' ).onChange( function() {
+		    	if(!animConfig.neckmove){
+		    		 head.play("front");
+				} else {
+					head.play("full");
+				}
+			});
+
+			f0.add( animConfig, 'walk' ).onChange( function() {
+		    	if(!animConfig.walk){
+		    		 body.play("idle");
+				} else {
+					body.play("walk");
+				}
+			});
+
+
+			f0.add( animConfig, 'salut' ).onChange( function() {
+		    	if(!animConfig.salut){
+		    		 body.play("idle");
+				} else {
+					body.play("salut");
+				}
+			});
+
+			f0.add( animConfig, 'speed', 0.1, 1 ).onChange( function() {
+			  });
+		}
+
+		function addGUIMroph() {
+		    var f1 = gui.addFolder('Morph');
+
+		    f1.add( morphConfig, 'automove' ).onChange( function() {
+		    	if(!morphConfig.automove){
+		    		fullMorph("smileOpen", 0);
+		    		fullMorph("fear", 0);
+				} 
+			});
+
+			f1.add( morphConfig, 'sadness', 0, 100 ).onChange( function() {
+				fullMorph("sad", morphConfig.sadness/100);
+			  });
+			f1.add( morphConfig, 'anger', 0, 100 ).onChange( function() {
+				fullMorph("anger", morphConfig.anger/100);
+			  });
+			f1.add( morphConfig, 'joy', 0, 100 ).onChange( function() { 
+				fullMorph("smileOpen", morphConfig.joy/100);
+			});
+			f1.add( morphConfig, 'fear', 0, 100 ).onChange( function() { 
+				fullMorph("fear", morphConfig.fear/100);
+				 });
+			f1.add( morphConfig, 'disgust', 0, 100 ).onChange( function() { 
+				fullMorph("disgust", morphConfig.disgust/100);
+				 });
+			f1.add( morphConfig, 'surprise', 0, 100 ).onChange( function() { 
+				fullMorph("surprise", morphConfig.surprise/100);
+				 });
+
+			var f2 = gui.addFolder('Phonemes');
+			f2.add( morphConfig, 'aah', 0, 100 ).listen().onChange( function() {fullMorph("aah", morphConfig.aah/100);});
+			f2.add( morphConfig, 'bigaah', 0, 100 ).listen().onChange( function() { fullMorph("bigaah", morphConfig.bigaah/100);});
+			f2.add( morphConfig, 'ch_j_sh', 0, 100 ).listen().onChange( function() { fullMorph("ch.j.sh", morphConfig.ch_j_sh/100);});
+			f2.add( morphConfig, 'f_v', 0, 100 ).listen().onChange( function() { fullMorph("f.v", morphConfig.f_v/100);});
+			f2.add( morphConfig, 'i', 0, 100 ).listen().onChange( function() { fullMorph("i", morphConfig.i/100);});
+			f2.add( morphConfig, 'k', 0, 100 ).listen().onChange( function() { fullMorph("k", morphConfig.k/100);});
+			f2.add( morphConfig, 'ee', 0, 100 ).listen().onChange( function() { fullMorph("ee", morphConfig.ee/100);});
+			f2.add( morphConfig, 'b_m_p', 0, 100 ).listen().onChange( function() { fullMorph("b.m.p", morphConfig.b_m_p/100);});
+			f2.add( morphConfig, 'n', 0, 100 ).listen().onChange( function() { fullMorph("n", morphConfig.n/100);});
+			f2.add( morphConfig, 'oh', 0, 100 ).listen().onChange( function() { fullMorph("oh", morphConfig.oh/100);});
+			f2.add( morphConfig, 'r', 0, 100 ).listen().onChange( function() { fullMorph("r", morphConfig.r/100);});
+			f2.add( morphConfig, 'd_s_t', 0, 100 ).listen().onChange( function() { fullMorph("d.s.t", morphConfig.d_s_t/100);});
+			f2.add( morphConfig, 'th', 0, 100 ).listen().onChange( function() { fullMorph("th", morphConfig.th/100);});
+			f2.add( morphConfig, 'w', 0, 100 ).listen().onChange( function() { fullMorph("w", morphConfig.w/100);});
+			f2.add( morphConfig, 'eh', 0, 100 ).listen().onChange( function() { fullMorph("eh", morphConfig.eh/100);});
+			f2.add( morphConfig, 'ooh_q', 0, 100 ).listen().onChange( function() {fullMorph("ooh.q", morphConfig.ooh_q/100);});
+		}
+
+		function addGUIVoise() {
+
+			var f3 = gui.addFolder('Voise');
+
+			f3.add( voiceConfig, 'googleVoise' ).onChange( function() {});
+
+			f3.add( voiceConfig, 'amplitude', 0, 100 ).onChange( function() {});
+			f3.add( voiceConfig, 'wordgap', 0, 100 ).onChange( function() {});
+			f3.add( voiceConfig, 'pitch', 0, 400 ).onChange( function() {});
+			f3.add( voiceConfig, 'speed', 0, 400 ).onChange( function() {});
+
+			f3.open();
+
+			
+		}
+
+		function toRad(Value) {
+			return Value * Math.PI / 180;
+		}
+		
+		function tell(s){
+			document.getElementById("debug").innerHTML = s;
+		}
+
+		//-----------------------------------------------------
+		//  GOOGLE SPEAK TRADUCTION WITH PHP
+		//-----------------------------------------------------
+
+		function testWithPHP(){
+
+			var fd = new FormData();
+			fd.append("txt", text);
+
+			var xhr = new XMLHttpRequest();
+			xhr.addEventListener("load", uploadComplete, false);
+			xhr.addEventListener("error", uploadFailed, false);
+			xhr.addEventListener("abort", uploadCanceled, false);
+			xhr.open("POST", "tts.php", true);
+			xhr.onreadystatechange = function (evt) {
+				if (this.readyState === 4) {
+					if (this.status == 200) {
+						tell( xhr.responseText);
+						// start animation
+						processTimer = setInterval(function(){startSequence()}, 10);
+			        }
+			    }
+		    };
+			xhr.send(fd);
+
+		}
+
+		function uploadComplete(evt){
+			//alert(evt.target.);
+		}
+
+		function uploadFailed(evt){
+			tell("error !!");
+		}
+
+		function uploadCanceled(evt){
+			tell("upload cancel");
+		}
+
+		window.onload = init;
+
+	</script>
+	<body>
+		<div id="viewport"></div>
+		<div id="hubs">
+			<div id="debug"></div>
+			<div id="gui"></div>
+			<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
+			<div id="info">
+				DIANA 0.1 <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2013</a>
+				 | <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d format</a> 
+				. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
+				. <a href="https://github.com/kripken/speak.js/" target="_blank"> speak.js</a> 
+				. <a href="https://github.com/dzucconi/phoneme-client" target="_blank"> phoneme-client</a>
+			</div>
+			<div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File."></div>
+		</div>
+		<div id="timeWav" style="visibility: hidden;"></div>
+		<div id="timeProcess" style="visibility: hidden;"></div>
+		<div id="timeComplete" style="visibility: hidden;"></div>
+		
+		
+		<div id="bub"><img class="bulle" src="res/img/bulle.png" /></div>
+		
+		
+	
+		<div class="cell-editor"><textarea id="editor" autofocus="true" placeholder="Begin typing"></textarea></div>
+		
+		<div id="stage" class="cell-stage">
+
+			<div id="output"></div>
+			<div id="loader" class="loading-indicator"><img src="res/img/loader_mini.gif" alt="Loading text"></div>
+			<div id="oldOutput" style="visibility:hidden;">X</div>
+
+		</div>
+		<div id="play"> <img class="buttonPlay" src="res/img/soundw.png" alt="play sound" onclick="say();" /></div>
+		<div id="audio"></div>
+	</body>
+</html>

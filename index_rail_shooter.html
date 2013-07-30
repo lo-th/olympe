@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>RAIL SHOOTER</title>
+	<meta charset="utf-8">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta property="og:image" content="http://loth.olympe.in/res/img/logo.png"/>
+	<meta property="og:title" content="Advanced Morphing"/>
+	<meta property="og:url" content="http://loth.olympe.in/"/>
+	<meta property="og:site_name" content="LOTH"/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:description" content="Experiment full morphing in webGl"/>
+	<meta name="language" content="en-us" />
+	<link rel="shortcut icon" href="res/img/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" type="text/css" href="css/loth.css" />
+	<link href="css/app.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="history/history.css" />
+	<script type="text/javascript" src="history/history.js"></script>
+</head>
+
+	<script src="js/three.min.js"></script>	
+	<script src="js/loaders/sea3d/SEA3D.js"></script>
+	<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+	<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+	<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>	
+	<script src="js/controls/OrbitControls.js"></script>
+	
+	<script src="js/postprocessing/EffectComposer.js"></script>
+	<script src="js/postprocessing/RenderPass.js"></script>
+	<script src="js/postprocessing/ShaderPass.js"></script>
+	<script src="js/postprocessing/MaskPass.js"></script> 
+	<script src="js/postprocessing/BloomPass.js"></script>
+
+	<script src="js/shaders/CopyShader.js"></script>
+	<script src="js/shaders/FresnelShader.js"></script>
+	<script src="js/shaders/ColorCorrectionShader.js"></script>
+	<script src="js/shaders/VignetteShader.js"></script>
+	<script src="js/shaders/SepiaShader.js"></script>
+	<script src="js/shaders/BleachBypassShader.js"></script>
+	<script src="js/shaders/ColorifyShader.js"></script>
+	<script src="js/shaders/ConvolutionShader.js"></script>
+	<script src="js/shaders/HorizontalBlurShader.js"></script>
+	<script src="js/shaders/VerticalBlurShader.js"></script>
+	<script src="js/postprocessing/TexturePass.js"></script>
+	
+	<script src='js/libs/dat.gui.min.js'></script>
+	<script src="js/libs/tween.min.js"></script>
+
+	<script>
+	    var vsize = { x:100, y:100, z:0 };
+	    var mouse = { x:0, y:0 };
+
+	    var inRender = true, inResize = false, isNeedPause = false;
+	    var FAR = 2000;
+
+	    var cursor, cursorImg;
+
+		var camera, controls, scene, renderer, composer, renderPass, delta;
+		var ambient, hemiLight, pointLight, light;
+		
+		var clock = new THREE.Clock();
+		var ground;
+		var skyCube;
+
+		var tunnels = [];
+		var materials = []; 
+
+		var gui;
+
+		var viewConfig = {
+			withEffect:false
+		};
+
+		var isWithComposer = false;
+
+		function init() {
+			setTimeout( initScene3D, 100);
+
+			cursorImg = document.getElementById( 'cursorImg' );
+			cursor = document.getElementById( 'cursor' );
+			cursor.style.position = "absolute";
+			document.body.style.cursor = 'none';
+
+			document.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mousedown', onMouseDown, false );
+			document.addEventListener( 'mouseup', onMouseUp, false );
+
+			addGUI();
+			addGUIView();
+
+			animate();
+		}
+
+		function initScene3D() {
+			
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight;
+			vsize.z = vsize.x / vsize.y;
+			
+			// RENDERER
+			renderer = new THREE.WebGLRenderer({ antialias: false });
+			renderer.setSize( vsize.x, vsize.y );
+
+			renderer.setClearColor( 0x000000, 1 );
+			renderer.shadowMapEnabled = true;
+			renderer.shadowMapCullFace = THREE.CullFaceBack;
+			//renderer.shadowMapSoft = true;
+			renderer.physicallyBasedShading = true;
+			renderer.gammaInput = true;
+			renderer.gammaOutput = true;
+			//renderer.autoClear = false;
+			//renderer.shadowMapType = THREE.PCFSoftShadowMap;
+			document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+			renderer.domElement.style.top = 31 + "px";
+			renderer.domElement.style.position = "absolute";
+
+			// SCENE
+			scene = new THREE.Scene();
+			scene.fog = new THREE.Fog( 0x000000 , 10, 900 );
+
+			// CAMERA
+			camera = new THREE.PerspectiveCamera( 45, vsize.z, 1, FAR );
+			camera.position.z = 100;
+			camera.position.y = -25;
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.center.set( 0, -25, 0 );
+			controls.keys = [];
+			controls.userRotateSpeed = 1.8;
+			controls.zoomSpeed = 1.6;
+			controls.userPanSpeed = 0.8;
+
+			if(viewConfig.withEffect)initComposer();
+
+			initLightAndSky();
+
+			//addGround();
+			addFarPlane();
+
+			importTunnel();
+
+			window.addEventListener( 'resize', onWindowResize, false );
+		}
+
+		//-----------------------------------------------------
+		//
+		//  RENDER LOOP
+		//
+		//-----------------------------------------------------
+
+		function animate() {
+			
+			requestAnimationFrame( animate );
+
+			TWEEN.update();
+
+			// sea update
+			/*delta = clock.getDelta();
+			if(head && bodyNeck){
+				THREE.AnimationHandler.update( delta*animConfig.speed );
+				head.position.copy( bodyNeck.matrixWorld.getPosition() );
+			}*/
+
+			// camera update
+			if(controls) controls.update();
+
+			// render update
+			if(viewConfig.withEffect) composer.render(delta);
+			else if(renderer) renderer.render( scene, camera );
+		}
+
+
+		//-----------------------------------------------------
+		//  LIGHT & SKY
+		//-----------------------------------------------------
+
+		function initLightAndSky(){
+
+			ambient = new THREE.AmbientLight( 0x000 );
+			scene.add( ambient );
+
+			hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+			hemiLight.position.set( 0, -10, 0 );
+			scene.add( hemiLight );
+
+			pointLight = new THREE.PointLight( 0x000, 1, 1000 );
+			pointLight.position.set( -200, 0, -100 );
+			scene.add( pointLight );
+
+			//light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
+			light = new THREE.DirectionalLight(0x000, 1.5);
+            light.position.set( 50, 200, 100 );
+			light.target.position.set(0, 0, 0);
+			light.castShadow = true;
+			light.onlyShadow = true;
+			light.shadowCameraNear = 50;
+			light.shadowCameraFar = 300;
+			//light.shadowCameraFov = 35;
+			light.shadowBias = -0.005;
+			light.shadowMapWidth = light.shadowMapHeight = 1024;
+			light.shadowDarkness = 0.35;
+
+			light.shadowCameraLeft = -60;
+			light.shadowCameraRight = 60;
+			light.shadowCameraTop = 60;
+			light.shadowCameraBottom = -60;
+
+			scene.add( light );
+
+			// SKYBOX
+			addSkyBox();
+
+		}	
+        
+		function lightColors( cc ){
+			ambient.color.setHex(cc[2]);
+
+			hemiLight.color.setHex( cc[2] );
+			hemiLight.groundColor.setHex( cc[0] );
+
+			pointLight.color.setHex( cc[1] );
+
+			light.color.setHex( cc[3] );
+
+			currentColors = cc;
+		}
+
+		function addFarPlane() {
+			var groundMaterial = new THREE.MeshBasicMaterial( { shininess: 10, ambient: 0x000000, color: 0x000000, specular: 0x000000 } );
+			ground = new THREE.Mesh(new THREE.PlaneGeometry( 100, 100, 1, 1 ), groundMaterial);
+			ground.position.set( 0, 0, 0 );
+			ground.position.z = -899;
+			//ground.rotation.x = - Math.PI / 2;
+			ground.receiveShadow = false;
+			scene.add( ground );
+		}
+
+		/*function addGround() {
+			var groundMaterial = new THREE.MeshBasicMaterial( { shininess: 10, ambient: 0xFFFFFF, color: 0xFFFFFF, specular: 0xffffff, transparent: true } );
+			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
+			groundMaterial.blending = THREE[ blendings[ 4 ] ];
+			ground = new THREE.Mesh(new THREE.PlaneGeometry( 100, 100, 4, 4 ), groundMaterial);
+			ground.position.set( 0, 0, 0 );
+			ground.rotation.x = - Math.PI / 2;
+			ground.receiveShadow = true;
+			scene.add( ground );
+		}*/
+
+		function addSkyBox() {
+			var cubes = [2, 14, 26, 30,31,32,33];
+			var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a,0x9b8379, 0x6f7488, 0xffffd9],
+			                  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+			                  ];
+			var n = Math.floor(Math.random()*cubes.length);
+			lightColors( cubesColors[n] );
+
+			var format = ".jpg";
+			var r = "res/textures/cube/sky"+cubes[n]+"/";
+			var urls = [ r + "posx"+format, r + "negx"+format,
+						 r + "posy"+format, r + "negy"+format,
+						 r + "posz"+format, r + "negz"+format ];
+
+			skyCube = THREE.ImageUtils.loadTextureCube( urls );
+			skyCube.format = THREE.RGBFormat;
+			var shader = THREE.ShaderLib[ "cube" ];
+			shader.uniforms[ "tCube" ].value = skyCube;
+
+			var material = new THREE.ShaderMaterial( {
+			fragmentShader: shader.fragmentShader,
+			vertexShader: shader.vertexShader,
+			uniforms: shader.uniforms,
+			depthWrite: false,
+			side: THREE.BackSide
+			} );
+
+			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
+			sky.castShadow = false;
+	        sky.receiveShadow = false;
+			scene.add( sky );
+		}
+
+		//-----------------------------------------------------
+		//  COMPOSER
+		//-----------------------------------------------------
+
+		function initComposer(){
+			if(viewConfig.withEffect){
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.addPass( new THREE.RenderPass( scene, camera ));
+				
+				var vh = 1.6, vl = 1.2;
+				var mix =0.1;
+
+				var colorCorrectionPass = new THREE.ShaderPass( THREE.ColorCorrectionShader );
+				colorCorrectionPass.uniforms[ "powRGB" ].value = new THREE.Vector3( vh, vh, vh );
+				colorCorrectionPass.uniforms[ "mulRGB" ].value = new THREE.Vector3( vl, vl, vl );
+				composer.addPass( colorCorrectionPass );	
+
+				var shaderSepia = THREE.SepiaShader;
+				var effectSepia = new THREE.ShaderPass( shaderSepia );
+				effectSepia.uniforms[ "amount" ].value =0.3;
+				//effectSepia.renderToScreen = true;
+				composer.addPass(effectSepia);
+
+			//	var effectBloom = new THREE.BloomPass( 0.2, mix*25, mix*4.0  );
+			//	composer.addPass( effectBloom );
+
+				var vignettePass = new THREE.ShaderPass( THREE.VignetteShader );
+				vignettePass.uniforms[ "offset" ].value = 1.5;
+				vignettePass.uniforms[ "darkness" ].value = 1.0;
+				composer.addPass( vignettePass );
+
+				var copyPass = new THREE.ShaderPass( THREE.CopyShader );
+				copyPass.renderToScreen = true;
+				composer.addPass( copyPass );
+			}
+		}
+
+		
+		//-----------------------------------------------------
+		//
+		//  SEA3D IMPORT
+		//
+		//-----------------------------------------------------
+
+		function importTunnel(){
+
+			var loader = new THREE.SEA3D( false );
+			var size = 1;
+			var i;
+
+			loader.onComplete = function( e ) {
+				for (i=0; i < loader.meshes.length; i++){
+
+					tunnels[i] = loader.meshes[i];
+					tunnels[i].scale.set( size, size, -size );
+					scene.add( tunnels[i] );
+
+					/*var boxtest = new THREE.Mesh(new THREE.CubeGeometry(10,10,10), new THREE.MeshBasicMaterial( { color: 0xff0000 } ));
+	                scene.add(boxtest);*/
+			    }
+
+			};
+			
+			loader.load( 'res/models/tunnel.sea' );
+
+		}
+
+
+		function importMonster(){
+			var loader = new THREE.SEA3D( false );
+			loader.onComplete = function( e ) {
+
+				/*body = loader.getMesh("Body");
+				body.scale.set( 1, 1, -1 );
+				scene.add( body );*/
+			};
+			
+			loader.load( 'res/models/monster.sea' );
+
+		}
+
+		//-----------------------------------------------------
+		//  LISTENER
+		//-----------------------------------------------------
+		function onMouseDown( e ) {
+			cursorImg.src = "res/img/cursor2.png";
+			//tell('shoot');
+		}
+
+		function onMouseUp( e ) {
+			cursorImg.src = "res/img/cursor.png";
+			//tell('not shoot');
+		}
+
+		function onMouseMove( e ) {
+			mouse.x = e.clientX;
+			mouse.y = e.clientY;
+
+			cursor.style.left = (mouse.x-16)+"px";
+			cursor.style.top = (mouse.y-16)+"px";
+			
+
+			// eye look
+			/*eyesTarget.position.set((mouse.x - window.innerWidth*0.5)*0.1,-(mouse.y - window.innerHeight*0.5)*0.1,50);
+			var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+1, eyesTarget.position.z);
+			var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-1, eyesTarget.position.z);
+			eyeR.lookAt(pos);
+			eyeL.lookAt(pos2);
+
+
+			// change morph weight
+			if(morphConfig.automove){
+				fullMorph("smileOpen", mouse.x / vsize.x );
+				fullMorph("fear", mouse.y / vsize.y);
+		    }*/
+		}
+
+		function onWindowResize( event ) {
+
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight-31;
+			vsize.z = vsize.x / vsize.y;
+
+			camera.aspect = vsize.z;
+			camera.updateProjectionMatrix();
+			renderer.setSize( vsize.x, vsize.y );
+		}
+
+
+		//-----------------------------------------------------
+		//  GUI
+		//-----------------------------------------------------
+
+		function addGUI() {
+
+		    gui = new dat.GUI({autoPlace:false, width:204});
+			document.getElementById('gui').appendChild(gui.domElement);
+			gui.close();
+		}
+		function addGUIView() {
+			var f4 = gui.addFolder('View Option');
+
+			f4.add( viewConfig, 'withEffect' ).onChange( function() {initComposer();});
+		}
+
+
+		//-----------------------------------------------------
+		//  HUB
+		//-----------------------------------------------------
+
+		function toRad(Value) {
+			return Value * Math.PI / 180;
+		}
+		
+		function tell(s){
+			document.getElementById("debug").innerHTML = s;
+		}
+
+		
+		window.onload = init;
+
+	</script>
+	<body>
+		<div id="viewport"></div>
+		<div id="hubs">
+			<div id="debug"></div>
+			<div id="gui"></div>
+			<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
+			<div id="info">
+				RAIL SHOOTER 0.1 <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2013</a>
+				 | <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d format</a> 
+				. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
+			</div>
+			<div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File." style="visibility: hidden;"></div>
+			<div id="cursor"><img id="cursorImg" src="res/img/cursor.png"></div>
+		</div>
+	</body>
+</html>
