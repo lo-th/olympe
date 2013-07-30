@@ -244,7 +244,7 @@
             light.position.set( 50, 200, 100 );
 			light.target.position.set(0, 0, 0);
 			light.castShadow = true;
-			light.onlyShadow = true;
+			light.onlyShadow = false;
 			light.shadowCameraNear = 50;
 			light.shadowCameraFar = 300;
 			//light.shadowCameraFov = 35;
@@ -507,7 +507,7 @@
 			materials[0].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin.jpg'  );
 			materials[0].map.repeat.set( 1, -1 );
 			materials[0].map.wrapS = materials[0].map.wrapT = THREE.RepeatWrapping;
-			materials[0].reflectivity=0.1;
+			materials[0].reflectivity=0.05;
 			materials[0].shininess = 14;
 
 			materials[2].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/teethUp.png' );
@@ -556,15 +556,18 @@
 			materials[9].map.repeat.set( 1, -1 );
 			materials[9].map.wrapS = materials[9].map.wrapT = THREE.RepeatWrapping;
 
-			materials[9].reflectivity=0.1;
+			materials[9].reflectivity=0.05;
 			materials[9].shininess = 14;
 		}
 
 		function initMaterialNormalMap(){
-			//materials[4].normalMap = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256_n.jpg' );
-		    //materials[4].normalScale.x = materials[4].normalScale.y = 2;
-			//materials[4].normalMap.repeat.set( 1, -1 );
-			//materials[4].normalMap.wrapS = materials[4].normalMap.wrapT = THREE.RepeatWrapping;
+			//materials[4].enableBump = true;
+		//	materials[4].normalMap = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256_n.jpg' );
+		///	materials[4].normalScale.value = 0.75;
+		//	materials[4].side = THREE.DoubleSide;
+		 //   materials[4].normalScale.x = materials[4].normalScale.y = 2;
+		//	materials[4].normalMap.repeat.set( 1, -1 );
+		//	materials[4].normalMap.wrapS = materials[4].normalMap.wrapT = THREE.RepeatWrapping;
 
 			materials[4].bumpMap = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_256_b.jpg' );
 			materials[4].bumpMap.repeat.set( 1, -1 );

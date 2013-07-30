@@ -59,7 +59,7 @@
 	    var cursor, cursorImg;
 
 		var camera, controls, scene, renderer, composer, renderPass, delta;
-		var ambient, hemiLight, pointLight, light;
+		var ambient, hemiLight, pointLight, pointLight0, light;
 		
 		var clock = new THREE.Clock();
 		var ground;
@@ -67,6 +67,8 @@
 
 		var tunnels = [];
 		var materials = []; 
+		var center;
+		var level;
 
 		var gui;
 
@@ -119,24 +121,29 @@
 
 			// SCENE
 			scene = new THREE.Scene();
-			scene.fog = new THREE.Fog( 0x000000 , 10, 900 );
+			scene.fog = new THREE.Fog( 0x000000 , 0, 900 );
 
 			// CAMERA
-			camera = new THREE.PerspectiveCamera( 45, vsize.z, 1, FAR );
+			camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
 			camera.position.z = 100;
 			camera.position.y = -25;
-			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			/*controls = new THREE.OrbitControls( camera, renderer.domElement );
 			controls.center.set( 0, -25, 0 );
 			controls.keys = [];
 			controls.userRotateSpeed = 1.8;
 			controls.zoomSpeed = 1.6;
-			controls.userPanSpeed = 0.8;
-
-			if(viewConfig.withEffect)initComposer();
+			controls.userPanSpeed = 0.8;*/
 
 			initLightAndSky();
 
-			//addGround();
+
+			level = new THREE.Object3D();
+			scene.add(level);
+
+			if(viewConfig.withEffect)initComposer();
+
+			
+
 			addFarPlane();
 
 			importTunnel();
@@ -164,7 +171,8 @@
 			}*/
 
 			// camera update
-			if(controls) controls.update();
+			//if(controls) controls.update();
+			if(tunnels[0])animTunnel();
 
 			// render update
 			if(viewConfig.withEffect) composer.render(delta);
@@ -179,33 +187,38 @@
 		function initLightAndSky(){
 
 			ambient = new THREE.AmbientLight( 0x000 );
-			scene.add( ambient );
+			//scene.add( ambient );
 
 			hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
-			hemiLight.position.set( 0, -10, 0 );
+			hemiLight.position.set( 0, 0, 0 );
 			scene.add( hemiLight );
 
-			pointLight = new THREE.PointLight( 0x000, 1, 1000 );
-			pointLight.position.set( -200, 0, -100 );
+			pointLight = new THREE.PointLight( 0x000, 3, 70 );
+			pointLight.position.set( 0, 0, 0 );
 			scene.add( pointLight );
+
+			pointLight0 = new THREE.PointLight( 0x000, 2, 400 );
+			pointLight0.position.set( 0, -10,-350 );
+			scene.add( pointLight0 );
 
 			//light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
 			light = new THREE.DirectionalLight(0x000, 1.5);
-            light.position.set( 50, 200, 100 );
-			light.target.position.set(0, 0, 0);
+            light.position.set( 50, 500, 100 );
+			light.target.position.set(0, -25, -1000);
 			light.castShadow = true;
 			light.onlyShadow = true;
-			light.shadowCameraNear = 50;
-			light.shadowCameraFar = 300;
+			light.shadowCameraNear = 100;
+			light.shadowCameraFar = 1000;
 			//light.shadowCameraFov = 35;
 			light.shadowBias = -0.005;
 			light.shadowMapWidth = light.shadowMapHeight = 1024;
-			light.shadowDarkness = 0.35;
+			light.shadowDarkness = 0.1;
 
-			light.shadowCameraLeft = -60;
-			light.shadowCameraRight = 60;
-			light.shadowCameraTop = 60;
-			light.shadowCameraBottom = -60;
+			light.shadowCameraLeft = -600;
+			light.shadowCameraRight = 600;
+			light.shadowCameraTop = 600;
+			light.shadowCameraBottom = -600;
+			//light.shadowCameraVisible = true; 
 
 			scene.add( light );
 
@@ -215,14 +228,15 @@
 		}	
         
 		function lightColors( cc ){
-			ambient.color.setHex(cc[2]);
+			ambient.color.setHex(cc[0]);
 
 			hemiLight.color.setHex( cc[2] );
 			hemiLight.groundColor.setHex( cc[0] );
 
-			pointLight.color.setHex( cc[1] );
+			pointLight.color.setHex( cc[3] );
+			pointLight0.color.setHex( cc[2] );
 
-			light.color.setHex( cc[3] );
+			light.color.setHex( cc[2] );
 
 			currentColors = cc;
 		}
@@ -334,19 +348,14 @@
 
 			loader.onComplete = function( e ) {
 				for (i=0; i < loader.meshes.length; i++){
-
 					tunnels[i] = loader.meshes[i];
 					tunnels[i].scale.set( size, size, -size );
-					scene.add( tunnels[i] );
-
-					/*var boxtest = new THREE.Mesh(new THREE.CubeGeometry(10,10,10), new THREE.MeshBasicMaterial( { color: 0xff0000 } ));
-	                scene.add(boxtest);*/
+					level.add( tunnels[i] );
+					tunnels[i].position.z = 200-(i*100);
 			    }
-
 			};
 			
 			loader.load( 'res/models/tunnel.sea' );
-
 		}
 
 
@@ -362,6 +371,36 @@
 			loader.load( 'res/models/monster.sea' );
 
 		}
+
+		//-----------------------------------------------------
+		//  TRAVEL
+		//-----------------------------------------------------
+
+		function animTunnel(){
+			var speed = 0.5;
+			level.position.z += speed;
+			if(level.position.z>100)tunnels[0].position.z = -1000;
+			if(level.position.z>200)tunnels[1].position.z = -1100;
+			if(level.position.z>300)tunnels[2].position.z = -1200;
+			if(level.position.z>400)tunnels[3].position.z = -1300;
+			if(level.position.z>500)tunnels[4].position.z = -1400;
+			if(level.position.z>600)tunnels[5].position.z = -1500;
+			if(level.position.z>700)tunnels[6].position.z = -1600;
+			if(level.position.z>800)tunnels[7].position.z = -1700;
+			if(level.position.z>900)tunnels[8].position.z = -1800;
+			if(level.position.z>1000)tunnels[9].position.z = -1900;
+			if(level.position.z>1100)tunnels[10].position.z = -2000;
+
+			if(level.position.z>1200)resetTunnel();
+		}
+
+		function resetTunnel(){
+			level.position.z = 0;
+			for (var i=0; i < tunnels.length; i++){
+				tunnels[i].position.z = 200-(i*100);
+			}
+		}
+
 
 		//-----------------------------------------------------
 		//  LISTENER
@@ -382,7 +421,12 @@
 
 			cursor.style.left = (mouse.x-16)+"px";
 			cursor.style.top = (mouse.y-16)+"px";
-			
+
+            center = new THREE.Vector3( (mouse.x - window.innerWidth*0.5)*0.25, -(mouse.y - window.innerHeight*0.5)*0.1, 0);
+            if(camera)camera.lookAt(center);
+            if(pointLight)pointLight.position.set(center.x/3, -15+center.y/3,20);
+			//controls.center.set( e.clientX, -25, e.clientY)
+			//controls.update();
 
 			// eye look
 			/*eyesTarget.position.set((mouse.x - window.innerWidth*0.5)*0.1,-(mouse.y - window.innerHeight*0.5)*0.1,50);
