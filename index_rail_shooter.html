@@ -73,7 +73,8 @@
 		var gui;
 
 		var viewConfig = {
-			withEffect:false
+			withEffect:false,
+			speed:0.5
 		};
 
 		var isWithComposer = false;
@@ -377,8 +378,7 @@
 		//-----------------------------------------------------
 
 		function animTunnel(){
-			var speed = 0.5;
-			level.position.z += speed;
+			level.position.z += viewConfig.speed;
 			if(level.position.z>100)tunnels[0].position.z = -1000;
 			if(level.position.z>200)tunnels[1].position.z = -1100;
 			if(level.position.z>300)tunnels[2].position.z = -1200;
@@ -469,6 +469,7 @@
 			var f4 = gui.addFolder('View Option');
 
 			f4.add( viewConfig, 'withEffect' ).onChange( function() {initComposer();});
+			f4.add( viewConfig, 'speed', 0.1, 5 ).onChange( function() {  });
 		}
 
 
