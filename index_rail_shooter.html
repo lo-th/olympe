@@ -51,12 +51,13 @@
 
 	<script>
 	    var vsize = { x:100, y:100, z:0 };
-	    var mouse = { x:0, y:0 };
+	    var mouse = { x:0, y:0, move:true };
 
 	    var inRender = true, inResize = false, isNeedPause = false;
 	    var FAR = 2000;
 
 	    var cursor, cursorImg;
+	    var tweenMouse;
 
 		var camera, controls, scene, renderer, composer, renderPass, delta;
 		var ambient, hemiLight, pointLight, pointLight0, light;
@@ -128,6 +129,8 @@
 			camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
 			camera.position.z = 100;
 			camera.position.y = -25;
+
+			center = new THREE.Vector3( 0,0,0 );
 			/*controls = new THREE.OrbitControls( camera, renderer.domElement );
 			controls.center.set( 0, -25, 0 );
 			controls.keys = [];
@@ -145,7 +148,7 @@
 
 			
 
-			addFarPlane();
+			
 
 			importTunnel();
 
@@ -165,14 +168,15 @@
 			TWEEN.update();
 
 			// sea update
-			/*delta = clock.getDelta();
-			if(head && bodyNeck){
-				THREE.AnimationHandler.update( delta*animConfig.speed );
-				head.position.copy( bodyNeck.matrixWorld.getPosition() );
-			}*/
+			/*
+			delta = clock.getDelta();
+			THREE.AnimationHandler.update( delta );
+			*/
 
 			// camera update
-			//if(controls) controls.update();
+			if(camera)camera.lookAt(center);
+            if(pointLight)pointLight.position.set(center.x/3, -15+center.y/3,20);
+
 			if(tunnels[0])animTunnel();
 
 			// render update
@@ -252,16 +256,21 @@
 			scene.add( ground );
 		}
 
-		/*function addGround() {
-			var groundMaterial = new THREE.MeshBasicMaterial( { shininess: 10, ambient: 0xFFFFFF, color: 0xFFFFFF, specular: 0xffffff, transparent: true } );
-			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
-			groundMaterial.blending = THREE[ blendings[ 4 ] ];
-			ground = new THREE.Mesh(new THREE.PlaneGeometry( 100, 100, 4, 4 ), groundMaterial);
-			ground.position.set( 0, 0, 0 );
-			ground.rotation.x = - Math.PI / 2;
-			ground.receiveShadow = true;
-			scene.add( ground );
-		}*/
+		function addWater() {
+			var waterMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0x5080AA, transparent: true, opacity: 0.4} );
+			waterMaterial.normalMap = THREE.ImageUtils.loadTexture( 'res/textures/water.jpg' );
+			waterMaterial.normalMap.repeat.set( 1, 100 );
+			waterMaterial.normalMap.wrapS = waterMaterial.normalMap.wrapT = THREE.RepeatWrapping;
+			waterMaterial.normalScale.x = 2;
+			waterMaterial.normalScale.y = -2;
+			//var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
+			//waterMaterial.blending = THREE[ blendings[ 4 ] ];
+			water = new THREE.Mesh(new THREE.PlaneGeometry( 20, 2000, 1, 1 ), waterMaterial);
+			water.position.set( 0, -38, -400 );
+			water.rotation.x = - Math.PI / 2;
+			water.receiveShadow = true;
+			level.add( water );
+		}
 
 		function addSkyBox() {
 			var cubes = [2, 14, 26, 30,31,32,33];
@@ -271,7 +280,7 @@
 			var n = Math.floor(Math.random()*cubes.length);
 			lightColors( cubesColors[n] );
 
-			var format = ".jpg";
+			/*var format = ".jpg";
 			var r = "res/textures/cube/sky"+cubes[n]+"/";
 			var urls = [ r + "posx"+format, r + "negx"+format,
 						 r + "posy"+format, r + "negy"+format,
@@ -293,7 +302,7 @@
 			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
 			sky.castShadow = false;
 	        sky.receiveShadow = false;
-			scene.add( sky );
+			scene.add( sky );*/
 		}
 
 		//-----------------------------------------------------
@@ -354,7 +363,11 @@
 					level.add( tunnels[i] );
 					tunnels[i].position.z = 200-(i*100);
 			    }
+
+			    addFarPlane();
+			    addWater();
 			};
+
 			
 			loader.load( 'res/models/tunnel.sea' );
 		}
@@ -415,32 +428,40 @@
 			//tell('not shoot');
 		}
 
+		function onMouseOut() {
+			if(mouse.move){
+			    document.body.style.cursor = 'auto';
+			    cursor.style.visibility = 'hidden';
+			    mouse.move = false;
+			    tweenMouse = new TWEEN.Tween( { x:center.x, y:center.y }  ).to( { x:0, y:0 } , 500 ).easing( TWEEN.Easing.Linear.None );
+			    tweenMouse.onUpdate(function(){ center.x = this.x; center.y = this.y; });
+			    tweenMouse.start();
+			}
+		}
+
+		function onMouseIn() {
+			if(!mouse.move){
+	    		document.body.style.cursor = 'none';
+		    	cursor.style.visibility = 'visible';
+		    	mouse.move = true;
+		    	tweenMouse.stop();
+		    }
+		}
+
 		function onMouseMove( e ) {
 			mouse.x = e.clientX;
 			mouse.y = e.clientY;
 
+			if(mouse.x>40 && mouse.x<vsize.x-40 && mouse.y>100 && mouse.y<vsize.y-40){
+				center.x = (mouse.x - window.innerWidth*0.5)*0.25;
+				center.y = -(mouse.y - window.innerHeight*0.5)*0.1;
+				onMouseIn();
+			}else{
+				onMouseOut();
+			}
+
 			cursor.style.left = (mouse.x-16)+"px";
 			cursor.style.top = (mouse.y-16)+"px";
-
-            center = new THREE.Vector3( (mouse.x - window.innerWidth*0.5)*0.25, -(mouse.y - window.innerHeight*0.5)*0.1, 0);
-            if(camera)camera.lookAt(center);
-            if(pointLight)pointLight.position.set(center.x/3, -15+center.y/3,20);
-			//controls.center.set( e.clientX, -25, e.clientY)
-			//controls.update();
-
-			// eye look
-			/*eyesTarget.position.set((mouse.x - window.innerWidth*0.5)*0.1,-(mouse.y - window.innerHeight*0.5)*0.1,50);
-			var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+1, eyesTarget.position.z);
-			var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-1, eyesTarget.position.z);
-			eyeR.lookAt(pos);
-			eyeL.lookAt(pos2);
-
-
-			// change morph weight
-			if(morphConfig.automove){
-				fullMorph("smileOpen", mouse.x / vsize.x );
-				fullMorph("fear", mouse.y / vsize.y);
-		    }*/
 		}
 
 		function onWindowResize( event ) {
