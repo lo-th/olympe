@@ -1,675 +1,664 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-  <link href="css/normalize.css" media="screen, print" rel="stylesheet" type="text/css" />
-  <link href="css/gauntlet.css"  media="screen, print" rel="stylesheet" type="text/css" />
-  <link href="css/loth.css" rel="stylesheet" type="text/css"  />
-  <title>Javascript Gauntlet 3D</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+	<link href="css/normalize.css" media="screen, print" rel="stylesheet" type="text/css" />
+	<link href="css/gauntlet.css"  media="screen, print" rel="stylesheet" type="text/css" />
+	<link href="css/loth.css" rel="stylesheet" type="text/css"  />
+	<title>Javascript Gauntlet 3D</title>
 </head>
 
 <body>
-  <div id="viewport"></div>
-  <div id="hubs">
-      <div id="debug"></div>
-      <div id="gui"></div>
-      <div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
-      <div id="info">
-        GAUNTLET 3D 0.1a <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2013</a>
-         | <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d</a> 
-        . <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
-         | <a href="https://github.com/jakesgordon/javascript-gauntlet/" target="_blank">Gauntlet source</a> 
-      </div>
-      <div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File." style="visibility: hidden;"></div>
-    </div>
-
-  <div id="gauntlet">
-    <img id="booting" src='res/img/loader.gif'>
-    <img id="splash"  src='res/images/splash.png'>
-
-    <canvas id="canvas">
-      <div class="unsupported">
-        Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
-      </div>
-    </canvas>
-
-    <div id="help" style="display:none;"></div>
-
-    <div id="scoreboard">
-
-      <img id="logo" src="res/images/logo.png">
-
-      <h3 class="level"> &nbsp; </h3>
-
-      <hr>
-
-      <div class="high">High Score: <span class='value'>000000</span></div>
-
-      <div id='warrior' class='player'>
-        <div class='name'>Warrior</div>
-        <div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
-        <div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
-        <div class='treasure'>
-          <img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
-          <img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="images/potion.png">
-        </div>
-        <div class='press'>PRESS <b>1</b> TO START</div>
-        <div class='multi'>multiplayer coming soon</div>
-      </div>
-
-      <div id='valkyrie' class='player'>
-        <div class='name'>Valkyrie</div>
-        <div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
-        <div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
-        <div class='treasure'>
-          <img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
-          <img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="images/potion.png">
-        </div>
-        <div class='press'>PRESS <b>2</b> TO START</div>
-        <div class='multi'>multiplayer coming soon</div>
-      </div>
-
-      <div id='wizard' class='player'>
-        <div class='name'>Wizard</div>
-        <div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
-        <div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
-        <div class='treasure'>
-          <img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
-          <img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png">
-        </div>
-        <div class='press'>PRESS <b>3</b> TO START</div>
-        <div class='multi'>multiplayer coming soon</div>
-      </div>
-
-      <div id='elf' class='player'>
-        <div class='name'>Elf</div>
-        <div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
-        <div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
-        <div class='treasure'>
-          <img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
-          <img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png">
-        </div>
-        <div class='press'>PRESS <b>4</b> TO START</div>
-        <div class='multi'>multiplayer coming soon</div>
-      </div>
-      <div id='sound' class='on' title='toggle music and fx'>
-          <img id="soundIn" src='res/img/son.png'>
-      </div>
-
-    </div>
-
-  </div>
-
-  <script src="js/three.min.js"></script>
- 
-  <script src="js/loaders/sea3d/SEA3D.js"></script>
-  <script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-  <script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
-  <script src="js/loaders/sea3d/SEA3DLZMA.js"></script> 
-
-  <script src="js/gauntlet/vendor.js"></script>
-  <script src="js/gauntlet/game.js"></script>
-  <script src="js/gauntlet/gauntlet.js"></script>
-
-  <script src='js/libs/dat.gui.min.js'></script>
-
-  <script>
-    var vsize = { x:100, y:100, z:0 };
-    var mouse = { x:0, y:0, move:true };
-    var camera, controls, target, target2,target3,scene, renderer, composer, renderPass, delta, center, pointLight, spotLight, time;
-
-    var materials = [];
-
-    var generator = [];
-    var treasure = [];
-    var monster = [];
-    var weapon = [];
-    var door = [];
-    var fx = [];
-
-    var ents = [];
-
-    var exit;
-
-    var level, player;
-    var meshs=[];
-
-    var list = "<b>1,2,3,4</b> choose player<br><b>ARROW</b> keys to move<br><b>HOLD SPACE</b> to fire<br><b>ENTER</b> to use potion";
-
-    var viewConfig = {
-      show2d : false,
-      showInfo : false
-    }
-
-    function init() {
-      initScene3D();
-      document.getElementById("canvas").style.visibility = "hidden";
-      document.getElementById("scoreboard").style.visibility = "hidden";
-    }
-
-    function initScene3D() {
-      //list = "";
-      
-      renderer = new THREE.WebGLRenderer({ antialias: false });
-
-      renderer.setClearColor( 0x222222, 1 );
-      renderer.physicallyBasedShading = true;
-      renderer.gammaInput = true;
-      renderer.gammaOutput = true;
-      renderer.shadowMapEnabled = true;
-      renderer.shadowMapSoft = true;
-      //renderer.shadowMapCullFace = THREE.CullFaceBack;
-
-      document.getElementById( 'viewport' ).appendChild( renderer.domElement );
-      renderer.domElement.style.top = 31 + "px";
-      renderer.domElement.style.position = "absolute";
-
-      // SCENE
-      scene = new THREE.Scene();
-      scene.fog = new THREE.Fog( 0xff0000, 250, 500 );
-
-      // CAMERA
-      camera = new THREE.PerspectiveCamera( 70, 0, 1, 2000 );
-      camera.position.z = 100;
-      camera.position.y = 300;
-
-      target = new THREE.Object3D();
-      scene.add(target);
-
-      target2 = new THREE.Object3D();
-      scene.add(target2);
-
-      target3 = new THREE.Object3D();
-      target2.add(target3);
-      target3.position.x = 200;
-      target3.position.y = -30;
-      target.add(camera);
-      //camera.rotation.z = toRad(90);
-     // controls =  new THREE.PointerLockControls( camera , target );//new THREE.
-      //scene.add( controls.getObject() );//FirstPersonControls(camera);
-     // controls.enabled = true;
-      var ambient = new THREE.AmbientLight( 0x111111 );
-      scene.add( ambient );
-
-      spotLight = new THREE.SpotLight( 0xffffff );
-      spotLight.intensity = 3;
-      spotLight.position.set(0,0,0);
-      spotLight.target = target3;
-      spotLight.castShadow = true;
-
-      spotLight.shadowCameraNear = 20;
-      spotLight.shadowCameraFar = 200;
-      spotLight.shadowCameraFov = 90;
-
-      spotLight.shadowMapBias = 0.01;
-      spotLight.shadowMapDarkness = 0.7;
-      spotLight.shadowMapWidth = 2*512;
-      spotLight.shadowMapHeight = 2*512;
-     // spotLight.shadowCameraVisible = true; 
-      scene.add(spotLight);
-
-      pointLight = new THREE.PointLight( 0xffffff, 1, 200 );
-      pointLight.position.set( 0, 60, 0 );
-      scene.add( pointLight );
-
-      center = new THREE.Vector3( 0,0,0 );
-      camera.lookAt(center);
-
-      level = new THREE.Object3D();
-      scene.add(level);
-
-      initMaterial();
-      initSea3DMesh();
-
-      addGUI();
-      addGUIView();
-
-      onResize();
-      window.addEventListener( 'resize', onResize, false );
-
-      setInterval( function () { requestAnimationFrame( animate ); }, 1000 / 60 );
-
-    }
-
-    function animate() {
-      tell(list);
-      renderer.render( scene, camera );
-    }
-
-    function onResize( event ) {
-
-      vsize.x = window.innerWidth;
-      vsize.y = window.innerHeight-31;
-      vsize.z = vsize.x / vsize.y;
-
-      camera.aspect = vsize.z;
-      camera.updateProjectionMatrix();
-      renderer.setSize( vsize.x, vsize.y );
-    }
-
-    function initMaterial( ) {
-
-      materials[0] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xff8a72 } );//WARRIOR
-      materials[1] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x00abff } );//VALKYRIE
-      materials[2] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffff00 } );//WIZARD
-      materials[3] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x34d219 } );//ELF
-
-      materials[4] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GHOST
-      materials[5] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//DEMON
-      materials[6] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GRUNT
-      materials[7] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//WIZARD
-      materials[8] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400040 } );//DEATH
-
-      materials[10] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008000 } );//HEALTH
-      materials[11] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008010 } );//POISON
-      materials[12] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008020 } );//FOOD1
-      materials[13] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008030 } );//FOOD2
-      materials[14] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008040 } );//FOOD3
-      materials[15] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008050 } );//KEY
-      materials[16] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//POTION
-      materials[17] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008070 } );//GOLD
-
-      materials[18] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008050 } );//DOOR HORIZONTAL
-      materials[19] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//DOOR VERTICAL
-      materials[20] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x000000 } );//EXIT
-
-      materials[21] = new THREE.MeshPhongMaterial( { shininess: 10, map:THREE.ImageUtils.loadTexture( 'res/textures/brick.png' )} );// WALL
-      materials[21].map.repeat.set( 1, -1 );
-      materials[21].map.wrapS = materials[21].map.wrapT = THREE.RepeatWrapping;
-
-      materials[22] = new THREE.MeshPhongMaterial( { shininess: 10,  map:THREE.ImageUtils.loadTexture( 'res/textures/floor.jpg' ) } );// FLOOR
-
-      materials[23] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GEN GHOST
-      materials[24] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//GEN DEMON
-      materials[25] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GEN GRUNT
-      materials[26] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//GEN WIZARD
-
-      materials[27] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFF0030, wireframe: true } );//FX
-      materials[28] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFF0030, wireframe: true } );//FX
-      materials[29] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFFFF30, wireframe: true } );//FX WEAPON
-
-    }
-
-    function initSea3DMesh() {
-      var loader = new THREE.SEA3D( false );
-      var size = 1;
-      var i;
-
-      loader.onComplete = function( e ) {
-        for (i=0; i < loader.meshes.length; i++){
-            meshs[i] = loader.meshes[i];
-            meshs[i].scale.set( size, size, -size );
-          }
-
-          document.getElementById("scoreboard").style.visibility = "visible";
-      };
-      loader.load( 'res/models/gauntlet.sea' );
-    }
-
-    //===========================================================================
-    //
-    // ENTITIES TRANSPHERE oo
-    //
-    //===========================================================================
-
-    function entities3DInfo(entities) {
-      if(!viewConfig.showInfo) return;
-      var t = "Entity lenght:" + entities.length + "<br>";
-      var n, max, entity;
-      var numMonster = 0;
-      var numWeapon = 0;
-      var numTreasure = 0;
-      var numFx = 0;
-      var numGenerator = 0;
-      var numDoor = 0;
-      var numExit =0;
-
-
-      for(n = 0, max = entities.length ; n < max ; n++) {
-        entity = entities[n];
-        if(entity.monster){numMonster++;}
-        if(entity.weapon){numWeapon++;}
-        if(entity.treasure){numTreasure++;}
-        if(entity.fx){numFx++;}
-        if(entity.generator){if(entity.type.sx>31)numGenerator++;}
-        if(entity.door){numDoor++;}
-        if(entity.exit){numExit++;}
-      }
-
-      list = t  + "Monster:"+numMonster+"<br>"+ "Weapon:"+numWeapon+"<br>"+ "Treasure:"+numTreasure+"<br>"+ "Fx:"+numFx+"<br>"+ "Generator:"+numGenerator+"<br>"+ "Door:"+numDoor+"<br>"+ "Exit:"+numExit+"<br>";
-    }
-
-    function entities3D( entity , n) {
-
-      if(entity.monster){
-        if (entity.health === 0) remove3DMonster(n);
-        add3DMonsteer(n, entity.type );
-        move3DMonsteer(n, entity.x, entity.y, entity.dir);
-      }
-
-      else if(entity.generator){
-        if(entity.type.sx>31){
-          if (entity.health === 0) remove3DGenerator(n);
-          add3DGenerator(n, entity.type, entity.x, entity.y );
-        }
-      }
-
-      else if(entity.treasure){
-        if (!entity.active) remove3DTreasure(n);
-        add3DTreasure(n, entity.type, entity.x, entity.y );
-      }
-
-      else if(entity.weapon){
-       // if (!entity.active) remove3DWeapon(n);
-        add3DWeapon(n, entity.type );
-        move3DWeapon(n, entity.x, entity.y, entity.dir);
-       /* if (entity.health === 0)remove3DMonster(n);
-        
-        move3DMonsteer( monster[n], entity.x, entity.y, entity.dir);*/
-      }
-
-      else if(entity.fx){
-        //if (!entity.active) remove3DFx(n);
-        add3DFx(n, entity.type, entity.x, entity.y );
-        move3DFx(n, entity.type, entity.x, entity.y);
-      }
-
-      else if(entity.door){
-        if (!entity.active) remove3DDoor(n);
-        add3DDoor(n, entity.type, entity.x, entity.y );
-      }
-
-      else if(entity.exit){
-        add3DExit(n, entity.x, entity.y);
-      }
-
-    }
-
-    //===========================================================================
-    // THE MAP
-    //===========================================================================
-
-    function init3DLevel(){
-      clear3DLevel();
-    }
-
-    function clear3DLevel(){
-      var obj, i;
-      for ( i = level.children.length - 1; i >= 0 ; i -- ) {
-        obj = level.children[ i ];
-        level.remove(obj);
-        obj.geometry.dispose();
-      }
-
-      generator.length = 0;
-      treasure.length = 0;
-      monster.length = 0;
-      weapon.length = 0;
-      door.length = 0;
-      fx.length = 0;
-      exit = null;
-    }
-
-    function add3DWall(x, y, sx, sy) {
-      var block = meshs[sx].clone();//new THREE.Mesh(new THREE.CubeGeometry( 32, 100, 32 ), materials[21]);
-      block.material =  materials[21];
-      block.position.set( x*32, 0, y*32 );
-      level.add(block);
-      block.castShadow = true;
-      block.receiveShadow = true;
-      //list+=sx+"/"+sy+" ";
-    }
-
-    function add3DFloor(x, y, sx, sy) {
-      if(sy!=0)return;//shadow
-      var block = new THREE.Mesh(new THREE.PlaneGeometry( 32, 32 ), materials[22]);
-      block.position.set( x*32, 0, y*32 );
-      block.rotation.x = - Math.PI / 2;
-      level.add(block);
-       block.castShadow = true;
-      block.receiveShadow = true;
-    }
-
-    //===========================================================================
-    // 3D PLAYER
-    //===========================================================================
-
-    function init3DPlayer(type) {
-      var mat = new THREE.MeshPhongMaterial( { shininess: 10, ambient: 0x000000, color: 0xfdc689, specular: 0x000000 } );
-      var playerHead = new THREE.Mesh(new THREE.CubeGeometry( 10, 10, 10 ), mat);
-      var playerArm = new THREE.Mesh(new THREE.CubeGeometry( 20, 5, 5 ),  materials[type.sy]);
-      player = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), materials[type.sy]);
-      scene.add(player);
-      playerHead.position.set(0,25,0);
-      playerArm.position.set(5,15,10);
-      player.add(playerHead);
-      player.add(playerArm);
-    }
-
-    function remove3DPlayer() {
-      scene.remove(player);
-      player.geometry.dispose();
-    }
-
-    function move3DPlayer( pp ) {
-      if(player){
-        player.rotation.y = toRad((-pp.dir*45)+90);
-
-        player.position.set(pp.x, 20, pp.y);
-        pointLight.position.set(pp.x, 60, pp.y);
-        target.position.set(pp.x, 20, pp.y);
-        target2.position.set(pp.x, 30, pp.y);
-        target2.rotation.y = player.rotation.y;
-        spotLight.position.copy(target2.position);
-
-        center.x = pp.x;
-        center.z = pp.y;
-      }
-    }
-
-    //===========================================================================
-    // 3D exit
-    //===========================================================================
-
-    function add3DExit(n, x, y) {
-      if(!exit){
-        exit = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 32 ), materials[20]);
-        exit.position.set(x, 30, y);
-        level.add(exit);
-      }
-    }
-
-    //===========================================================================
-    // 3D DOOR
-    //===========================================================================
-
-    function add3DDoor(n, type, x, y) {
-      if(!door[n]){
-        var m 
-        if(type.sx==10) m = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 10 ), materials[18]);
-        if(type.sx==11) m = new THREE.Mesh(new THREE.CubeGeometry( 10, 60, 32 ), materials[19]);
-        m.position.set(x, 30, y);
-        level.add(m);
-        door[n] = m;
-        door[n].castShadow = true;
-        door[n].receiveShadow = true;
-      }
-    }
-
-    function remove3DDoor(n) {
-      if(door[n]){
-        level.remove(door[n]);
-        door[n].geometry.dispose();
-      }
-    }
-
-    //===========================================================================
-    // 3D GENERATOR
-    //===========================================================================
-
-    function add3DGenerator(n, type, x, y) {
-      if(!generator[n]){
-        generator[n] = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 32 ), materials[type.sy+19]);
-        generator[n] .position.set(x, 30, y);
-        level.add( generator[n] );
-        generator[n].castShadow = true;
-        generator[n].receiveShadow = true;
-      }
-    }
-
-    function remove3DGenerator(n) {
-      if(generator[n]){
-        level.remove(generator[n]);
-        generator[n].geometry.dispose();
-      }
-    }
-
-    //===========================================================================
-    // 3D TREASURE
-    //===========================================================================
-    var Treasure = new THREE.Mesh(new THREE.CubeGeometry( 20, 20, 20 ), null);
-
-    function add3DTreasure(n, type, x, y) {
-      if(!treasure[n]){
-        treasure[n] = Treasure.clone();
-        treasure[n].material = materials[type.sx+10];
-        treasure[n].position.set(x, 10, y);
-        level.add(treasure[n]);
-        
-        treasure[n].castShadow = true;
-        treasure[n].receiveShadow = true;
-      }
-    }
-
-    function remove3DTreasure(n) {
-      if(treasure[n] !== 'undefined'){
-        level.remove(treasure[n]);
-        treasure[n].geometry.dispose();
-      }
-    }
-
-    //===========================================================================
-    // 3D MONSTER
-    //===========================================================================
-
-    var Monster = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), null);
-
-    function add3DMonsteer(n, type) {
-      if(!monster[n]){
-        monster[n] = Monster.clone();
-        monster[n].material = materials[type.sy];
-        level.add( monster[n] );
-        monster[n].castShadow = true;
-        monster[n].receiveShadow = true;
-     }
-    }
-
-    function remove3DMonster(n) {
-      if(monster[n]){
-        level.remove(monster[n]);
-        monster[n].geometry.dispose();
-      }
-    }
-
-
-    function move3DMonsteer( n, x, y, dir ) {
-      monster[n].rotation.y = toRad((-dir*45)+90);
-      monster[n].position.set(x, 20, y);
-    }
-
-    //===========================================================================
-    // 3D FX
-    //===========================================================================
-
-    function add3DFx(n, type, x, y) {
-      if(!fx[n]){
-        var m 
-        if(type.sx === 13)m = new THREE.Mesh(new THREE.CubeGeometry( 30, 10, 30 ), materials[27]);
-        else if(type.sx === 19)m = new THREE.Mesh(new THREE.CubeGeometry( 30, 10, 30 ), materials[29]);
-        level.add(m);
-        fx[n] = m;
-      }
-      //fx[n].position.set(x, 30, y);
-    }
-
-    function remove3DFx(n) {
-      if(fx[n]){
-        level.remove(fx[n]);
-        fx[n].geometry.dispose();
-      }
-    }
-
-    function move3DFx(n, type, x, y) {
-      if(type.sx === 13) fx[n].material =  materials[27];
-      else if(type.sx === 19) fx[n].material =  materials[29];
-      fx[n].position.set(x, 20, y);
-    }
-
-    //===========================================================================
-    // 3D WEAPON
-    //===========================================================================
-
-    function add3DWeapon(n, type) {
-      if(!weapon[n]){
-        weapon[n] = new THREE.Mesh(new THREE.CubeGeometry( 20, 10, 10 ), materials[4]);
-        level.add(weapon[n]);
-        //weapon[n].castShadow = true;
-        //weapon[n].receiveShadow = true;
-        
-     }
-    }
-    function remove3DWeapon(n) {
-      if(weapon[n]){
-        level.remove(weapon[n]);
-        weapon[n].geometry.dispose();
-      // weapon[n] = false;
-     //   list += "monster remove" + n + ".";
-        //monster[n] = null;
-      }
-    }
-    function move3DWeapon( n, x, y, dir ) {
-      weapon[n].rotation.y = toRad((-dir*45)+90);
-      weapon[n].position.set(x, 20, y);
-    }
-
-    function toRad(Value) {
-      return Value * Math.PI / 180;
-    }
-
-    function tell(Value) {
-       document.getElementById('debug').innerHTML = Value;
-    }
-
-    //-----------------------------------------------------
-    //  GUI
-    //-----------------------------------------------------
-
-    function addGUI() {
-
-      gui = new dat.GUI({autoPlace:false, width:204});
-      document.getElementById('gui').appendChild(gui.domElement);
-      gui.open();
-    }
-
-    function addGUIView() {
-      var f4 = gui.addFolder('View Option');
-
-      f4.add( viewConfig, 'show2d' ).onChange( function() {
-        if(viewConfig.show2d)document.getElementById("canvas").style.visibility = "visible"; 
-        else document.getElementById("canvas").style.visibility = "hidden";
-
-         window.game.no2d(viewConfig.show2d);
-      });
-      f4.add( viewConfig, 'showInfo' ).onChange( function() { if(!viewConfig.showInfo) list = "";});
-      f4.open();
-
-    }
-
-    window.onload = init;
-    Game.run(Gauntlet);
-
-  </script>
+<div id="viewport"></div>
+<div id="hubs">
+	<div id="debug"></div>
+	<div id="gui"></div>
+	<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
+	<div id="info">
+	GAUNTLET 3D 0.1a <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2013</a>
+	| <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d</a> 
+	. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
+	| <a href="https://github.com/jakesgordon/javascript-gauntlet/" target="_blank">Gauntlet source</a> 
+	</div>
+	<div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File." style="visibility: hidden;"></div>
+</div>
+
+<div id="gauntlet">
+	<img id="booting" src='res/img/loader.gif'>
+	<img id="splash"  src='res/images/splash.png'>
+	<canvas id="canvas">
+		<div class="unsupported">Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element</div>
+	</canvas>
+	<div id="help" style="display:none;"></div>
+	<div id="scoreboard">
+		<img id="logo" src="res/images/logo.png">
+		<h3 class="level"> &nbsp; </h3>
+		<hr>
+		<div class="high">High Score: <span class='value'>000000</span></div>
+		<div id='warrior' class='player'>
+			<div class='name'>Warrior</div>
+			<div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
+			<div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
+			<div class='treasure'>
+				<img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
+				<img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="images/potion.png">
+			</div>
+			<div class='press'>PRESS <b>1</b> TO START</div>
+			<div class='multi'>multiplayer coming soon</div>
+		</div>
+		<div id='valkyrie' class='player'>
+			<div class='name'>Valkyrie</div>
+			<div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
+			<div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
+			<div class='treasure'>
+				<img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
+				<img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="images/potion.png">
+			</div>
+			<div class='press'>PRESS <b>2</b> TO START</div>
+			<div class='multi'>multiplayer coming soon</div>
+		</div>
+		<div id='wizard' class='player'>
+			<div class='name'>Wizard</div>
+			<div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
+			<div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
+			<div class='treasure'>
+				<img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
+				<img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png">
+			</div>
+			<div class='press'>PRESS <b>3</b> TO START</div>
+			<div class='multi'>multiplayer coming soon</div>
+		</div>
+		<div id='elf' class='player'>
+			<div class='name'>Elf</div>
+			<div class='score'><div class='label'>Score</div><div class='value'>000000</div></div>
+			<div class='health'><div class='label'>Health</div><div class='value'>000</div></div>
+			<div class='treasure'>
+				<img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png"><img class='key' src="res/images/key.png">
+				<img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png"><img class='potion' src="res/images/potion.png">
+			</div>
+			<div class='press'>PRESS <b>4</b> TO START</div>
+			<div class='multi'>multiplayer coming soon</div>
+		</div>
+		<div id='sound' class='on' title='toggle music and fx'>
+			<img id="soundIn" src='res/img/son.png'>
+		</div>
+	</div>
+</div>
+
+<script src="js/three.min.js"></script>
+
+<script src="js/loaders/sea3d/SEA3D.js"></script>
+<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+<script src="js/loaders/sea3d/SEA3DLZMA.js"></script> 
+
+<script src="js/gauntlet/vendor.js"></script>
+<script src="js/gauntlet/game.js"></script>
+<script src="js/gauntlet/gauntlet.js"></script>
+
+<script src='js/libs/dat.gui.min.js'></script>
+
+<script>
+	var vsize = { x:100, y:100, z:0 };
+	var mouse = { x:0, y:0, move:true };
+	var camera, controls, target, target2,target3,scene, renderer, composer, renderPass, delta, center, pointLight, pointLight2, spotLight, renderLoop;
+
+	var Colors= [0x161616]
+
+	var materials = [];
+
+	var generator = [];
+	var treasure = [];
+	var monster = [];
+	var weapon = [];
+	var door = [];
+	var fx = [];
 
+	var ents = [];
+
+	var exit;
+
+	var level, player;
+	var meshs=[];
+
+	var list;
+
+	var viewConfig = {
+		show2d : false,
+		showInfo : false
+	}
+
+	function init() {
+		initScene3D();
+		document.getElementById("canvas").style.visibility = "hidden";
+		document.getElementById("scoreboard").style.visibility = "hidden";
+		tell("<b>1,2,3,4</b> choose player<br><b>ARROW</b> keys to move<br><b>HOLD SPACE</b> to fire<br><b>ENTER</b> to use potion");
+	}
+
+	function initScene3D() {
+
+		renderer = new THREE.WebGLRenderer({ antialias: false });
+		renderer.setClearColor( Colors[0], 1 );
+		renderer.physicallyBasedShading = true;
+		renderer.gammaInput = true;
+		renderer.gammaOutput = true;
+		renderer.shadowMapEnabled = true;
+		renderer.shadowMapSoft = true;
+
+		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+		renderer.domElement.style.top = 31 + "px";
+		renderer.domElement.style.position = "absolute";
+
+		// SCENE
+		scene = new THREE.Scene();
+		scene.fog = new THREE.Fog(  Colors[0], 300, 500 );
+
+		// CAMERA
+		camera = new THREE.PerspectiveCamera( 70, 0, 1, 2000 );
+		camera.position.z = 100;
+		camera.position.y = 300;
+
+		target = new THREE.Object3D();
+		scene.add(target);
+
+		target2 = new THREE.Object3D();
+		scene.add(target2);
+
+		target3 = new THREE.Object3D();
+		target2.add(target3);
+		target3.position.x = 100;
+		target3.position.y = -20;
+		target.add(camera);
+
+		var ambient = new THREE.AmbientLight(  Colors[0] );
+		scene.add( ambient );
+
+		spotLight = new THREE.SpotLight( 0xffffff );
+		spotLight.intensity = 3;
+		spotLight.position.set(0,0,0);
+		spotLight.target = target3;
+		spotLight.castShadow = true;
+
+		spotLight.shadowCameraNear = 20;
+		spotLight.shadowCameraFar = 200;
+		spotLight.shadowCameraFov = 120;
+
+		spotLight.shadowMapBias = 0.01;
+		spotLight.shadowMapDarkness = 0.7;
+		spotLight.shadowMapWidth = 2*512;
+		spotLight.shadowMapHeight = 2*512;
+		//spotLight.shadowCameraVisible = true; 
+
+		spotLight.onlyShadow= true;
+		scene.add(spotLight);
+
+		pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+		pointLight.position.set( 0, 30, 0 );
+		target2.add( pointLight );
+
+		pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
+		pointLight2.position.set( 0, 0, 0 );
+		target3.add( pointLight2 );
+
+		center = new THREE.Vector3( 0,0,0 );
+		camera.lookAt(center);
+
+		level = new THREE.Object3D();
+		scene.add(level);
+
+		initMaterial();
+		initSea3DMesh();
+
+		addGUI();
+		addGUIView();
+
+		onResize();
+		window.addEventListener( 'resize', onResize, false );
+	}
+
+	function startRender() {
+		if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( animate ); }, 1000 / 60 );
+	}
+
+	function stopRender() {
+		if(renderLoop) {clearInterval(renderLoop); renderLoop = null;}
+	}
+
+	function animate() {
+		renderer.render( scene, camera );
+	}
+
+	function onResize( event ) {
+
+		vsize.x = window.innerWidth;
+		vsize.y = window.innerHeight-31;
+		vsize.z = vsize.x / vsize.y;
+
+		camera.aspect = vsize.z;
+		camera.updateProjectionMatrix();
+		renderer.setSize( vsize.x, vsize.y );
+	}
+
+
+	function initMaterial( ) {
+
+		materials[0] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xff8a72 } );//WARRIOR
+		materials[1] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x00abff } );//VALKYRIE
+		materials[2] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffff00 } );//WIZARD
+		materials[3] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x34d219 } );//ELF
+
+		materials[4] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GHOST
+		materials[5] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//DEMON
+		materials[6] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GRUNT
+		materials[7] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//WIZARD
+		materials[8] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400040 } );//DEATH
+
+		materials[10] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008000 } );//HEALTH
+		materials[11] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008010 } );//POISON
+		materials[12] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008020 } );//FOOD1
+		materials[13] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008030 } );//FOOD2
+		materials[14] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008040 } );//FOOD3
+		materials[15] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008050 } );//KEY
+		materials[16] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//POTION
+		materials[17] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008070 } );//GOLD
+
+		materials[18] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008050 } );//DOOR HORIZONTAL
+		materials[19] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//DOOR VERTICAL
+		materials[20] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x000000 } );//EXIT
+
+		materials[21] = new THREE.MeshPhongMaterial( { shininess: 10, map:THREE.ImageUtils.loadTexture( 'res/textures/brick.png' )} );// WALL
+		materials[21].map.repeat.set( 1, -1 );
+		materials[21].map.wrapS = materials[21].map.wrapT = THREE.RepeatWrapping;
+
+		materials[22] = new THREE.MeshPhongMaterial( { shininess: 10,  map:THREE.ImageUtils.loadTexture( 'res/textures/floor.jpg' ) } );// FLOOR
+
+		materials[23] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GEN GHOST
+		materials[24] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//GEN DEMON
+		materials[25] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GEN GRUNT
+		materials[26] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//GEN WIZARD
+
+		materials[27] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFF0030, wireframe: true } );//FX
+		materials[28] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFF0030, wireframe: true } );//FX
+		materials[29] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xFFFF30, wireframe: true } );//FX WEAPON
+
+	}
+
+	//===========================================================================
+	// IMPORT SEA3D ASSETS
+	//===========================================================================
+
+	function initSea3DMesh() {
+
+		var loader = new THREE.SEA3D( false );
+		var size = 1;
+		var i;
+
+		loader.onComplete = function( e ) {
+			for (i=0; i < loader.meshes.length; i++){
+				meshs[i] = loader.meshes[i];
+				meshs[i].scale.set( size, size, -size );
+			}
+
+			document.getElementById("scoreboard").style.visibility = "visible";
+		};
+		loader.load( 'res/models/gauntlet.sea' );
+	}
+
+	//===========================================================================
+	//
+	// ENTITIES TRANSPHERE oo
+	//
+	//===========================================================================
+
+	function entities3DInfo(entities) {
+		if(!viewConfig.showInfo) return;
+		var t = "Entity lenght:" + entities.length + "<br>";
+		var n, max, entity;
+		var numMonster = 0;
+		var numWeapon = 0;
+		var numTreasure = 0;
+		var numFx = 0;
+		var numGenerator = 0;
+		var numDoor = 0;
+		var numExit =0;
+
+
+		for(n = 0, max = entities.length ; n < max ; n++) {
+			entity = entities[n];
+			if(entity.monster){numMonster++;}
+			if(entity.weapon){numWeapon++;}
+			if(entity.treasure){numTreasure++;}
+			if(entity.fx){numFx++;}
+			if(entity.generator){if(entity.type.sx>31)numGenerator++;}
+			if(entity.door){numDoor++;}
+			if(entity.exit){numExit++;}
+		}
+
+		list = t  + "Monster:"+numMonster+"<br>"+ "Weapon:"+numWeapon+"<br>"+ "Treasure:"+numTreasure+"<br>"+ "Fx:"+numFx+"<br>"+ "Generator:"+numGenerator+"<br>"+ "Door:"+numDoor+"<br>"+ "Exit:"+numExit+"<br>";
+		tell(list);
+	}
+
+	function entities3D( entity , n) {
+
+		if(entity.monster){
+			if (entity.health === 0) remove3DMonster(n);
+			add3DMonsteer(n, entity.type );
+			move3DMonsteer(n, entity.x, entity.y, entity.dir);
+		}
+
+		else if(entity.generator){
+			if(entity.type.sx>31){
+				if (entity.health === 0) remove3DGenerator(n);
+				add3DGenerator(n, entity.type, entity.x, entity.y );
+			}
+		}
+
+		else if(entity.treasure){
+			if (!entity.active) remove3DTreasure(n);
+			add3DTreasure(n, entity.type, entity.x, entity.y );
+		}
+
+		else if(entity.weapon){
+			// if (!entity.active) remove3DWeapon(n);
+			add3DWeapon(n, entity.type );
+			move3DWeapon(n, entity.x, entity.y, entity.dir);
+		}
+
+		else if(entity.fx){
+			//if (!entity.active) remove3DFx(n);
+			add3DFx(n, entity.type, entity.x, entity.y );
+			move3DFx(n, entity.type, entity.x, entity.y);
+		}
+
+		else if(entity.door){
+			if (!entity.active) remove3DDoor(n);
+			add3DDoor(n, entity.type, entity.x, entity.y );
+		}
+
+		else if(entity.exit){
+			add3DExit(n, entity.x, entity.y);
+		}
+
+	}
+
+	//===========================================================================
+	// THE MAP
+	//===========================================================================
+
+	function init3DLevel(){
+		clear3DLevel();
+		startRender();
+	}
+
+	function clear3DLevel(){
+		var obj, i;
+		for ( i = level.children.length - 1; i >= 0 ; i -- ) {
+			obj = level.children[ i ];
+			level.remove(obj);
+			obj.geometry.dispose();
+		}
+
+		generator.length = 0;
+		treasure.length = 0;
+		monster.length = 0;
+		weapon.length = 0;
+		door.length = 0;
+		fx.length = 0;
+		exit = null;
+
+		stopRender();
+	}
+
+	function add3DWall(x, y, sx, sy) {
+		var block = meshs[sx].clone();
+		block.material =  materials[21];
+		block.position.set( x*32, 0, y*32 );
+		level.add(block);
+		block.castShadow = true;
+		block.receiveShadow = true;
+	}
+
+	function add3DFloor(x, y, sx, sy) {
+		if(sy!=0)return;//no need shadow cell
+		var block = new THREE.Mesh(new THREE.PlaneGeometry( 32, 32 ), materials[22]);
+		block.position.set( x*32, 0, y*32 );
+		block.rotation.x = - Math.PI / 2;
+		level.add(block);
+		block.castShadow = true;
+		block.receiveShadow = true;
+	}
+
+	//===========================================================================
+	// 3D PLAYER
+	//===========================================================================
+
+	function init3DPlayer(type) {
+		var mat = new THREE.MeshPhongMaterial( { shininess: 10, ambient: 0x000000, color: 0xfdc689, specular: 0x000000 } );
+		var playerHead = new THREE.Mesh(new THREE.CubeGeometry( 10, 10, 10 ), mat);
+		var playerArm = new THREE.Mesh(new THREE.CubeGeometry( 20, 5, 5 ),  materials[type.sy]);
+		player = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), materials[type.sy]);
+		scene.add(player);
+		playerHead.position.set(0,25,0);
+		playerArm.position.set(5,15,10);
+		player.add(playerHead);
+		player.add(playerArm);
+	}
+
+	function remove3DPlayer() {
+		scene.remove(player);
+		player.geometry.dispose();
+	}
+
+	function move3DPlayer( pp ) {
+	  if(player){
+			player.rotation.y = toRad((-pp.dir*45)+90);
+
+			player.position.set(pp.x, 20, pp.y);
+			target.position.set(pp.x, 20, pp.y);
+			target2.position.set(pp.x, 30, pp.y);
+			target2.rotation.y = player.rotation.y;
+			spotLight.position.copy(target2.position);
+
+			center.x = pp.x;
+			center.z = pp.y;
+		}
+	}
+
+	//===========================================================================
+	// 3D exit
+	//===========================================================================
+
+	function add3DExit(n, x, y) {
+		if(!exit){
+			exit = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 32 ), materials[20]);
+			exit.position.set(x, 30, y);
+			level.add(exit);
+		}
+	}
+
+	//===========================================================================
+	// 3D DOOR
+	//===========================================================================
+
+	function add3DDoor(n, type, x, y) {
+		if(!door[n]){
+			var m 
+			if(type.sx==10) m = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 10 ), materials[18]);
+			if(type.sx==11) m = new THREE.Mesh(new THREE.CubeGeometry( 10, 60, 32 ), materials[19]);
+			m.position.set(x, 30, y);
+			level.add(m);
+			door[n] = m;
+			door[n].castShadow = true;
+			door[n].receiveShadow = true;
+		}
+	}
+
+	function remove3DDoor(n) {
+		if(door[n]){
+			level.remove(door[n]);
+			door[n].geometry.dispose();
+		}
+	}
+
+	//===========================================================================
+	// 3D GENERATOR
+	//===========================================================================
+
+	function add3DGenerator(n, type, x, y) {
+		if(!generator[n]){
+			generator[n] = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 32 ), materials[type.sy+19]);
+			generator[n] .position.set(x, 30, y);
+			level.add( generator[n] );
+			generator[n].castShadow = true;
+			generator[n].receiveShadow = true;
+		}
+	}
+
+	function remove3DGenerator(n) {
+		if(generator[n]){
+			level.remove(generator[n]);
+			generator[n].geometry.dispose();
+		}
+	}
+
+	//===========================================================================
+	// 3D TREASURE
+	//===========================================================================
+	var Treasure = new THREE.Mesh(new THREE.CubeGeometry( 20, 20, 20 ), null);
+
+	function add3DTreasure(n, type, x, y) {
+		if(!treasure[n]){
+			treasure[n] = Treasure.clone();
+			treasure[n].material = materials[type.sx+10];
+			treasure[n].position.set(x, 10, y);
+			level.add(treasure[n]);
+		
+			treasure[n].castShadow = true;
+			treasure[n].receiveShadow = true;
+		}
+	}
+
+	function remove3DTreasure(n) {
+		if(treasure[n]){
+			level.remove(treasure[n]);
+			treasure[n].geometry.dispose();
+		}
+	}
+
+	//===========================================================================
+	// 3D MONSTER
+	//===========================================================================
+
+	var Monster = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), null);
+
+	function add3DMonsteer(n, type) {
+		if(!monster[n]){
+			monster[n] = Monster.clone();
+			monster[n].material = materials[type.sy];
+			level.add( monster[n] );
+			monster[n].castShadow = true;
+			monster[n].receiveShadow = true;
+		}
+	}
+
+	function remove3DMonster(n) {
+		if(monster[n]){
+			level.remove(monster[n]);
+			monster[n].geometry.dispose();
+		}
+	}
+
+	function move3DMonsteer( n, x, y, dir ) {
+		monster[n].rotation.y = toRad((-dir*45)+90);
+		monster[n].position.set(x, 20, y);
+	}
+
+	//===========================================================================
+	// 3D FX
+	//===========================================================================
+
+	function add3DFx(n, type, x, y) {
+		if(!fx[n]){
+			if(type.sx === 13)fx[n] = new THREE.Mesh(new THREE.CubeGeometry( 30, 10, 30 ), materials[27]);
+			else if(type.sx === 19)fx[n] = new THREE.Mesh(new THREE.CubeGeometry( 30, 10, 30 ), materials[29]);
+			level.add(fx[n]);
+		}
+	}
+
+	function remove3DFx(n) {
+		if(fx[n]){
+			level.remove(fx[n]);
+			fx[n].geometry.dispose();
+		}
+	}
+
+	function move3DFx(n, type, x, y) {
+		if(type.sx === 13) fx[n].material =  materials[27];
+		else if(type.sx === 19) fx[n].material =  materials[29];
+		fx[n].position.set(x, 20, y);
+	}
+
+	//===========================================================================
+	// 3D WEAPON
+	//===========================================================================
+
+	function add3DWeapon(n, type) {
+		if(!weapon[n]){
+			weapon[n] = new THREE.Mesh(new THREE.CubeGeometry( 20, 10, 10 ), materials[4]);
+			level.add(weapon[n]);
+		}
+	}
+
+	function remove3DWeapon(n) {
+		if(weapon[n]){
+			level.remove(weapon[n]);
+			weapon[n].geometry.dispose();
+		}
+	}
+
+	function move3DWeapon( n, x, y, dir ) {
+		weapon[n].rotation.y = toRad((-dir*45)+90);
+		weapon[n].position.set(x, 20, y);
+	}
+
+	//-----------------------------------------------------
+	//  TOOLS
+	//-----------------------------------------------------
+
+	function toRad(Value) {
+		return Value * Math.PI / 180;
+	}
+
+	function tell(Value) {
+		document.getElementById('debug').innerHTML = Value;
+	}
+
+	//-----------------------------------------------------
+	//  GUI
+	//-----------------------------------------------------
+
+	function addGUI() {
+		gui = new dat.GUI({autoPlace:false, width:204});
+		document.getElementById('gui').appendChild(gui.domElement);
+		gui.open();
+	}
+
+	function addGUIView() {
+		var f4 = gui.addFolder('View Option');
+
+		f4.add( viewConfig, 'show2d' ).onChange( function() {
+			if(viewConfig.show2d)document.getElementById("canvas").style.visibility = "visible"; 
+			else document.getElementById("canvas").style.visibility = "hidden";
+			window.game.no2d(viewConfig.show2d);
+		});
+		f4.add( viewConfig, 'showInfo' ).onChange( function() { if(!viewConfig.showInfo) list = "";});
+		f4.open();
+	}
+
+	window.onload = init;
+	Game.run(Gauntlet);
+
+</script>
 </body>
 </html>

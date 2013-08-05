@@ -66,11 +66,11 @@
 	<script src="js/speak/speakClient.js"></script>
 
 	<script>
-	    var vsize = { x:100, y:100, z:0 };
-	    var mouse = { x:0, y:0 };
+		var vsize = { x:100, y:100, z:0 };
+		var mouse = { x:0, y:0 };
 
-	    var inRender = true, inResize = false, isNeedPause = false;
-	    var FAR = 2000;
+		var inRender = true, inResize = false, isNeedPause = false;
+		var FAR = 2000;
 
 		var camera, controls, scene, renderer, composer, renderPass, delta;
 		var ambient, hemiLight, pointLight, light;
@@ -251,7 +251,7 @@
 
 			//light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
 			light = new THREE.DirectionalLight(0x000, 1.5);
-            light.position.set( 50, 200, 100 );
+			light.position.set( 50, 200, 100 );
 			light.target.position.set(0, 0, 0);
 			light.castShadow = true;
 			light.onlyShadow = false;
@@ -287,7 +287,7 @@
 			addSkyBox();
 
 		}	
-        
+		
 		function lightColors( cc ){
 			ambient.color.setHex(cc[2]);
 
@@ -316,8 +316,8 @@
 		function addSkyBox() {
 			var cubes = [2, 14, 26, 30,31,32,33];
 			var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a,0x9b8379, 0x6f7488, 0xffffd9],
-			                  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
-			                  ];
+							  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+							  ];
 			var n = Math.floor(Math.random()*cubes.length);
 			lightColors( cubesColors[n] );
 
@@ -342,7 +342,7 @@
 
 			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
 			sky.castShadow = false;
-	        sky.receiveShadow = false;
+			sky.receiveShadow = false;
 			scene.add( sky );
 		}
 
@@ -403,67 +403,67 @@
 				head = loader.getMesh("skin_hi");
 				head.scale.set( size, size, -size );
 				//head.geometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ) );
-	            scene.add( head );
+				scene.add( head );
 
-	            head.setWeightByName("neck", 1);
+				head.setWeightByName("neck", 1);
 
-	            if(animConfig.neckmove) head.play("full");
-	            else head.play("front");
+				if(animConfig.neckmove) head.play("full");
+				else head.play("front");
 
-	            head.position.set(0,-10,0);
-	            trace += 'Animation: '+ head.animations.length+ '   Morph: ' + head.geometry.morphTargets.length;
+				head.position.set(0,-10,0);
+				trace += 'Animation: '+ head.animations.length+ '   Morph: ' + head.geometry.morphTargets.length;
 
-	            neck = loader.getMesh("Neck");
-	            neck.castShadow = false;
-	            //neck.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
+				neck = loader.getMesh("Neck");
+				neck.castShadow = false;
+				//neck.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
 
 
-	            hair = loader.getMesh("Hair");
-	            //hair.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
-	            //hair.visible = false;
+				hair = loader.getMesh("Hair");
+				//hair.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(-90) ) );
+				//hair.visible = false;
 
-	            eyeR = loader.getMesh("Eye_R");
-	            eyeR.castShadow = false;
+				eyeR = loader.getMesh("Eye_R");
+				eyeR.castShadow = false;
 
-	            eyeL = loader.getMesh("Eye_L");
-	            eyeL.castShadow = false;
+				eyeL = loader.getMesh("Eye_L");
+				eyeL.castShadow = false;
 
-	            eyeL.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
-	            eyeR.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
+				eyeL.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
+				eyeR.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
 
-	            eyeTop = loader.getMesh("eye_top");
-	            eyeTop.castShadow = false;
-	            eyeTop.receiveShadow = false;
+				eyeTop = loader.getMesh("eye_top");
+				eyeTop.castShadow = false;
+				eyeTop.receiveShadow = false;
 
-	            teethUp = loader.getMesh("teethUpper");
-	            teethDown = loader.getMesh("teethLower");
-	            tongue = loader.getMesh("tongue");
-	            troat = loader.getMesh("sock");
+				teethUp = loader.getMesh("teethUpper");
+				teethDown = loader.getMesh("teethLower");
+				tongue = loader.getMesh("tongue");
+				troat = loader.getMesh("sock");
 
-	            teethUp.castShadow = false;
-	            teethDown.castShadow = false;
-	            tongue.castShadow = false;
-	            troat.castShadow = false;
+				teethUp.castShadow = false;
+				teethDown.castShadow = false;
+				tongue.castShadow = false;
+				troat.castShadow = false;
 
-	            eyesTarget =  new THREE.Object3D();
-	            eyesTarget.position.set(0,0,50);
-	            scene.add( eyesTarget ); 
-	            /*var eyebuble = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6,6), new THREE.MeshBasicMaterial( { color: 0x00000 } ));
-	            eyesTarget.add(eyebuble);*/
+				eyesTarget =  new THREE.Object3D();
+				eyesTarget.position.set(0,0,50);
+				scene.add( eyesTarget ); 
+				/*var eyebuble = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6,6), new THREE.MeshBasicMaterial( { color: 0x00000 } ));
+				eyesTarget.add(eyebuble);*/
 
-	            // test if morph existe
-	            var mName;
-	            for (var j=0; j < head.geometry.morphTargets.length; j++){
-	            	mName = head.geometry.morphTargets[j].name;
-	            	morphsTables[mName] = { tup:testMorph(teethUp, mName), tdown:testMorph(teethDown, mName), eye: testMorph(eyeTop, mName), tongue: testMorph(tongue, mName),  troat:testMorph(troat, mName) };
-	            }
+				// test if morph existe
+				var mName;
+				for (var j=0; j < head.geometry.morphTargets.length; j++){
+					mName = head.geometry.morphTargets[j].name;
+					morphsTables[mName] = { tup:testMorph(teethUp, mName), tdown:testMorph(teethDown, mName), eye: testMorph(eyeTop, mName), tongue: testMorph(tongue, mName),  troat:testMorph(troat, mName) };
+				}
 
-	            // change materials
-	            for(var i=0; i< loader.materials.length; i++){
-	            	materials[i] = loader.materials[i];
-	            }
+				// change materials
+				for(var i=0; i< loader.materials.length; i++){
+					materials[i] = loader.materials[i];
+				}
 
-	            initHeadMaterial();
+				initHeadMaterial();
 
 				importBody();
 			};
@@ -506,13 +506,13 @@
 		function initHeadMaterial(){
 
 			for(var i=0; i< materials.length; i++){
-            	if (i!= 2 && i!= 3 && i!= 6 && i!= 8){
-	            	materials[i].envMap = skyCube; 
-	            	materials[i].combine= THREE.MixOperation;
-	            	materials[i].reflectivity=1;
-	            	if(i==7) materials[i].side = THREE.DoubleSide;// hair doublesize
-	            }
-	        }
+				if (i!= 2 && i!= 3 && i!= 6 && i!= 8){
+					materials[i].envMap = skyCube; 
+					materials[i].combine= THREE.MixOperation;
+					materials[i].reflectivity=1;
+					if(i==7) materials[i].side = THREE.DoubleSide;// hair doublesize
+				}
+			}
 
 			materials[0].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin.jpg'  );
 			materials[0].map.repeat.set( 1, -1 );
@@ -561,8 +561,8 @@
 		function initBodyMaterial(){
 
 			materials[9].envMap = skyCube; 
-	        materials[9].combine= THREE.MixOperation;
-	        materials[9].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_2048.jpg' );
+			materials[9].combine= THREE.MixOperation;
+			materials[9].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_2048.jpg' );
 			materials[9].map.repeat.set( 1, -1 );
 			materials[9].map.wrapS = materials[9].map.wrapT = THREE.RepeatWrapping;
 
@@ -635,7 +635,7 @@
 			if(morphConfig.automove){
 				fullMorph("smileOpen", mouse.x / vsize.x );
 				fullMorph("fear", mouse.y / vsize.y);
-		    }
+			}
 		}
 
 		function onWindowResize( event ) {
@@ -736,13 +736,13 @@
 					else playButton.style.visibility = 'hidden';
 
 					oldOutput.innerHTML = output.innerHTML;
-			    }
+				}
 			}
-        }
+		}
 
-        // Phonemes
-        function convert(n) {
-        	if(n==0)phonemesSequency.push(n);
+		// Phonemes
+		function convert(n) {
+			if(n==0)phonemesSequency.push(n);
 			else {
 				var ph = n.split(' ');
 				var num = 1;
@@ -837,7 +837,7 @@
 		//-----------------------------------------------------
 
 		function addGUI() {
-		    gui = new dat.GUI({autoPlace:false, width:204});
+			gui = new dat.GUI({autoPlace:false, width:204});
 			document.getElementById('gui').appendChild(gui.domElement);
 			gui.close();
 		}
@@ -850,16 +850,16 @@
 		function addGUIAnimation() {	
 			var f0 = gui.addFolder('Animation');
 			f0.add( animConfig, 'neckmove' ).onChange( function() {
-		    	if(!animConfig.neckmove){
-		    		 head.play("front");
+				if(!animConfig.neckmove){
+					 head.play("front");
 				} else {
 					head.play("full");
 				}
 			});
 
 			f0.add( animConfig, 'walk' ).onChange( function() {
-		    	if(!animConfig.walk){
-		    		 body.play("idle");
+				if(!animConfig.walk){
+					 body.play("idle");
 				} else {
 					body.play("walk");
 				}
@@ -867,8 +867,8 @@
 
 
 			f0.add( animConfig, 'salut' ).onChange( function() {
-		    	if(!animConfig.salut){
-		    		 body.play("idle");
+				if(!animConfig.salut){
+					 body.play("idle");
 				} else {
 					body.play("salut");
 				}
@@ -879,12 +879,12 @@
 		}
 
 		function addGUIMroph() {
-		    var f1 = gui.addFolder('Morph');
+			var f1 = gui.addFolder('Morph');
 
-		    f1.add( morphConfig, 'automove' ).onChange( function() {
-		    	if(!morphConfig.automove){
-		    		fullMorph("smileOpen", 0);
-		    		fullMorph("fear", 0);
+			f1.add( morphConfig, 'automove' ).onChange( function() {
+				if(!morphConfig.automove){
+					fullMorph("smileOpen", 0);
+					fullMorph("fear", 0);
 				} 
 			});
 
@@ -958,9 +958,9 @@
 						tell( xhr.responseText);
 						// start animation
 						processTimer = setInterval(function(){startSequence()}, 10);
-			        }
-			    }
-		    };
+					}
+				}
+			};
 			xhr.send(fd);
 
 		}
