@@ -293,12 +293,17 @@
 		var loader = new THREE.SEA3D( false );
 		var size = 1;
 		var i;
+		list = "";
 
 		loader.onComplete = function( e ) {
+			// 0 -> 15 walls
+			// 16 -> 23 treasure
 			for (i=0; i < loader.meshes.length; i++){
 				meshs[i] = loader.meshes[i];
 				meshs[i].scale.set( size, size, -size );
+				list += meshs[i].name+" ";
 			}
+			tell(list);
 
 			document.getElementById("scoreboard").style.visibility = "visible";
 		};
@@ -525,13 +530,12 @@
 	//===========================================================================
 	// 3D TREASURE
 	//===========================================================================
-	var Treasure = new THREE.Mesh(new THREE.CubeGeometry( 20, 20, 20 ), null);
 
 	function add3DTreasure(n, type, x, y) {
 		if(!treasure[n]){
-			treasure[n] = Treasure.clone();
+			treasure[n] = meshs[type.sx+16].clone();
 			treasure[n].material = materials[type.sx+10];
-			treasure[n].position.set(x, 10, y);
+			treasure[n].position.set(x, 0, y);
 			level.add(treasure[n]);
 		
 			treasure[n].castShadow = true;
