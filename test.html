@@ -1,0 +1,73 @@
+
+<html>
+<head>
+<script src="js/jquery-1.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+</head>
+<body>
+<div class="thumbnail" id="paparazzixxx">
+    <a class="playback" href="#">
+        Hello
+    </a>
+    <audio id="paparazzi">
+        <source src="audio/hello.mp3" type="audio/mpeg" />
+        <source src="audio/hello.ogg" type="audio/ogg" />
+        Your browser does not support HTML5 audio.
+    </audio>
+</div>
+<div class="thumbnail" id="paparazzixxx">
+    <a class="playback" href="#">
+        Maya
+    </a>
+    <audio id="paparazzi">
+        <source src="audio/maya.mp3" type="audio/mpeg" />
+        <source src="audio/maya.ogg" type="audio/ogg" />
+        Your browser does not support HTML5 audio.
+    </audio>
+</div>
+<br clear="left"/><br/><br/>
+<p>Enter text to speak (doesn't currently work in Firefox<input id="thetext" type="text"/></p>
+    <button class="playtext" href="#">
+        Play Text
+    </button>
+    <audio id="paparazzi">
+        <source id = "playthistext" src="" type="audio/mpeg" />
+        Your browser does not support HTML5 audio.
+    </audio>
+
+
+   <script type="text/javascript">
+   $(function() {
+     $(".playback").click(function(e) {
+       e.preventDefault();
+
+       // This next line will get the audio element
+       // that is adjacent to the link that was clicked.
+       var song = $(this).next('audio').get(0);
+       if (song.paused)
+         song.play();
+       else
+         song.pause();
+     });
+   });
+   $(function() {
+     $(".playtext").click(function(e) {
+       e.preventDefault();
+       $url = encodeURI('http://imedia-ventures.com/taptospeak/test.php?q=' + $('#thetext').val());
+   //alert($url);
+    //$('#playthistext').attr('src', $url);
+    //alert($('#playthistext').attr('src'));
+       // This next line will get the audio element
+       // that is adjacent to the link that was clicked.
+       var song = $(this).next('audio').get(0);
+       song.src = $url;
+       
+       if (song.paused)
+         song.play();
+       else
+         song.pause();
+     });
+   });
+</script>
+</body>
+</html>

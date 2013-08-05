@@ -29,9 +29,11 @@ body {
 #viewport {
     position: absolute;
 }
+
 #cursor {
 	pointer-events: none;
 }
+
 #hubs {
 }
 
