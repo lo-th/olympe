@@ -13,5 +13,11 @@ Is my 3D work for web with [sea3d format](href='https://code.google.com/p/sea3d/
 > - head: 30000 faces and 28 morph target.<br>
 > - body: 9666 faces and 3 animation.<br>
 
+**Rail shooter** version 0.1 alpha
+> Test for infinie shooter<br>
+
+**Gauntlet 3d** version 0.1 alpha
+> Test for full game 3d assets with [Gauntlet javascript](http://https://github.com/jakesgordon/javascript-gauntlet/) game engine by Jakes Gordon<br>
+
 
 
