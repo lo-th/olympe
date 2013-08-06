@@ -103,7 +103,7 @@
 	var vsize = { x:100, y:100, z:0 };
 	var mouse = { x:0, y:0, move:true };
 	var camera, controls, target, target2,target3,scene, renderer, composer, renderPass, delta, center, pointLight, pointLight2, spotLight, renderLoop;
-
+	var clock = new THREE.Clock();
 	var Colors= [0x161616]
 
 	var materials = [];
@@ -114,6 +114,8 @@
 	var weapon = [];
 	var door = [];
 	var fx = [];
+
+	var loader;
 
 	var ents = [];
 
@@ -157,7 +159,7 @@
 		// CAMERA
 		camera = new THREE.PerspectiveCamera( 70, 0, 1, 2000 );
 		camera.position.z = 100;
-		camera.position.y = 300;
+		camera.position.y = 250;
 
 		target = new THREE.Object3D();
 		scene.add(target);
@@ -215,6 +217,8 @@
 
 		onResize();
 		window.addEventListener( 'resize', onResize, false );
+
+		//animate()
 	}
 
 	function startRender() {
@@ -226,6 +230,9 @@
 	}
 
 	function animate() {
+		//requestAnimationFrame( animate );
+		delta = clock.getDelta();
+		THREE.AnimationHandler.update( delta );
 		renderer.render( scene, camera );
 	}
 
@@ -300,6 +307,7 @@
 			// 16 -> 23 treasure
 			// 24 - 25 doors
 			// 26 exit
+			// 27 -> 30 Hero 
 			for (i=0; i < loader.meshes.length; i++){
 				meshs[i] = loader.meshes[i];
 				meshs[i].scale.set( size, size, -size );
@@ -441,15 +449,17 @@
 	//===========================================================================
 
 	function init3DPlayer(type) {
-		var mat = new THREE.MeshPhongMaterial( { shininess: 10, ambient: 0x000000, color: 0xfdc689, specular: 0x000000 } );
-		var playerHead = new THREE.Mesh(new THREE.CubeGeometry( 10, 10, 10 ), mat);
-		var playerArm = new THREE.Mesh(new THREE.CubeGeometry( 20, 5, 5 ),  materials[type.sy]);
-		player = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), materials[type.sy]);
+		//var mat = new THREE.MeshPhongMaterial( { shininess: 10, ambient: 0x000000, color: 0xfdc689, specular: 0x000000 } );
+		//var playerHead = new THREE.Mesh(new THREE.CubeGeometry( 10, 10, 10 ), mat);
+		//var playerArm = new THREE.Mesh(new THREE.CubeGeometry( 20, 5, 5 ),  materials[type.sy]);
+		player = meshs[27+type.sy].clone();//new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), materials[type.sy]);
+	//	player.material= materials[type.sy];
 		scene.add(player);
-		playerHead.position.set(0,25,0);
-		playerArm.position.set(5,15,10);
-		player.add(playerHead);
-		player.add(playerArm);
+		player.play('idle')
+		//playerHead.position.set(0,25,0);
+		//playerArm.position.set(5,15,10);
+		//player.add(playerHead);
+		//player.add(playerArm);
 	}
 
 	function remove3DPlayer() {
@@ -459,13 +469,19 @@
 
 	function move3DPlayer( pp ) {
 	  if(player){
-			player.rotation.y = toRad((-pp.dir*45)+90);
+			player.rotation.y = toRad((-pp.dir*45)+180);
 
-			player.position.set(pp.x, 20, pp.y);
+			player.position.set(pp.x, 25, pp.y);
 			target.position.set(pp.x, 20, pp.y);
 			target2.position.set(pp.x, 30, pp.y);
-			target2.rotation.y = player.rotation.y;
+			target2.rotation.y = player.rotation.y- toRad(90);
 			spotLight.position.copy(target2.position);
+
+			if(pp.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
+			else if( pp.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
+
+			//player info for animation
+			//tell("Fire:"+pp.firing+"<br>"+"Move:"+pp.moving.dir+"<br>"+"Hurt:"+pp.hurting+"<br>"+"Dead:"+pp.dead+"<br>"+ player.currentAnimation.name);
 
 			center.x = pp.x;
 			center.z = pp.y;
@@ -573,6 +589,7 @@
 		if(monster[n]){
 			level.remove(monster[n]);
 			monster[n].geometry.dispose();
+			monster[n] = false;
 		}
 	}
 
