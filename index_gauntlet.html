@@ -193,8 +193,8 @@
 		spotLight.onlyShadow= true;
 		scene.add(spotLight);
 
-		pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
-		pointLight.position.set( 0, 30, 0 );
+		pointLight = new THREE.PointLight( 0xffffff, 1, 150 );
+		pointLight.position.set( 0, 50, 0 );
 		target2.add( pointLight );
 
 		pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
@@ -267,7 +267,7 @@
 		materials[19] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//DOOR VERTICAL
 		materials[20] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x909090 } );//EXIT
 
-		materials[21] = new THREE.MeshPhongMaterial( { shininess: 10, map:THREE.ImageUtils.loadTexture( 'res/textures/brick.png' )} );// WALL
+		materials[21] = new THREE.MeshPhongMaterial( { shininess: 10, map:THREE.ImageUtils.loadTexture( 'res/textures/wall.jpg' )} );// WALL
 		materials[21].map.repeat.set( 1, -1 );
 		materials[21].map.wrapS = materials[21].map.wrapT = THREE.RepeatWrapping;
 
