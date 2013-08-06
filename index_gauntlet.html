@@ -265,7 +265,7 @@
 
 		materials[18] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008050 } );//DOOR HORIZONTAL
 		materials[19] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008060 } );//DOOR VERTICAL
-		materials[20] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x000000 } );//EXIT
+		materials[20] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x909090 } );//EXIT
 
 		materials[21] = new THREE.MeshPhongMaterial( { shininess: 10, map:THREE.ImageUtils.loadTexture( 'res/textures/brick.png' )} );// WALL
 		materials[21].map.repeat.set( 1, -1 );
@@ -293,17 +293,19 @@
 		var loader = new THREE.SEA3D( false );
 		var size = 1;
 		var i;
-		list = "";
+		//list = "";
 
 		loader.onComplete = function( e ) {
 			// 0 -> 15 walls
 			// 16 -> 23 treasure
+			// 24 - 25 doors
+			// 26 exit
 			for (i=0; i < loader.meshes.length; i++){
 				meshs[i] = loader.meshes[i];
 				meshs[i].scale.set( size, size, -size );
 				list += meshs[i].name+" ";
 			}
-			tell(list);
+			//tell(list);
 
 			document.getElementById("scoreboard").style.visibility = "visible";
 		};
@@ -476,9 +478,12 @@
 
 	function add3DExit(n, x, y) {
 		if(!exit){
-			exit = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 32 ), materials[20]);
-			exit.position.set(x, 30, y);
+			exit = meshs[26].clone();
+			exit.material = materials[20];
+			exit.position.set(x, 0, y);
 			level.add(exit);
+			exit.castShadow = true;
+			exit.receiveShadow = true;
 		}
 	}
 
@@ -488,12 +493,10 @@
 
 	function add3DDoor(n, type, x, y) {
 		if(!door[n]){
-			var m 
-			if(type.sx==10) m = new THREE.Mesh(new THREE.CubeGeometry( 32, 60, 10 ), materials[18]);
-			if(type.sx==11) m = new THREE.Mesh(new THREE.CubeGeometry( 10, 60, 32 ), materials[19]);
-			m.position.set(x, 30, y);
-			level.add(m);
-			door[n] = m;
+			if(type.sx==10){ door[n] = meshs[24].clone(); door[n].material = materials[18]; }
+			if(type.sx==11){ door[n] = meshs[25].clone(); door[n].material = materials[19]; }
+			door[n].position.set(x, 0, y);
+			level.add(door[n]);
 			door[n].castShadow = true;
 			door[n].receiveShadow = true;
 		}
