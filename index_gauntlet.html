@@ -102,7 +102,7 @@
 <script>
 	var vsize = { x:100, y:100, z:0 };
 	var mouse = { x:0, y:0, move:true };
-	var camera, controls, target, target2,target3,scene, renderer, composer, renderPass, delta, center, pointLight, pointLight2, spotLight, renderLoop;
+	var camera, controls, target, target2,target3,target4,scene, renderer, composer, renderPass, delta, center, pointLight, pointLight2, spotLight, renderLoop;
 	var clock = new THREE.Clock();
 	var Colors= [0x161616]
 
@@ -159,7 +159,7 @@
 		// CAMERA
 		camera = new THREE.PerspectiveCamera( 70, 0, 1, 2000 );
 		camera.position.z = 100;
-		camera.position.y = 250;
+		camera.position.y = 200;
 
 		target = new THREE.Object3D();
 		scene.add(target);
@@ -169,22 +169,28 @@
 
 		target3 = new THREE.Object3D();
 		target2.add(target3);
-		target3.position.x = 100;
+		target3.position.x = -50;
 		target3.position.y = -20;
+		target4 = new THREE.Object3D();
+		target2.add(target4);
+		target4.position.x = 100;
+		target4.position.y = 200;
+		target4.position.z = 50;
 		target.add(camera);
+
 
 		var ambient = new THREE.AmbientLight(  Colors[0] );
 		scene.add( ambient );
 
 		spotLight = new THREE.SpotLight( 0xffffff );
-		spotLight.intensity = 3;
-		spotLight.position.set(0,0,0);
-		spotLight.target = target3;
+		spotLight.intensity = 1;
+		//spotLight.position.set(0,200,0);
+		spotLight.target = target;
 		spotLight.castShadow = true;
 
 		spotLight.shadowCameraNear = 20;
-		spotLight.shadowCameraFar = 200;
-		spotLight.shadowCameraFov = 120;
+		spotLight.shadowCameraFar = 300;
+		spotLight.shadowCameraFov = 75;
 
 		spotLight.shadowMapBias = 0.01;
 		spotLight.shadowMapDarkness = 0.7;
@@ -192,16 +198,16 @@
 		spotLight.shadowMapHeight = 2*512;
 		//spotLight.shadowCameraVisible = true; 
 
-		spotLight.onlyShadow= true;
-		scene.add(spotLight);
+		//spotLight.onlyShadow= true;
+		target4.add(spotLight);
 
-		pointLight = new THREE.PointLight( 0xffffff, 1, 150 );
-		pointLight.position.set( 0, 50, 0 );
+	    pointLight = new THREE.PointLight( 0xffffff, 1, 200 );
+		pointLight.position.set( 0, 30, 0 );
 		target2.add( pointLight );
 
-		pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
+		/*pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
 		pointLight2.position.set( 0, 0, 0 );
-		target3.add( pointLight2 );
+		target3.add( pointLight2 );*/
 
 		center = new THREE.Vector3( 0,0,0 );
 		camera.lookAt(center);
@@ -217,8 +223,6 @@
 
 		onResize();
 		window.addEventListener( 'resize', onResize, false );
-
-		//animate()
 	}
 
 	function startRender() {
@@ -250,7 +254,7 @@
 
 	function initMaterial( ) {
 
-		materials[0] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xff8a72 } );//WARRIOR
+		/*materials[0] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xff8a72 } );//WARRIOR
 		materials[1] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x00abff } );//VALKYRIE
 		materials[2] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffff00 } );//WIZARD
 		materials[3] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x34d219 } );//ELF
@@ -259,7 +263,7 @@
 		materials[5] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//DEMON
 		materials[6] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GRUNT
 		materials[7] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//WIZARD
-		materials[8] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400040 } );//DEATH
+		materials[8] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400040 } );//DEATH*/
 
 		materials[10] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008000 } );//HEALTH
 		materials[11] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x008010 } );//POISON
@@ -308,6 +312,7 @@
 			// 24 - 25 doors
 			// 26 exit
 			// 27 -> 30 Hero 
+			// 31 -> 36 Monster 
 			for (i=0; i < loader.meshes.length; i++){
 				meshs[i] = loader.meshes[i];
 				meshs[i].scale.set( size, size, -size );
@@ -357,14 +362,16 @@
 	function entities3D( entity , n) {
 
 		if(entity.monster){
-			if (entity.health === 0) remove3DMonster(n);
+			//
+
 			add3DMonsteer(n, entity.type );
-			move3DMonsteer(n, entity.x, entity.y, entity.dir);
+			move3DMonsteer(n, entity);
+			if (entity.health === 0) remove3DMonster(n);
 		}
 
 		else if(entity.generator){
 			if(entity.type.sx>31){
-				if (entity.health === 0) remove3DGenerator(n);
+				//if (entity.health == 0) remove3DGenerator(n);
 				add3DGenerator(n, entity.type, entity.x, entity.y );
 			}
 		}
@@ -427,7 +434,7 @@
 
 	function add3DWall(x, y, sx, sy) {
 		var block = meshs[sx].clone();
-		block.material =  materials[21];
+		//block.material =  materials[21];
 		block.position.set( x*32, 0, y*32 );
 		level.add(block);
 		block.castShadow = true;
@@ -449,13 +456,11 @@
 	//===========================================================================
 
 	function init3DPlayer(type) {
-		//var mat = new THREE.MeshPhongMaterial( { shininess: 10, ambient: 0x000000, color: 0xfdc689, specular: 0x000000 } );
-		//var playerHead = new THREE.Mesh(new THREE.CubeGeometry( 10, 10, 10 ), mat);
-		//var playerArm = new THREE.Mesh(new THREE.CubeGeometry( 20, 5, 5 ),  materials[type.sy]);
-		player = meshs[27+type.sy].clone();//new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), materials[type.sy]);
-	//	player.material= materials[type.sy];
+		player = meshs[27+type.sy].clone();
 		scene.add(player);
-		player.play('idle')
+		
+		player.play('idle');
+
 		//playerHead.position.set(0,25,0);
 		//playerArm.position.set(5,15,10);
 		//player.add(playerHead);
@@ -463,6 +468,7 @@
 	}
 
 	function remove3DPlayer() {
+
 		scene.remove(player);
 		player.geometry.dispose();
 	}
@@ -472,10 +478,10 @@
 			player.rotation.y = toRad((-pp.dir*45)+180);
 
 			player.position.set(pp.x, 25, pp.y);
-			target.position.set(pp.x, 20, pp.y);
-			target2.position.set(pp.x, 30, pp.y);
-			target2.rotation.y = player.rotation.y- toRad(90);
-			spotLight.position.copy(target2.position);
+			target.position.set(pp.x, 0, pp.y);
+			target2.position.set(pp.x, 25, pp.y);
+			//target2.rotation.y = player.rotation.y- toRad(90);
+		//	spotLight.position.copy(target4)//et(pp.x, 100, pp.y);;
 
 			if(pp.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
 			else if( pp.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
@@ -573,12 +579,10 @@
 	// 3D MONSTER
 	//===========================================================================
 
-	var Monster = new THREE.Mesh(new THREE.CubeGeometry( 16, 40, 20 ), null);
-
 	function add3DMonsteer(n, type) {
 		if(!monster[n]){
-			monster[n] = Monster.clone();
-			monster[n].material = materials[type.sy];
+			monster[n] = meshs[27+type.sy].clone();
+			monster[n].play("idle");
 			level.add( monster[n] );
 			monster[n].castShadow = true;
 			monster[n].receiveShadow = true;
@@ -587,15 +591,20 @@
 
 	function remove3DMonster(n) {
 		if(monster[n]){
+			monster[n].pause();
 			level.remove(monster[n]);
 			monster[n].geometry.dispose();
-			monster[n] = false;
+			//monster[n] = false;
 		}
 	}
 
-	function move3DMonsteer( n, x, y, dir ) {
-		monster[n].rotation.y = toRad((-dir*45)+90);
-		monster[n].position.set(x, 20, y);
+	function move3DMonsteer( n, mm ) {
+		monster[n].rotation.y = toRad((-mm.dir*45)+180);
+		monster[n].position.set(mm.x, 25, mm.y);
+
+		if(mm.thinking == 0 && monster[n].currentAnimation.name == "idle") monster[n].play('walk');
+		else if( mm.thinking > 0 && monster[n].currentAnimation.name == "walk") monster[n].play('idle');
+		else if(!mm.active)monster[n].pause();
 	}
 
 	//===========================================================================
