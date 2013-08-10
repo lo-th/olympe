@@ -477,6 +477,7 @@
 
 			if(ee.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
 			else if( ee.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
+			else if( ee.health === 0 && player.currentAnimation.name !== "death") player.play('death');
 
 			//player info for animation
 			//tell("Fire:"+pp.firing+"<br>"+"Move:"+pp.moving.dir+"<br>"+"Hurt:"+pp.hurting+"<br>"+"Dead:"+pp.dead+"<br>"+ player.currentAnimation.name);
@@ -587,8 +588,8 @@
 		    }
 			if(ee.thinking == 0 && monster[n].currentAnimation.name == "idle") monster[n].play('walk');
 			else if( ee.thinking > 0 && monster[n].currentAnimation.name == "walk") monster[n].play('idle');
-			else if (ee.health === 0) monster[n].play('stop');
-			else if(!ee.active) monster[n].play('stop');
+			//else if (ee.health < 1 && monster[n].currentAnimation.name !== "death") monster[n].play('death');
+			else if(!ee.active && monster[n].currentAnimation.name !== "stop") monster[n].play('stop');
 		}
 	}
 
