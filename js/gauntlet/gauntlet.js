@@ -426,6 +426,7 @@ Gauntlet = function() {
     onfinish: function(event, previous, current) {
       this.saveHighScore();
       this.player.leave();
+      
       /////////////////////////////
       clear3DLevel();
       ////////////////////////////
@@ -457,8 +458,8 @@ Gauntlet = function() {
 
         ///////////////////////////////
         //move3DPlayer(this.player);
+        //entitiesTo3D(this.map.entities);
         //////////////////////////////
-        //animate(frame);
       }
     },
 
@@ -470,7 +471,11 @@ Gauntlet = function() {
           this.render.player(  ctx, frame, this.viewport, this.player);
         }
         this.scoreboard.refreshPlayer(this.player);
-       // move3DPlayer(this.player);
+
+        ///////////////////////////////
+        //move3DPlayer(this.player);
+        //entitiesTo3D( this.map.entities);
+        //////////////////////////////
       }
       this.debugHeap(frame);
     },
@@ -769,9 +774,11 @@ Gauntlet = function() {
 
     update: function(frame, player, map, viewport) {
       ///////////////////////////////
-      entities3DInfo(this.entities);
-      ///////////////////////////////
+      //entities3DInfo(this.entities, frame);
+      //entitiesTo3D(this.entities);
       move3DPlayer(player);
+      ///////////////////////////////
+      //
 
       var n, max, entity;
       for(n = 0, max = this.entities.length ; n < max ; n++) {
@@ -781,9 +788,6 @@ Gauntlet = function() {
         ///////////////////////////
         if (entity.active && entity.update){
           entity.update(frame, player, map, viewport);
-        ///////////////////////////
-        //entities3D(entity, n);
-        ///////////////////////////
         }
       }
     },
@@ -838,6 +842,7 @@ Gauntlet = function() {
 
         if (iswall(pixel)){
           cell.wall = walltype(tx, ty, map);
+
           //////////////////////////////////////
           add3DWall(tx, ty, cell.wall, DEBUG.WALL || level.wall);
           //////////////////////////////////////
@@ -846,9 +851,9 @@ Gauntlet = function() {
           cell.nothing = true;
         else{
           cell.shadow = shadowtype(tx, ty, map);
+
           //////////////////////////////////////
           add3DFloor(tx, ty, DEBUG.FLOOR || level.floor, 0);
-          // add3DFloor(tx, ty, cell.shadow, WALL.MAX+1);
           //////////////////////////////////////
           }
         if (isexit(pixel))
