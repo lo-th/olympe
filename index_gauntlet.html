@@ -166,7 +166,7 @@
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
 		renderer.shadowMapSoft = true;
-		//renderer.sortObjects = false;
+		renderer.sortObjects = false;
 
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
 		renderer.domElement.style.top = 31 + "px";
@@ -380,7 +380,8 @@
 			// 36 - floor
 			for (i=0; i < loader.meshes.length; i++){
 				meshs[i] = loader.meshes[i];
-				meshs[i].scale.set( size, size, -size );
+				if(meshs[i].name !== "weapon0" && meshs[i].name !== "weapon1" && meshs[i].name !== "weapon2" && meshs[i].name !== "weapon3") 
+					meshs[i].scale.set( size, size, -size );
 				//list += i + ":"+meshs[i].name+"<br>";
 			}
 			//tell(list);
@@ -398,7 +399,7 @@
 		scene.add(intro);
 
 		for (var i = 0; i<4; i++){
-			players[i] = meshs[27+i].clone();
+			players[i] = meshs[27+i];//.clone();
 			intro.add(players[i]);
 			players[i].play("jump");
 			players[i].position.x = (i*60)-90;
@@ -564,7 +565,7 @@
 	//===========================================================================
 
 	function init3DPlayer(type) {
-		player = meshs[27+type.sy].clone();
+		player = meshs[27+type.sy]//.clone();
 		player.play('idle');
 		scene.add(player);
 	}
