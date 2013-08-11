@@ -14,7 +14,7 @@ body {
 
 #gauntlet       { margin: 1em auto; position: fixed; right:0px; top:31px; }
 #booting        { position: absolute; width: 6%; left: 30%; top: 40%;      } 
-#splash         { position: absolute; display: none; }
+#splash         { position: absolute; display: none; right:120px;}
 #canvas         { display: inline-block; vertical-align: top; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
 #help           { position: absolute; width: 33%; left: 22%; top: 30%; text-align: left; font-size: 1.5em; font-weight: bold; background-color: rgba(255, 255, 255, 0.75); border: 6px solid black; color: black; padding: 1em; display: inline-block; border-radius: 0.5em; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
 #scoreboard     { display: inline-block; vertical-align: top; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
@@ -94,4 +94,4 @@ body {
 /* @media query based layout */
 /*****************************/
 
-@media screen and (min-width:    0px) and (min-height:    0px) { #gauntlet { width:  512px; height: 384px; font-size:  7pt; } #canvas { width: 384px; height: 384px; } #splash { width: 384px; height: 384px; } #scoreboard { width: /*  512 - 384 - 8 = */ 120px; height: 384px; } } /* block = 16 */
+@media screen and (min-width:    0px) and (min-height:    0px) { #gauntlet { width:  512px; height: 384px; font-size:  7pt; } #canvas { width: 384px; height: 384px; } #splash { width: 30px; height: 30px; } #scoreboard { width: /*  512 - 384 - 8 = */ 120px; height: 384px; } } /* block = 16 */

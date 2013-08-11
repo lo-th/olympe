@@ -360,6 +360,13 @@ Gauntlet = function() {
     //---------------------------
 
     no2d: function(b){ gameDraw2d = b; },
+    playPlayer: function(n){ 
+      if(n===0)this.start(PLAYER.WARRIOR);
+      if(n===1)this.start(PLAYER.VALKYRIE);
+      if(n===2)this.start(PLAYER.WIZARD);
+      if(n===3)this.start(PLAYER.ELF); 
+    },
+
 
     //---------------------------
     // STATE MACHINE TRANSITIONS

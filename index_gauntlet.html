@@ -26,7 +26,7 @@
 
 <div id="gauntlet">
 	<img id="booting" src='res/img/loader.gif'>
-	<img id="splash"  src='res/images/splash.png'>
+	<img id="splash"  src='res/images/splash0.png'>
 	<canvas id="canvas">
 		<div class="unsupported">Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element</div>
 	</canvas>
@@ -102,7 +102,7 @@
 <script>
 	var vsize = { x:100, y:100, z:0 };
 	var mouse = { x:0, y:0, move:true };
-	var camera, controls, target, target2,target3,target4,scene, renderer, composer, renderPass, delta, center, pointLight, pointLight2, spotLight, renderLoop;
+	var camera, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight, renderLoop;
 	var clock = new THREE.Clock();
 	var Colors= [0x161616]
 
@@ -115,21 +115,34 @@
 	var door = [];
 	var fx = [];
 
+	var players = [];
+	var grounds = [];
+
 	var loader;
 
 	var tEntities = [];
 
 	var exit;
 
-	var level, player;
+	var level, player, intro;
 	var meshs=[];
 
 	var list ="";
-	//var Game = Game.run();
+
+	var projector, raycaster;
+	var mouse = new THREE.Vector2(), INTERSECTED;
+	var radius = 100, theta = 0;
+	var isIntro;
 
 	var viewConfig = {
 		show2d : false,
 		showInfo : false
+	}
+
+	var camConfig = {
+		horizontal : 45,
+		vertical : 90,
+		distance : 200
 	}
 
 	function init() {
@@ -141,14 +154,19 @@
 	}
 
 	function initScene3D() {
+		vsize.x = window.innerWidth;
+		vsize.y = window.innerHeight-31;
+		vsize.z = vsize.x / vsize.y;
 
 		renderer = new THREE.WebGLRenderer({ antialias: false });
+		renderer.setSize( vsize.x, vsize.y );
 		renderer.setClearColor( Colors[0], 1 );
 		renderer.physicallyBasedShading = true;
 		renderer.gammaInput = true;
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
 		renderer.shadowMapSoft = true;
+		//renderer.sortObjects = false;
 
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
 		renderer.domElement.style.top = 31 + "px";
@@ -156,37 +174,26 @@
 
 		// SCENE
 		scene = new THREE.Scene();
-		scene.fog = new THREE.Fog(  Colors[0], 300, 500 );
+		//scene.fog = new THREE.Fog(  Colors[0], 300, 500 );
+
+		projector = new THREE.Projector();
+		raycaster = new THREE.Raycaster();
 
 		// CAMERA
-		camera = new THREE.PerspectiveCamera( 70, 0, 1, 2000 );
+		camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, 2000 );
 		camera.position.z = 100;
 		camera.position.y = 200;
+		scene.add(camera);
 
 		target = new THREE.Object3D();
 		scene.add(target);
-
-		target2 = new THREE.Object3D();
-		scene.add(target2);
-
-		target3 = new THREE.Object3D();
-		target2.add(target3);
-		target3.position.x = -50;
-		target3.position.y = -20;
-		target4 = new THREE.Object3D();
-		target2.add(target4);
-		target4.position.x = 100;
-		target4.position.y = 200;
-		target4.position.z = 50;
-		target.add(camera);
-
-
+		
 		var ambient = new THREE.AmbientLight(  Colors[0] );
 		scene.add( ambient );
 
 		spotLight = new THREE.SpotLight( 0xffffff );
 		spotLight.intensity = 1;
-		//spotLight.position.set(0,200,0);
+		spotLight.position.set(100,200,50);
 		spotLight.target = target;
 		spotLight.castShadow = true;
 
@@ -201,30 +208,26 @@
 		//spotLight.shadowCameraVisible = true; 
 
 		//spotLight.onlyShadow= true;
-		target4.add(spotLight);
+		target.add(spotLight);
 
 	    pointLight = new THREE.PointLight( 0xffffff, 1, 200 );
 		pointLight.position.set( 0, 30, 0 );
-		target2.add( pointLight );
+		target.add( pointLight );
 
 		/*pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
 		pointLight2.position.set( 0, 0, 0 );
 		target3.add( pointLight2 );*/
 
-		center = new THREE.Vector3( 0,0,0 );
-		camera.lookAt(center);
-
-		//level = new THREE.Object3D();
-		//scene.add(level);
 
 		initMaterial();
 		initSea3DMesh();
 
 		addGUI();
 		addGUIView();
-
-		onResize();
+		addGUICamera();
 		window.addEventListener( 'resize', onResize, false );
+		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	}
 
 	function startRender() {
@@ -239,31 +242,87 @@
 		//requestAnimationFrame( animate );
 		delta = clock.getDelta();
 		THREE.AnimationHandler.update( delta );
+		
+		camera.position.copy(Orbit())
+		camera.lookAt( target.position );
+
+		// find intersections if intro
+		if(isIntro){
+			var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+			projector.unprojectVector( vector, camera );
+			raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+			var intersects = raycaster.intersectObjects( intro.children );
+
+			if ( intersects.length > 0 ) {
+				if ( INTERSECTED != intersects[ 0 ].object ) {
+					if ( INTERSECTED ){ 
+						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+						intro3DIdle();
+					}
+					INTERSECTED = intersects[ 0 ].object;
+					INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+					INTERSECTED.material.emissive.setHex( 0xff0000 );
+					//list = ("select "+INTERSECTED.name);
+					if(players.length>0){
+						if ( INTERSECTED.name === "G0" )if(players[0].currentAnimation.name !== "walk") players[0].play("walk");
+						if ( INTERSECTED.name === "G1" )if(players[1].currentAnimation.name !== "walk") players[1].play("walk");
+						if ( INTERSECTED.name === "G2" )if(players[2].currentAnimation.name !== "walk") players[2].play("walk");
+						if ( INTERSECTED.name === "G3" )if(players[3].currentAnimation.name !== "walk") players[3].play("walk");
+				    }
+				}
+			} else {
+				if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+				INTERSECTED = null;
+				intro3DIdle();
+			}
+		}
+
 		renderer.render( scene, camera );
 		tell(list);
 	}
 
-	function onResize( event ) {
+    function Orbit() {
+			var p = new THREE.Vector3();
+			var phi = THREE.Math.degToRad( camConfig.horizontal );
+			var theta = THREE.Math.degToRad( camConfig.vertical );
+			var d = camConfig.distance;
+			p.x = (d * Math.sin(phi) * Math.cos(theta)) + target.position.x;
+			p.z = (d * Math.sin(phi) * Math.sin(theta))+ target.position.z;
+			p.y = (d * Math.cos(phi))+ target.position.y;
+			return p;
+	}
 
+	function onResize( event ) {
 		vsize.x = window.innerWidth;
 		vsize.y = window.innerHeight-31;
 		vsize.z = vsize.x / vsize.y;
-
 		camera.aspect = vsize.z;
 		camera.updateProjectionMatrix();
 		renderer.setSize( vsize.x, vsize.y );
 	}
 
+	function onDocumentMouseMove( event ) {
+		event.preventDefault();
+		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	}
+
+	function onDocumentMouseDown( event ) {
+		if(isIntro && INTERSECTED !== null ){
+			if ( INTERSECTED.name === "G0" ) window.game.playPlayer(0);
+			if ( INTERSECTED.name === "G1" ) window.game.playPlayer(1);
+			if ( INTERSECTED.name === "G2" ) window.game.playPlayer(2);
+			if ( INTERSECTED.name === "G3" ) window.game.playPlayer(3);
+		}
+	}
 
 	function initMaterial( ) {
-	materials[0] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xff8a72 } );//wapon
+	    materials[0] = new THREE.MeshLambertMaterial( { shininess: 10, color: 0xff5032 } );//wapon
+		materials[1] = new THREE.MeshLambertMaterial( { shininess: 10, color: 0x00abff } );//VALKYRIE
+		materials[2] = new THREE.MeshLambertMaterial( { shininess: 10, color: 0xffff00 } );//WIZARD
+		materials[3] = new THREE.MeshLambertMaterial( { shininess: 10, color: 0x34d219 } );//ELF
 
-		/*
-		materials[1] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x00abff } );//VALKYRIE
-		materials[2] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffff00 } );//WIZARD
-		materials[3] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x34d219 } );//ELF
-
-		materials[4] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GHOST
+		/*materials[4] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0xffffff } );//GHOST
 		materials[5] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400010 } );//DEMON
 		materials[6] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400020 } );//GRUNT
 		materials[7] = new THREE.MeshPhongMaterial( { shininess: 10, color: 0x400030 } );//WIZARD
@@ -325,10 +384,57 @@
 				//list += i + ":"+meshs[i].name+"<br>";
 			}
 			//tell(list);
+			intro3D();
 
 			document.getElementById("scoreboard").style.visibility = "visible";
+
+			//window.game.start(window.game.PLAYER.WARRIOR);
 		};
 		loader.load( 'res/models/gauntlet.sea' );
+	}
+
+	function intro3D(){
+		intro = new THREE.Object3D();
+		scene.add(intro);
+
+		for (var i = 0; i<4; i++){
+			players[i] = meshs[27+i].clone();
+			intro.add(players[i]);
+			players[i].play("jump");
+			players[i].position.x = (i*60)-90;
+
+			grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[i]);
+			intro.add(grounds[i]);
+			grounds[i].rotation.x = - Math.PI / 2 ;
+			grounds[i].position.y = -2;
+			grounds[i].position.x = (i*60)-90;
+			grounds[i].castShadow = true;
+			grounds[i].receiveShadow = true;
+			grounds[i].name = "G"+ i;
+		}
+		startRender();
+		isIntro=true;
+	}
+
+	function intro3DIdle(){
+		if(players.length>0){
+			for (var i = 0; i<4; i++){
+				if(players[i].currentAnimation.name !== "idle") players[i].play("idle");
+			}
+	    }
+	}
+
+	function clear3Dintro(){
+		stopRender();
+		var obj, i;
+		for ( i = intro.children.length - 1; i >= 0 ; i -- ) {
+			obj = intro.children[ i ];
+			intro.remove(obj);
+			obj.geometry.dispose();
+		}
+		scene.remove(intro);
+		intro = null;
+		isIntro=false;
 	}
 
 	//===========================================================================
@@ -348,7 +454,6 @@
 		var numGenerator = 0;
 		var numDoor = 0;
 		var numExit =0;
-
 
 		for(n = 0, max = entities.length ; n < max ; n++) {
 			entity = entities[n];
@@ -386,7 +491,6 @@
 
 		if(entity.monster) monster3D(n, entity);
 		if(entity.generator){ if(entity.type.sx>31){ generator3D(n, entity); }}
-
 		// fixe and remove
 		if(entity.treasure) Treasure3D(n, entity);
 		if(entity.door) door3D(n, entity );
@@ -402,9 +506,14 @@
 	//===========================================================================
 
 	function init3DLevel(){
+		if(intro)clear3Dintro();
 		if(level)clear3DLevel();
 		level = new THREE.Object3D();
 		scene.add(level);
+
+		//camera.position.z = 100;
+		//camera.position.y = 200;
+
 		startRender();
 	}
 
@@ -467,13 +576,10 @@
 
 	function move3DPlayer( ee ) {
 	    if(player){
-			player.rotation.y = toRad((-ee.dir*45)+180);
 
+			player.rotation.y = toRad((-ee.dir*45)+180);
 			player.position.set(ee.x, 25, ee.y);
-			target.position.set(ee.x, 0, ee.y);
-			target2.position.set(ee.x, 25, ee.y);
-			//target2.rotation.y = player.rotation.y- toRad(90);
-		//	spotLight.position.copy(target4)//et(pp.x, 100, pp.y);;
+			target.position.set(ee.x, 25, ee.y);
 
 			if(ee.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
 			else if( ee.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
@@ -481,9 +587,6 @@
 
 			//player info for animation
 			//tell("Fire:"+pp.firing+"<br>"+"Move:"+pp.moving.dir+"<br>"+"Hurt:"+pp.hurting+"<br>"+"Dead:"+pp.dead+"<br>"+ player.currentAnimation.name);
-
-			center.x = ee.x;
-			center.z = ee.y;
 		}
 	}
 
@@ -652,7 +755,6 @@
 
 	function addGUIView() {
 		var f4 = gui.addFolder('View Option');
-
 		f4.add( viewConfig, 'show2d' ).onChange( function() {
 			if(viewConfig.show2d)document.getElementById("canvas").style.visibility = "visible"; 
 			else document.getElementById("canvas").style.visibility = "hidden";
@@ -660,6 +762,14 @@
 		});
 		f4.add( viewConfig, 'showInfo' ).onChange( function() { if(!viewConfig.showInfo) list = "";});
 		f4.open();
+	}
+
+	function addGUICamera() {
+		var f5 = gui.addFolder('Camera Option');
+		f5.add( camConfig, 'horizontal', 0, 360 ).onChange( function() {  });
+		f5.add( camConfig, 'vertical', 0, 360 ).onChange( function() {  });
+		f5.add( camConfig, 'distance', 50, 500 ).onChange( function() {  });
+		f5.open();
 	}
 
 	window.onload = init;
