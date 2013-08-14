@@ -360,6 +360,7 @@ Gauntlet = function() {
     //---------------------------
 
     no2d: function(b){ gameDraw2d = b; },
+    
     playPlayer: function(n){ 
       if(n===0)this.start(PLAYER.WARRIOR);
       if(n===1)this.start(PLAYER.VALKYRIE);
@@ -381,6 +382,9 @@ Gauntlet = function() {
 
     onmenu: function(event, previous, current) {
       this.sounds.playMenuMusic();
+      ///////////////////////////////
+      init3D();
+      ///////////////////////////////
     },
 
     onstart: function(event, previous, current, type, nlevel) {
