@@ -115,7 +115,7 @@
 	var clock = new THREE.Clock();
 
 
-	var Colors= [0x161616, 0xaaaaaa, 0xffffff];
+	var Colors= [0x161616, 0x333333, 0xffffff];
 	//---------- Bakground, Ambient, Specular
 
 	var materials = [];
@@ -354,17 +354,20 @@
 	    materials[0] = makeMaterial("avatar1.jpg", null, true);// player 0 / 1;
 		materials[1] = makeMaterial("avatar2.jpg", null, true);// player 2 / 3;
 
-		materials[2] = makeMaterial("wall.jpg", "wall_n.jpg");// wall
-		materials[3] = makeMaterial("floor_128.jpg", "floor_128_n.jpg");// floor
+		//materials[2] = makeMaterial("wall.jpg", "wall_n.jpg");// wall
+		materials[2] = makeMaterial("wall.jpg", null, false, 25, null, false, true);// wall bump
+		//materials[3] = makeMaterial("floor_128.jpg", "floor_128_n.jpg");// floor
+		materials[3] = makeMaterial("floor_128.jpg", null, false, 25, null, false, true);// floor bump
 
 		materials[4] = makeMaterial("avatar3.jpg", null, true);// monster 4 / 5
 		materials[5] = makeMaterial("avatar4.jpg", null, true);// monster 6 / 7
 		materials[6] = makeMaterial("avatar5.jpg", null, true);// monster 8 
 
-		materials[7] = makeMaterial("stairs.jpg", "stairs_n.jpg");// exit and door
+		//materials[7] = makeMaterial("stairs.jpg", "stairs_n.jpg");// exit and door
+		materials[7] = makeMaterial("stairs.jpg", null, false, 25, null, false, true);// exit and door bump
 		materials[8] = makeMaterial(null, null, false, 60, 0xffff00);// treasure
 
-		materials[9] = makeMaterial(null, null, false, 60, 0xff0000);// fx
+		materials[9] = makeMaterial("exp.png", null, false, 60, null, true);// fx
 		materials[10] = makeMaterial(null, null, false, 60, 0x0000ff);// weapon
 		materials[11] = makeMaterial(null, null, false, 60, 0x00ffff);// generator
 
@@ -377,7 +380,7 @@
 
 	}
 
-	function makeMaterial (diffuse, normal, skin, shine, color){
+	function makeMaterial (diffuse, normal, skin, shine, color, transparent, bump){
 		var map, map2;
 		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: shine || 60 } );
 
@@ -387,6 +390,11 @@
 		    map.wrapS = map.wrapT = THREE.RepeatWrapping;
 		    map.anisotropy = renderer.getMaxAnisotropy();
 		    material.map = map;
+		}
+
+		if(bump){
+			 material.bumpMap = map;
+			 material.bumpScale = 3;
 		}
 
 		if(normal) {
@@ -400,6 +408,7 @@
 
 		if(skin) material.skinning = true;
 		if(color) material.color.setHex( color );
+		if(transparent) material.transparent = transparent;
 
 		return material;
 	}
@@ -780,7 +789,7 @@
 	// 3D FX
 	//===========================================================================
 
-	var fxGeo = new THREE.PlaneGeometry( 10, 10 );
+	var fxGeo = new THREE.PlaneGeometry( 30, 30 );
 
 	function fx3D(n, ee) {
 		if(!fx[n]){
