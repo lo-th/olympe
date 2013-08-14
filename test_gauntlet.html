@@ -23,10 +23,10 @@
 </div>
 <div id="my-stat"></div>
 <div  id='buttonMenu'>
-<div  id='button' onclick='test3D( "monster", 100, 6, 2);'>TEST MONSTER 01</div>
-<div  id='button' onclick='test3D( "monster", 200, 7, 2);'>TEST MONSTER 02</div>
-<div  id='button' onclick='test3D( "object", 1000, 26, 3);'>TEST OBJECT 01</div>
-<div  id='button' onclick='test3D( "object", 4000, 23, 4);'>TEST OBJECT 02</div>
+<div  id='button' onclick='test3D( "monster", 100, 6, 2, 0.4);'>TEST MONSTER 01</div>
+<div  id='button' onclick='test3D( "monster", 200, 7, 2, 0.4);'>TEST MONSTER 02</div>
+<div  id='button' onclick='test3D( "object", 200, 26, 3, 0.3);'>TEST OBJECT 01</div>
+<div  id='button' onclick='test3D( "object", 1000, 23, 4, 0.2);'>TEST OBJECT 02</div>
 <div  id='button' onclick='intro3D();'>TEST INTRO</div>
 </div>
 
@@ -94,7 +94,7 @@
 	var camConfig = {
 		horizontal : 45,
 		vertical : 90,
-		distance : 200
+		distance : 250
 	}
 
 	/*function init() {
@@ -138,6 +138,7 @@
 		renderer.gammaInput = true;
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
+		renderer.sortObjects = false;
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		//renderer.shadowMapSoft = true;
@@ -158,7 +159,7 @@
 		// CAMERA
 		camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, 2000 );
 		camera.position.z = 100;
-		camera.position.y = 200;
+		camera.position.y = 250;
 		//scene.add(camera);
 
 		target = new THREE.Object3D();
@@ -314,7 +315,8 @@
 		materials[1] = makeMaterial("avatar2.jpg", null, true);// player 2 / 3;
 
 	    materials[2] = makeMaterial(null, null, true, 60, 0xea9a9a);
-	    materials[3] = makeMaterial('stairs.jpg', null, false, 60);
+	   // materials[3] = makeMaterial('stairs.jpg', null, false, 60);
+	    materials[3] = makeMaterial("stairs.jpg", null, false, 150, null, false, true);
 	    materials[4] = makeMaterial(null, null, false, 60, 0xffff00);
 
 
@@ -327,7 +329,7 @@
 
 	}
 
-	function makeMaterial (diffuse, normal, skin, shine, color){
+	function makeMaterial (diffuse, normal, skin, shine, color, transparent, bump){
 		var map, map2;
 		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: shine || 60 } );
 
@@ -337,6 +339,11 @@
 		    map.wrapS = map.wrapT = THREE.RepeatWrapping;
 		    map.anisotropy = renderer.getMaxAnisotropy();
 		    material.map = map;
+		}
+
+		if(bump){
+			 material.bumpMap = map;
+			 material.bumpScale = 3;
 		}
 
 		if(normal) {
@@ -350,6 +357,7 @@
 
 		if(skin) material.skinning = true;
 		if(color) material.color.setHex( color );
+		if(transparent) material.transparent = transparent;
 
 		return material;
 	}
@@ -390,7 +398,7 @@
 	// TEST
 	//===========================================================================
 
-	function test3D(type, number, n, matNumber){
+	function test3D(type, number, n, matNumber, scale){
 
 		if(test)clear3DMonsterTest();
 		if(intro)clear3Dintro();
@@ -411,9 +419,15 @@
 		var material = materials[matNumber];
 		var pos = new THREE.Vector3(0,0,0);
 		var up = new THREE.Vector3(0,0,1);
+		var sc = scale || 1;
+		var rx, rz;
 
 		if(type == "monster") mesh = loader.getMesh(meshs[27+n].name);
 		if(type == "object"){ geo = meshs[n].geometry; posY=0;}
+
+		//if(geo)geo.applyMatrix( new THREE.Matrix4().makeRotationY( degToRad(180) ) );
+		//if(mesh)mesh.geometry.applyMatrix( new THREE.Matrix4().makeRotationY( degToRad(180) ) );
+
 
 
 		//var gg = new THREE.BufferGeometryUtils.fromGeometry(meshs[26].geometry);
@@ -431,40 +445,11 @@
 				} );*/
 
 
-		for(var j=0; j<line; j++){
-            for(var i=0; i<colone; i++){
 
+		 for(var i=0; i<number; i++){
+		//for(var j=0; j<line; j++){
+        //    for(var i=0; i<colone; i++){
 
-				//var block = new THREE.Mesh(gg,  materials[0]);//
-				//var block = new THREE.SkinnedMesh(gg, material, false);
-				//block.material.skinning = true;
-				//block.bones = bones;
-				//block.animations = anim;
-				
-				//block.addAnimations( anim );
-				/*block.animations = {};
-				for (var i in anim) {
-					block.animations[i] = new THREE.Animation( block, anim[i].data.name );
-					block.animations[i].loop = anim[i].loop;
-					block.animations[i].name = anim[i].name;
-
-
-				}*/
-				//block.activeAnimation = true;
-				//block.addAnimations( block.animations );
-/*
-				var nsIndex = block.animations[0].name.indexOf("/")+1;
-				block.animationNamespace = block.animations[0].name.substring(0, nsIndex);
-				for (var i in block.animations) {								
-		THREE.AnimationHandler.add( block.animations[i] );
-	}*/
-					//THREE.AnimationHandler.add( block.animations[i] );
-
-				//block.animations = anim;
-			//	tell(block.bones.length)
-				/*for (var i in block.animations) {
-					THREE.AnimationHandler.add( block.animations[i] );	
-				}*/
 				var block;
 
 				if(mesh){
@@ -473,29 +458,22 @@
 					block.play("walk", Math.random()*100);
 				}
 				else block = new THREE.Mesh(geo,  material);
-				block.scale.set( 1, 1, -1 );
-				block.position.set(startX- i *space, posY, startY - j*space);
+				block.scale.set( sc, sc, -sc );
 
-
-				//block.position.copy( Orbit(pos, Math.random()*360, Math.random()*360, 100+posY) )
-				//block.up.set( 1, 1, -1 );
-				//block.lookAt(pos);
-				//block.geometry.applyMatrix( new THREE.Matrix4().makeRotationY( degToRad(90) ) );
-				//block.geometry.matrixRotationWorld.y = 
-				//block.rotation.y += degToRad(90);
-				//block.rotation.x += degToRad(90);;;
-				//block.rotation.z += degToRad(90)
-
-
-				
-
+				rx =  (Math.random()*360);
+				rz =  (Math.random()*360);
+				block.rotation.z = -degToRad(rx);
+				//block.rotation.x = -degToRad(rz);
+				block.rotation.y = -degToRad(rz);
+				block.position.copy( Orbit(pos,rx,rz, 75+(posY*0.5) ))
 				block.castShadow = block.receiveShadow = true;
+
 				test.add( block );
-				monster[i] = block;
-			}
+			//}
 		}
 
-		grounds[0] = new THREE.Mesh(new THREE.PlaneGeometry( (colone*space)+space, (line*space)+space ), materials[10]);
+		//grounds[0] = new THREE.Mesh(new THREE.PlaneGeometry( (colone*space)+space, (line*space)+space ), materials[10]);
+		grounds[0] = new THREE.Mesh(new THREE.SphereGeometry( 75 , 30, 30), materials[10]);
 		grounds[0].rotation.x = - Math.PI / 2 ;
 		grounds[0].castShadow = false;
 		grounds[0].receiveShadow = true;

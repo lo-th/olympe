@@ -115,7 +115,7 @@
 	var clock = new THREE.Clock();
 
 
-	var Colors= [0x161616, 0x333333, 0xffffff];
+	var Colors= [0x161616, 0x333333, 0x606060];
 	//---------- Bakground, Ambient, Specular
 
 	var materials = [];
@@ -180,14 +180,14 @@
 		renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
 		renderer.setSize( vsize.x, vsize.y );
 		renderer.setClearColor( Colors[0], 1 );
-		//renderer.physicallyBasedShading = true;
+		renderer.physicallyBasedShading = true;
 		renderer.gammaInput = true;
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		//renderer.shadowMapSoft = true;
-		//renderer.sortObjects = false;
+		renderer.sortObjects = false;
 		//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
@@ -355,21 +355,23 @@
 		materials[1] = makeMaterial("avatar2.jpg", null, true);// player 2 / 3;
 
 		//materials[2] = makeMaterial("wall.jpg", "wall_n.jpg");// wall
-		materials[2] = makeMaterial("wall.jpg", null, false, 25, null, false, true);// wall bump
+		materials[2] = makeMaterial("wall.jpg", null, false, 150, null, false, true);// wall bump
 		//materials[3] = makeMaterial("floor_128.jpg", "floor_128_n.jpg");// floor
-		materials[3] = makeMaterial("floor_128.jpg", null, false, 25, null, false, true);// floor bump
+		materials[3] = makeMaterial("floor_128.jpg", null, false, 150, null, false, true);// floor bump
 
 		materials[4] = makeMaterial("avatar3.jpg", null, true);// monster 4 / 5
 		materials[5] = makeMaterial("avatar4.jpg", null, true);// monster 6 / 7
 		materials[6] = makeMaterial("avatar5.jpg", null, true);// monster 8 
 
 		//materials[7] = makeMaterial("stairs.jpg", "stairs_n.jpg");// exit and door
-		materials[7] = makeMaterial("stairs.jpg", null, false, 25, null, false, true);// exit and door bump
+		materials[7] = makeMaterial("stairs.jpg", null, false, 150, null, false, true);// exit and door bump
 		materials[8] = makeMaterial(null, null, false, 60, 0xffff00);// treasure
 
 		materials[9] = makeMaterial("exp.png", null, false, 60, null, true);// fx
 		materials[10] = makeMaterial(null, null, false, 60, 0x0000ff);// weapon
 		materials[11] = makeMaterial(null, null, false, 60, 0x00ffff);// generator
+
+		materials[12] = makeMaterial(null, null, false, 10, 0x606060);// Guns
 
 		//materials[30] = makeMaterial(null, null, false, 60, 0xF90503);
 		//intro
@@ -437,6 +439,7 @@
 				meshs[i] = loader.meshes[i];
 				if(meshs[i].name !== "weapon0" && meshs[i].name !== "weapon1" && meshs[i].name !== "weapon2" && meshs[i].name !== "weapon3") 
 					meshs[i].scale.set( size, size, -size );
+				else meshs[i].material = materials[12];
 				//list += i + ":"+meshs[i].name+"<br>";
 			}
 			//tell(list);
@@ -494,6 +497,7 @@
 		for ( i = intro.children.length - 1; i >= 0 ; i -- ) {
 			obj = intro.children[ i ];
 			intro.remove(obj);
+			if(obj.animations) obj.stop();
 			obj.geometry.dispose();
 		}
 		scene.remove(intro);
@@ -839,13 +843,13 @@
 	}
 
 	function Orbit(origine, horizontal, vertical, distance) {
-			var p = new THREE.Vector3();
-			var phi = degToRad( horizontal );
-			var theta = degToRad( vertical );
-			p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
-			p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
-			p.y = (distance * Math.cos(phi)) + origine.y;
-			return p;
+		var p = new THREE.Vector3();
+		var phi = degToRad( horizontal );
+		var theta = degToRad( vertical );
+		p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+		p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+		p.y = (distance * Math.cos(phi)) + origine.y;
+		return p;
 	}
 
 	//-----------------------------------------------------

@@ -105,13 +105,14 @@ body {
 #button {
 	position: block;
 	right: 0px;
-	margin: 10px;
-    padding: 10px;
+	margin: 5px;
+    padding: 5px;
     background:#000000;
     cursor: pointer;
     border:solid;
     border-color: #cccccc;
     border-width:1px;
+    font-size:10px;
 }
 
 a { color: #ffcc66; text-decoration:none; cursor: pointer}
