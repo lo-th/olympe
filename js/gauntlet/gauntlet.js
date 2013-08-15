@@ -442,7 +442,7 @@ Gauntlet = function() {
       this.player.leave();
       
       /////////////////////////////
-      clear3DLevel();
+      clear3DLevel(true);
       ////////////////////////////
     },
 

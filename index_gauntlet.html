@@ -145,6 +145,7 @@
 	var mouse = new THREE.Vector2(), INTERSECTED;
 	var radius = 100, theta = 0;
 	var isIntro;
+	var isIntroStart;
 	var currentLevel;
 	var maxLevel = 17;
 
@@ -469,8 +470,11 @@
 	//===========================================================================
 
 	function intro3D(){
+		isIntroStart = true;
+
 		intro = new THREE.Object3D();
 		scene.add(intro);
+		target.position.set(0,22.5,0);
 
 		for (var i = 0; i<4; i++){
 			players[i] = meshs[27+i];
@@ -479,13 +483,15 @@
 
 			intro.add(players[i]);
 			players[i].play("jump");
-			players[i].position.x = (i*60)-90;
+			//players[i].position.x = (i*60)-90;
+			players[i].position.set((i*60)-90, 22.5, 0);
+			players[i].rotation.y = degToRad(0);
 
 			//grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[20+i]);
 			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 2, 56 ), materials[20+i]);
 			intro.add(grounds[i]);
 			//grounds[i].rotation.x = - Math.PI / 2 ;
-			grounds[i].position.y = -1;
+			grounds[i].position.y = -3;
 			grounds[i].position.x = (i*60)-90;
 			grounds[i].castShadow = false;
 			grounds[i].receiveShadow = true;
@@ -519,11 +525,20 @@
 		isIntro=true;
 		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
 		startRender();
+		setTimeout(introAnimEnd, 1000);
+	}
+
+	function introAnimEnd(){
+		isIntroStart = false;
+		for (var i = 0; i<4; i++){
+			grounds[i].position.y = -1;
+		}
 	}
 
 	function intro3DIdle(){
-		if(players.length>0){
+		if(players.length>0 && !isIntroStart){
 			for (var i = 0; i<4; i++){
 				if(players[i].currentAnimation.name !== "idle") players[i].play("idle");
 			}
@@ -539,8 +554,12 @@
 			if(obj.animations) obj.stop();
 			obj.geometry.dispose();
 		}
+
 		scene.remove(intro);
 		intro = null;
+		levels.length = 0;
+		grounds.length = 0;
+		players.length = 0;
 		isIntro=false;
 		document.removeEventListener( 'mousemove', onDocumentMouseMove );
 		document.removeEventListener( 'mousedown', onDocumentMouseDown );
@@ -656,8 +675,8 @@
 		startRender();
 	}
 
-	function clear3DLevel(){
-		stopRender();
+	function clear3DLevel(end){
+		
 		var obj, i;
 		for ( i = level.children.length - 1; i >= 0 ; i -- ) {
 			obj = level.children[ i ];
@@ -678,6 +697,11 @@
 
 		scene.remove(level);
 		level = null;
+
+		stopRender();
+
+		if(end)intro3D();
+		
 	}
 
 	function add3DWall(x, y, sx, sy) {
@@ -721,8 +745,8 @@
 	    if(player){
 
 			player.rotation.y = degToRad((-ee.dir*45)+180);
-			player.position.set(ee.x, 25, ee.y);
-			target.position.set(ee.x, 25, ee.y);
+			player.position.set(ee.x, 22.5, ee.y);
+			target.position.set(ee.x, 22.5, ee.y);
 
 			if(ee.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
 			else if( ee.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
