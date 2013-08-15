@@ -332,7 +332,6 @@ Gauntlet = function() {
 
   var game = {
     
-
     cfg: cfg,
 
     run: function(runner) {
@@ -360,12 +359,16 @@ Gauntlet = function() {
     //---------------------------
 
     no2d: function(b){ gameDraw2d = b; },
-    
-    playPlayer: function(n){ 
-      if(n===0)this.start(PLAYER.WARRIOR);
-      if(n===1)this.start(PLAYER.VALKYRIE);
-      if(n===2)this.start(PLAYER.WIZARD);
-      if(n===3)this.start(PLAYER.ELF); 
+
+    getLevel: function(){ return this.storage[STORAGE.NLEVEL]; },
+
+    playPlayer: function(n, l){ 
+      var ll = this.storage[STORAGE.NLEVEL];
+      if(l) ll = l;
+      if(n===0)this.start(PLAYER.WARRIOR, ll);
+      if(n===1)this.start(PLAYER.VALKYRIE, ll);
+      if(n===2)this.start(PLAYER.WIZARD, ll);
+      if(n===3)this.start(PLAYER.ELF, ll); 
     },
 
 

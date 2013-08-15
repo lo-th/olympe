@@ -130,6 +130,7 @@
 
 	var players = [];
 	var grounds = [];
+	var levels = [];
 
 	var loader;
 
@@ -144,6 +145,8 @@
 	var mouse = new THREE.Vector2(), INTERSECTED;
 	var radius = 100, theta = 0;
 	var isIntro;
+	var currentLevel;
+	var maxLevel = 17;
 
 	var viewConfig = {
 		show2d : false,
@@ -156,14 +159,11 @@
 		distance : 200
 	}
 
-	/*function init() {
-		//initScene3D();
-		document.getElementById("canvas").style.visibility = "hidden";
-		//document.getElementById("scoreboard").style.visibility = "hidden";
-		tell("<b>1,2,3,4</b> choose player<br><b>ARROW</b> keys to move<br><b>HOLD SPACE</b> to fire<br><b>ENTER</b> to use potion");
-	}*/
+	function initGame() {
+	}
 
 	function init3D() {
+		//initGame();
 		if(!renderer){
 			setTimeout(initScene3D, 100);
 			document.getElementById("canvas").style.visibility = "hidden";
@@ -242,9 +242,9 @@
 		//scene.add(spotLight);
 
 
-	    pointLight = new THREE.PointLight( 0xffffff, 1, 200 );
+	    /*pointLight = new THREE.PointLight( 0xffffff, 1, 200 );
 		pointLight.position.set( 0, 30, 0 );
-		target.add( pointLight );
+		target.add( pointLight );*/
 
 		/*pointLight2 = new THREE.PointLight( 0xffffff, 3, 150 );
 		pointLight2.position.set( 0, 0, 0 );
@@ -295,7 +295,7 @@
 					}
 					INTERSECTED = intersects[ 0 ].object;
 					INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-					INTERSECTED.material.emissive.setHex( 0xff0000 );
+					INTERSECTED.material.emissive.setHex( 0x606060 );
 					//list = ("select "+INTERSECTED.name);
 					if(players.length>0){
 						if ( INTERSECTED.name === "G0" )if(players[0].currentAnimation.name !== "walk") players[0].play("walk");
@@ -336,10 +336,21 @@
 
 	function onDocumentMouseDown( event ) {
 		if(isIntro && INTERSECTED !== null ){
-			if ( INTERSECTED.name === "G0" ) window.game.playPlayer(0);
-			if ( INTERSECTED.name === "G1" ) window.game.playPlayer(1);
-			if ( INTERSECTED.name === "G2" ) window.game.playPlayer(2);
-			if ( INTERSECTED.name === "G3" ) window.game.playPlayer(3);
+			if ( INTERSECTED.name === "G0" ) window.game.playPlayer(0, currentLevel);
+			if ( INTERSECTED.name === "G1" ) window.game.playPlayer(1, currentLevel);
+			if ( INTERSECTED.name === "G2" ) window.game.playPlayer(2, currentLevel);
+			if ( INTERSECTED.name === "G3" ) window.game.playPlayer(3, currentLevel);
+
+			if ( INTERSECTED.name === "PLUS" ) {
+				if(currentLevel == maxLevel) currentLevel = 0;
+				currentLevel++; 
+				createLabel("Level "+ currentLevel);
+			}
+			if ( INTERSECTED.name === "MOIN" ) {
+				currentLevel--; 
+				if(currentLevel ==0) currentLevel = maxLevel;
+				createLabel("Level "+ currentLevel);
+			}
 		}
 	}
 
@@ -379,6 +390,10 @@
 		materials[21] = makeMaterial(null, null, false, 60, 0x08B4F0);
 		materials[22] = makeMaterial(null, null, false, 60, 0xF5FC00);
 		materials[23] = makeMaterial(null, null, false, 60, 0x00FF03);
+
+		materials[24] = makeMaterial(null, null, false, 60, 0x909090);
+		materials[25] = makeMaterial(null, null, false, 60, 0x606060);
+		materials[26] = makeMaterial(null, null, false, 60, 0x606060);
 
 	}
 
@@ -467,16 +482,39 @@
 			players[i].play("jump");
 			players[i].position.x = (i*60)-90;
 
-			grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[20+i]);
+			//grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[20+i]);
+			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 4, 56 ), materials[20+i]);
 			intro.add(grounds[i]);
-			grounds[i].rotation.x = - Math.PI / 2 ;
-			grounds[i].position.y = -2;
+			//grounds[i].rotation.x = - Math.PI / 2 ;
+			grounds[i].position.y = -3;
 			grounds[i].position.x = (i*60)-90;
 			grounds[i].castShadow = false;
 			grounds[i].receiveShadow = true;
 			grounds[i].name = "G"+ i;
 		}
-		
+
+		levels[0] = new THREE.Mesh(new THREE.CubeGeometry( 20, 4, 20 ), materials[25]);
+		levels[0].position.set(62+10, -10-8, 28+10);
+		intro.add(levels[0]);
+		levels[0].name = "PLUS";
+
+		levels[1] = new THREE.Mesh(new THREE.CubeGeometry( 20, 4, 20 ), materials[26]);
+		levels[1].position.set(-62-10, -10-8, 28+10);
+		intro.add(levels[1]);
+		levels[1].name = "MOIN";
+
+		levels[2] = new THREE.Mesh(new THREE.PlaneGeometry( 116, 20 ), materials[24]);
+		levels[2].position.set(0, -10-8, 28+10);
+		intro.add(levels[2]);
+
+		levels[0].rotation.x =  degToRad(45);//Math.PI / 2 ;
+		levels[1].rotation.x =  degToRad(45);//Math.PI / 2 ;
+		levels[2].rotation.x = - degToRad(45)//Math.PI / 2 ;
+
+		currentLevel = window.game.getLevel();
+
+		createLabel("Level "+ currentLevel);
+
 		isIntro=true;
 		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -505,6 +543,32 @@
 		isIntro=false;
 		document.removeEventListener( 'mousemove', onDocumentMouseMove );
 		document.removeEventListener( 'mousedown', onDocumentMouseDown );
+	}
+
+	function createLabel(text, size, color) {
+		if(!color) color = "#ff8080";
+		if(!size) size = 10;
+
+		var canvas = document.createElement("canvas");
+		var context = canvas.getContext("2d");
+
+		canvas.width = 116*3;
+		canvas.height = 20*3;
+		context = canvas.getContext("2d");
+		context.font = 'Bold 30px Arial';
+
+		context.textAlign = "center";
+		context.textBaseline = "middle";
+		context.fillStyle = color;
+		context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+		//context.strokeStyle = "red";
+
+		var texture = new THREE.Texture(canvas);
+		texture.needsUpdate = true;
+
+		materials[24].map = texture;
+		//materials[24].transparent = true;
 	}
 
 	//===========================================================================
