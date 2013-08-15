@@ -177,7 +177,7 @@
 		vsize.y = window.innerHeight-31;
 		vsize.z = vsize.x / vsize.y;
 
-		renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+		renderer = new THREE.WebGLRenderer({ antialias: false});//, alpha: false });
 		renderer.setSize( vsize.x, vsize.y );
 		renderer.setClearColor( Colors[0], 1 );
 		renderer.physicallyBasedShading = true;
@@ -187,7 +187,7 @@
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		//renderer.shadowMapSoft = true;
-		renderer.sortObjects = false;
+		//renderer.sortObjects = false;
 		//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
@@ -295,7 +295,7 @@
 					}
 					INTERSECTED = intersects[ 0 ].object;
 					INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-					INTERSECTED.material.emissive.setHex( 0x606060 );
+					INTERSECTED.material.emissive.setHex( 0x909090 );
 					//list = ("select "+INTERSECTED.name);
 					if(players.length>0){
 						if ( INTERSECTED.name === "G0" )if(players[0].currentAnimation.name !== "walk") players[0].play("walk");
@@ -384,16 +384,15 @@
 
 		materials[12] = makeMaterial(null, null, false, 10, 0x606060);// Guns
 
-		//materials[30] = makeMaterial(null, null, false, 60, 0xF90503);
 		//intro
 		materials[20] = makeMaterial(null, null, false, 60, 0xF90503);
 		materials[21] = makeMaterial(null, null, false, 60, 0x08B4F0);
 		materials[22] = makeMaterial(null, null, false, 60, 0xF5FC00);
 		materials[23] = makeMaterial(null, null, false, 60, 0x00FF03);
 
-		materials[24] = makeMaterial(null, null, false, 60, 0x909090);
-		materials[25] = makeMaterial(null, null, false, 60, 0x606060);
-		materials[26] = makeMaterial(null, null, false, 60, 0x606060);
+		materials[24] = makeMaterial(null, null, false, 60, 0xFFFFFF);
+		materials[25] = makeMaterial(null, null, false, 60, 0x909090);
+		materials[26] = makeMaterial(null, null, false, 60, 0x909090);
 
 	}
 
@@ -483,22 +482,22 @@
 			players[i].position.x = (i*60)-90;
 
 			//grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[20+i]);
-			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 4, 56 ), materials[20+i]);
+			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 2, 56 ), materials[20+i]);
 			intro.add(grounds[i]);
 			//grounds[i].rotation.x = - Math.PI / 2 ;
-			grounds[i].position.y = -3;
+			grounds[i].position.y = -1;
 			grounds[i].position.x = (i*60)-90;
 			grounds[i].castShadow = false;
 			grounds[i].receiveShadow = true;
 			grounds[i].name = "G"+ i;
 		}
 
-		levels[0] = new THREE.Mesh(new THREE.CubeGeometry( 20, 4, 20 ), materials[25]);
+		levels[0] = new THREE.Mesh(new THREE.PlaneGeometry( 20, 20 ), materials[25]);
 		levels[0].position.set(62+10, -10-8, 28+10);
 		intro.add(levels[0]);
 		levels[0].name = "PLUS";
 
-		levels[1] = new THREE.Mesh(new THREE.CubeGeometry( 20, 4, 20 ), materials[26]);
+		levels[1] = new THREE.Mesh(new THREE.PlaneGeometry( 20, 20 ), materials[26]);
 		levels[1].position.set(-62-10, -10-8, 28+10);
 		intro.add(levels[1]);
 		levels[1].name = "MOIN";
@@ -507,13 +506,15 @@
 		levels[2].position.set(0, -10-8, 28+10);
 		intro.add(levels[2]);
 
-		levels[0].rotation.x =  degToRad(45);//Math.PI / 2 ;
-		levels[1].rotation.x =  degToRad(45);//Math.PI / 2 ;
+		levels[0].rotation.x = - degToRad(45);//Math.PI / 2 ;
+		levels[1].rotation.x = - degToRad(45);//Math.PI / 2 ;
 		levels[2].rotation.x = - degToRad(45)//Math.PI / 2 ;
 
 		currentLevel = window.game.getLevel();
 
 		createLabel("Level "+ currentLevel);
+		createLabel(">",60,"#ff8080",25);
+		createLabel("<",60,"#ff8080",26);
 
 		isIntro=true;
 		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -545,30 +546,37 @@
 		document.removeEventListener( 'mousedown', onDocumentMouseDown );
 	}
 
-	function createLabel(text, size, color) {
-		if(!color) color = "#ff8080";
-		if(!size) size = 10;
+	function createLabel(text, size, color, n) {
+		if(!color) color = "#AAAAAA";
+		if(!size) size = 36;
+		if(!n) n = 24;
 
 		var canvas = document.createElement("canvas");
 		var context = canvas.getContext("2d");
 
-		canvas.width = 116*3;
+		if(n==24)canvas.width = 116*3;
+		else canvas.width = 20*3;
 		canvas.height = 20*3;
-		context = canvas.getContext("2d");
-		context.font = 'Bold 30px Arial';
+		ctx = canvas.getContext("2d");
+		ctx.font = 'italic '+size+'pt Calibri';
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
 
-		context.textAlign = "center";
-		context.textBaseline = "middle";
-		context.fillStyle = color;
-		context.fillText(text, canvas.width / 2, canvas.height / 2);
+		var gradient=ctx.createLinearGradient(0,0,0,canvas.height);
+		gradient.addColorStop("0","white");
+		gradient.addColorStop("1.0","yellow");
 
-		//context.strokeStyle = "red";
+		ctx.strokeStyle = gradient;
+		ctx.lineWidth=3;
+		ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+		ctx.fillStyle = color;
+		ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
 		var texture = new THREE.Texture(canvas);
 		texture.needsUpdate = true;
 
-		materials[24].map = texture;
-		//materials[24].transparent = true;
+		materials[n].map = texture;
+		materials[n].transparent = true;
 	}
 
 	//===========================================================================
@@ -867,7 +875,8 @@
 		} else {
 			//if(ee.type.sx === 13) fx[n].material =  materials[27];
 		    //else if(ee.type.sx === 19) fx[n].material =  materials[29];
-		    fx[n].position.set(ee.x, 20, ee.y);
+		    fx[n].position.set(ee.x, 19+(n*0.01), ee.y);
+		    fx[n].lookAt(camera.position)
 		}
 	}
 
