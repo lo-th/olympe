@@ -363,69 +363,65 @@
 
 	function initMaterial( ) {
 
-	    materials[0] = makeMaterial("avatar1.jpg", null, true);// player 0 / 1;
-		materials[1] = makeMaterial("avatar2.jpg", null, true);// player 2 / 3;
+	    materials[0] = makeMaterial({ map:"avatar1.jpg", skinning:true }); // player 0 / 1;
+		materials[1] = makeMaterial({ map:"avatar2.jpg", skinning:true }); // player 2 / 3;
 
-		//materials[2] = makeMaterial("wall.jpg", "wall_n.jpg");// wall
-		materials[2] = makeMaterial("wall.jpg", null, false, 150, null, false, true);// wall bump
-		//materials[3] = makeMaterial("floor_128.jpg", "floor_128_n.jpg");// floor
-		materials[3] = makeMaterial("floor_128.jpg", null, false, 150, null, false, true);// floor bump
+		materials[2] = makeMaterial({ map:"wall.jpg", bump:true, shininess:150 }); // wall bump
+		materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:0.3, shininess:150 }); // floor bump
 
-		materials[4] = makeMaterial("avatar3.jpg", null, true);// monster 4 / 5
-		materials[5] = makeMaterial("avatar4.jpg", null, true);// monster 6 / 7
-		materials[6] = makeMaterial("avatar5.jpg", null, true);// monster 8 
+		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
+		materials[5] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 6 / 7
+		materials[6] = makeMaterial({ map:"avatar5.jpg", skinning:true }); // monster 8 
 
-		//materials[7] = makeMaterial("stairs.jpg", "stairs_n.jpg");// exit and door
-		materials[7] = makeMaterial("stairs.jpg", null, false, 150, null, false, true);// exit and door bump
-		materials[8] = makeMaterial(null, null, false, 60, 0xffff00);// treasure
+		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, shininess:150 }); // exit and door bump
+		materials[8] = makeMaterial({ color:0xffff00 }); // treasure
 
-		materials[9] = makeMaterial("exp.png", null, false, 60, null, true);// fx
-		materials[10] = makeMaterial(null, null, false, 60, 0x0000ff);// weapon
-		materials[11] = makeMaterial(null, null, false, 60, 0x00ffff);// generator
+		materials[9] = makeMaterial({ map:"exp.png", transparent:true }); // fx
+		materials[10] = makeMaterial({ color:0x0000ff }); // weapon
+		materials[11] = makeMaterial({ color:0x00ffff }); // generator
 
-		materials[12] = makeMaterial(null, null, false, 10, 0x606060);// Guns
+		materials[12] = makeMaterial({ color:0x606060, shininess: 10 }); // Guns
 
 		//intro
-		materials[20] = makeMaterial(null, null, false, 60, 0xF90503);
-		materials[21] = makeMaterial(null, null, false, 60, 0x08B4F0);
-		materials[22] = makeMaterial(null, null, false, 60, 0xF5FC00);
-		materials[23] = makeMaterial(null, null, false, 60, 0x00FF03);
+		materials[20] = makeMaterial({ color:0xF90503 });
+		materials[21] = makeMaterial({ color:0x08B4F0 });
+		materials[22] = makeMaterial({ color:0xF5FC00 });
+		materials[23] = makeMaterial({ color:0x00FF03 });
 
-		materials[24] = makeMaterial(null, null, false, 60, 0xFFFFFF);
-		materials[25] = makeMaterial(null, null, false, 60, 0x909090);
-		materials[26] = makeMaterial(null, null, false, 60, 0x909090);
-
+		materials[24] = makeMaterial({ color:0xFFFFFF });
+		materials[25] = makeMaterial({ color:0x909090 });
+		materials[26] = makeMaterial({ color:0x909090 });
 	}
 
-	function makeMaterial (diffuse, normal, skin, shine, color, transparent, bump){
+	function makeMaterial (data){
 		var map, map2;
-		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: shine || 60 } );
+		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 60 } );
 
-		if(diffuse) {
-			map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ diffuse );
+		if(data.map) {
+			map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
 		    map.repeat.set( 1, -1 );
 		    map.wrapS = map.wrapT = THREE.RepeatWrapping;
 		    map.anisotropy = renderer.getMaxAnisotropy();
 		    material.map = map;
 		}
 
-		if(bump){
+		if(data.bump && data.map){
 			 material.bumpMap = map;
-			 material.bumpScale = 3;
+			 material.bumpScale = data.bumpScale || 3;
 		}
 
-		if(normal) {
-			map2 = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ normal );
+		/*if(data.normal) {
+			map2 = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.normal );
 		    map2.repeat.set( 1, -1 );
 		    map2.wrapS = map2.wrapT = THREE.RepeatWrapping;
 		    map2.anisotropy = renderer.getMaxAnisotropy();
 		    material.normalMap = map2;
-		    material.normalScale.x = material.normalScale.y = 2;
-		}
+		    material.normalScale.x = material.normalScale.y = data.normalScale || 2;
+		}*/
 
-		if(skin) material.skinning = true;
-		if(color) material.color.setHex( color );
-		if(transparent) material.transparent = transparent;
+		if(data.skinning) material.skinning = data.skinning;
+		if(data.color) material.color.setHex( data.color );
+		if(data.transparent) material.transparent = data.transparent;
 
 		return material;
 	}
@@ -470,8 +466,6 @@
 	//===========================================================================
 
 	function intro3D(){
-		isIntroStart = true;
-
 		intro = new THREE.Object3D();
 		scene.add(intro);
 		target.position.set(0,22.5,0);
@@ -483,14 +477,11 @@
 
 			intro.add(players[i]);
 			players[i].play("jump");
-			//players[i].position.x = (i*60)-90;
 			players[i].position.set((i*60)-90, 22.5, 0);
 			players[i].rotation.y = degToRad(0);
 
-			//grounds[i] = new THREE.Mesh(new THREE.PlaneGeometry( 56, 56 ), materials[20+i]);
 			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 2, 56 ), materials[20+i]);
 			intro.add(grounds[i]);
-			//grounds[i].rotation.x = - Math.PI / 2 ;
 			grounds[i].position.y = -3;
 			grounds[i].position.x = (i*60)-90;
 			grounds[i].castShadow = false;
@@ -512,19 +503,18 @@
 		levels[2].position.set(0, -10-8, 28+10);
 		intro.add(levels[2]);
 
-		levels[0].rotation.x = - degToRad(45);//Math.PI / 2 ;
-		levels[1].rotation.x = - degToRad(45);//Math.PI / 2 ;
-		levels[2].rotation.x = - degToRad(45)//Math.PI / 2 ;
+		levels[0].rotation.x = - degToRad(45);
+		levels[1].rotation.x = - degToRad(45);
+		levels[2].rotation.x = - degToRad(45);
 
+		// get the current game level
 		currentLevel = window.game.getLevel();
-
 		createLabel("Level "+ currentLevel);
 		createLabel(">",60,"#ff8080",25);
 		createLabel("<",60,"#ff8080",26);
-
+		
+		isIntroStart = true;
 		isIntro=true;
-		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
 		startRender();
 		setTimeout(introAnimEnd, 1000);
@@ -535,6 +525,8 @@
 		for (var i = 0; i<4; i++){
 			grounds[i].position.y = -1;
 		}
+		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	}
 
 	function intro3DIdle(){
@@ -546,7 +538,8 @@
 	}
 
 	function clear3Dintro(){
-		stopRender();
+		document.removeEventListener( 'mousemove', onDocumentMouseMove );
+		document.removeEventListener( 'mousedown', onDocumentMouseDown );
 		var obj, i;
 		for ( i = intro.children.length - 1; i >= 0 ; i -- ) {
 			obj = intro.children[ i ];
@@ -556,13 +549,13 @@
 		}
 
 		scene.remove(intro);
-		intro = null;
 		levels.length = 0;
 		grounds.length = 0;
 		players.length = 0;
 		isIntro=false;
-		document.removeEventListener( 'mousemove', onDocumentMouseMove );
-		document.removeEventListener( 'mousedown', onDocumentMouseDown );
+		intro = null;
+
+		stopRender();
 	}
 
 	function createLabel(text, size, color, n) {
