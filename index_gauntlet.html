@@ -105,6 +105,8 @@
 <script src="js/gauntlet/gauntlet.js"></script>
 
 <script src='js/libs/dat.gui.min.js'></script>
+<script src='js/threex.rendererstats.js'></script>
+<script src="js/microcache.js"></script>
 
 <script>
       
@@ -151,7 +153,8 @@
 
 	var viewConfig = {
 		show2d : false,
-		showInfo : false
+		showInfo : false,
+		fullStats : false
 	}
 
 	var camConfig = {
@@ -181,10 +184,17 @@
 		renderer = new THREE.WebGLRenderer({ antialias: false});//, alpha: false });
 		renderer.setSize( vsize.x, vsize.y );
 		renderer.setClearColor( Colors[0], 1 );
+
 		renderer.physicallyBasedShading = true;
 		renderer.gammaInput = true;
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
+
+		renderer.autoClear = false;
+		renderer.sortObjects = false;
+
+		renderer._microCache = new MicroCache();
+
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		//renderer.shadowMapSoft = true;
@@ -313,7 +323,37 @@
 		}
 
 		renderer.render( scene, camera );
+
+		if(viewConfig.fullStats){
+			stats.update();
+			rendererStats.update(renderer);
+		}
 		//tell(list);
+	}
+
+	var stats, rendererStats;
+
+	function fullStats(){
+		if(viewConfig.fullStats){
+			stats = new Stats();
+			stats.domElement.style.position	= 'absolute'
+			stats.domElement.style.right	= '10px'
+			stats.domElement.style.bottom	= '161px'
+			document.body.appendChild( stats.domElement );
+
+
+			rendererStats = new THREEx.RendererStats();
+			rendererStats.domElement.style.position	= 'absolute'
+			rendererStats.domElement.style.right	= '10px'
+			rendererStats.domElement.style.bottom	= '10px'
+			document.body.appendChild( rendererStats.domElement );
+		} else {
+			if (rendererStats.domElement )document.body.removeChild(rendererStats.domElement);
+			if (stats.domElement )document.body.removeChild(stats.domElement);
+		}
+
+		//isFullStats = true;
+
 	}
 
 	//===========================================================================
@@ -397,7 +437,8 @@
 		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 50 } );
 
 		if(data.map) {
-			map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
+			//map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
+			map = renderer._microCache.getSet( data.map , THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map ));
 		    map.repeat.set( 1, -1 );
 		    map.wrapS = map.wrapT = THREE.RepeatWrapping;
 		    map.anisotropy = renderer.getMaxAnisotropy();
@@ -421,6 +462,8 @@
 		if(data.skinning) material.skinning = data.skinning;
 		if(data.color) material.color.setHex( data.color );
 		if(data.transparent) material.transparent = data.transparent;
+
+		material.perPixel = true;
 
 		return material;
 	}
@@ -959,6 +1002,8 @@
 			window.game.no2d(viewConfig.show2d);
 		});
 		f4.add( viewConfig, 'showInfo' ).onChange( function() { if(!viewConfig.showInfo) list = "";});
+
+		f4.add( viewConfig, 'fullStats' ).onChange( function() { fullStats() });
 		f4.open();
 	}
 
