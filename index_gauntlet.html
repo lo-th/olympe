@@ -361,19 +361,18 @@
 	//
 	//===========================================================================
 
-	function initMaterial( ) {
-
+	function initMaterial(){
 	    materials[0] = makeMaterial({ map:"avatar1.jpg", skinning:true }); // player 0 / 1;
 		materials[1] = makeMaterial({ map:"avatar2.jpg", skinning:true }); // player 2 / 3;
 
-		materials[2] = makeMaterial({ map:"wall.jpg", bump:true, shininess:150 }); // wall bump
-		materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:0.3, shininess:150 }); // floor bump
+		materials[2] = makeMaterial({ map:"wall.jpg", bump:true, bumpScale:12, shininess:10 }); // wall bump
+		materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
 
 		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
 		materials[5] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 6 / 7
 		materials[6] = makeMaterial({ map:"avatar5.jpg", skinning:true }); // monster 8 
 
-		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, shininess:150 }); // exit and door bump
+		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, bumpScale:12, shininess:10 }); // exit and door bump
 		materials[8] = makeMaterial({ color:0xffff00 }); // treasure
 
 		materials[9] = makeMaterial({ map:"exp.png", transparent:true }); // fx
@@ -395,7 +394,7 @@
 
 	function makeMaterial (data){
 		var map, map2;
-		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 60 } );
+		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 50 } );
 
 		if(data.map) {
 			map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
@@ -407,7 +406,7 @@
 
 		if(data.bump && data.map){
 			 material.bumpMap = map;
-			 material.bumpScale = data.bumpScale || 3;
+			 material.bumpScale = data.bumpScale || 1;
 		}
 
 		/*if(data.normal) {
