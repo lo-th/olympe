@@ -105,14 +105,36 @@ body {
 #button {
 	position: block;
 	right: 0px;
-	margin: 5px;
-    padding: 5px;
     background:#000000;
     cursor: pointer;
     border:solid;
     border-color: #cccccc;
-    border-width:1px;
+    vertical-align:middle;
+    border-width:0px;
     font-size:10px;
+}
+.mlogo {
+	height:16px;
+	margin-right:10px;
+	display:inline-block;
+
+	vertical-align:-20%;
+}
+#MiniMenu {
+	position: fixed;
+	left:20px;
+	top:50px;
+	margin: 0;
+    padding: 0;
+}
+#mbutton {
+	height:25px;
+	position: block;
+	right: 0px;
+    margin: 0px;
+    padding: 0;
+    cursor: pointer;
+    font-size:12px;
 }
 
 a { color: #ffcc66; text-decoration:none; cursor: pointer}
