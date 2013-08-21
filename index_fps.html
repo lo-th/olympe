@@ -30,7 +30,6 @@
 
 		<script>
 		    var FAR = 4000;
-
 			var camera, scene, renderer;
 			var level = { x:50, y:0, z:20, ox:0, oy:0, oz:0, firstDraw:false, height:null, collision:null};
 			var cfg = { speed:0.03, maxSpeed:0.5, worldSize:10, mapSize:1, posY:100};
@@ -45,24 +44,18 @@
 			var Colors= [0x48608c, 0x48608c, 0xAAAAAA];
 			//---------- Bakground, Ambient, Specular
 
-
 			var player;
 			var playerPos;
 			var sky, skyCube;
 			var ambient, hemiLight, spotLight, pointLight;
-			var materials = [];
 			var map, ctx;
 			var debug;
-
-			//var mesh;
-
+			var materials = [];
 			var meshs = [];
 
 			initMap();
 			initDebug();
-
 			init();
-
 			animate();
 
 			//-----------------------------------------------------
@@ -80,7 +73,7 @@
 				renderer.gammaOutput = true;
 				renderer.shadowMapEnabled = true;
 
-				camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, 4000 );
+				camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
 
 				scene = new THREE.Scene();
 
@@ -142,22 +135,20 @@
 				renderer.setSize( vsize.x, vsize.y );
 			}
 
+			//-----------------------------------------------------
+			//  SKY BOX
+			//-----------------------------------------------------
+
 			function addSkyBox() {
 				var cubes = [2, 14, 26, 30,31,32,33];
 				var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a, 0x9b8379, 0x6f7488, 0xffffd9],
 								  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
 								  ];
 				var n = Math.floor(Math.random()*cubes.length);
-
-
 				lightColors( cubesColors[n] );
-
 				var format = ".jpg";
 				var r = "res/textures/cube/sky"+cubes[n]+"/";
-				var urls = [ r + "posx"+format, r + "negx"+format,
-							 r + "posy"+format, r + "negy"+format,
-							 r + "posz"+format, r + "negz"+format ];
-
+				var urls = [ r + "posx"+format, r + "negx"+format, r + "posy"+format, r + "negy"+format, r + "posz"+format, r + "negz"+format ];
 				skyCube = THREE.ImageUtils.loadTextureCube( urls );
 				skyCube.format = THREE.RGBFormat;
 				var shader = THREE.ShaderLib[ "cube" ];
@@ -179,19 +170,13 @@
 
 			function lightColors( cc ){
 				ambient.color.setHex(cc[2]);
-
 				hemiLight.color.setHex( cc[2] );
 				hemiLight.groundColor.setHex( cc[0] );
-
 				pointLight.color.setHex( cc[1] );
-
 				spotLight.color.setHex( cc[3] );
-
-				//currentColors = cc;
 				Colors[0] = cc[2];
 				Colors[1] = cc[2];
 				Colors[2] = cc[3];
-				
 			}
 
 			//-----------------------------------------------------
