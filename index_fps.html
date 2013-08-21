@@ -29,6 +29,7 @@
 		<script src="js/libs/tween.min.js"></script>
 
 		<script>
+		    var FAR = 4000;
 
 			var camera, scene, renderer;
 			var level = { x:50, y:0, z:20, ox:0, oy:0, oz:0, firstDraw:false, height:null, collision:null};
@@ -47,6 +48,8 @@
 
 			var player;
 			var playerPos;
+			var sky, skyCube;
+			var ambient, hemiLight, spotLight, pointLight;
 			var materials = [];
 			var map, ctx;
 			var debug;
@@ -87,11 +90,19 @@
 
 				playerPos = new THREE.Vector3();
 
-				var ambient = new THREE.AmbientLight( Colors[1] );
+				ambient = new THREE.AmbientLight( Colors[1] );
 				scene.add( ambient );
 
-				var spotLight = new THREE.SpotLight( 0xffffff );
-				spotLight.intensity = 1;
+				hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+				hemiLight.position.set( 0, 0, 0 );
+				scene.add( hemiLight );
+
+				pointLight = new THREE.PointLight( 0x000, 0.5, 3000 );
+				pointLight.position.set( -1000, 100, -700 );
+				scene.add( pointLight );
+
+				spotLight = new THREE.SpotLight( 0xffffff );
+				spotLight.intensity = 1.5;
 				spotLight.position.set(100,200,50);
 				spotLight.target = player;
 				spotLight.castShadow = true;
@@ -106,6 +117,8 @@
 				spotLight.shadowMapHeight = 1024;
 
 				player.add(spotLight);
+
+				addSkyBox();
 
 				initMaterial();
 
@@ -124,6 +137,58 @@
 				camera.aspect = vsize.z;
 				camera.updateProjectionMatrix();
 				renderer.setSize( vsize.x, vsize.y );
+			}
+
+			function addSkyBox() {
+				var cubes = [2, 14, 26, 30,31,32,33];
+				var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a, 0x9b8379, 0x6f7488, 0xffffd9],
+								  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+								  ];
+				var n = Math.floor(Math.random()*cubes.length);
+
+
+				lightColors( cubesColors[n] );
+
+				var format = ".jpg";
+				var r = "res/textures/cube/sky"+cubes[n]+"/";
+				var urls = [ r + "posx"+format, r + "negx"+format,
+							 r + "posy"+format, r + "negy"+format,
+							 r + "posz"+format, r + "negz"+format ];
+
+				skyCube = THREE.ImageUtils.loadTextureCube( urls );
+				skyCube.format = THREE.RGBFormat;
+				var shader = THREE.ShaderLib[ "cube" ];
+				shader.uniforms[ "tCube" ].value = skyCube;
+
+				var material = new THREE.ShaderMaterial( {
+					fragmentShader: shader.fragmentShader,
+					vertexShader: shader.vertexShader,
+					uniforms: shader.uniforms,
+					depthWrite: false,
+					side: THREE.BackSide
+				});
+
+				sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
+				sky.castShadow = false;
+				sky.receiveShadow = false;
+				scene.add( sky );
+			}
+
+			function lightColors( cc ){
+				ambient.color.setHex(cc[2]);
+
+				hemiLight.color.setHex( cc[2] );
+				hemiLight.groundColor.setHex( cc[0] );
+
+				pointLight.color.setHex( cc[1] );
+
+				spotLight.color.setHex( cc[3] );
+
+				//currentColors = cc;
+				Colors[0] = cc[2];
+				Colors[1] = cc[2];
+				Colors[2] = cc[3];
+				
 			}
 
 			//-----------------------------------------------------
@@ -203,6 +268,7 @@
 			    }
 
 				player.position.copy(playerPos);
+				sky.position.copy(playerPos);
 
 				tell("x:"+parseInt(level.x)+" y:" + parseInt(level.y) + " z:"+ parseInt(level.z) + " h:" +  parseInt(cam.horizontal) + " v:" +  parseInt(cam.vertical));
 			}
@@ -317,7 +383,7 @@
 
 			function initMaterial() {
 				materials[0] = makeMaterial({ map:"house.jpg", bump:true, bumpScale:2, shininess:10 });
-				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:2, shininess:10 });
+				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:2, shininess:60 });
 				materials[2] = makeMaterial({ map:"intern.jpg", bump:true, bumpScale:2, shininess:10 });
 				materials[3] = makeMaterial({ map:"balcon.png", bump:true, bumpScale:2, shininess:10 , transparent:true, side:THREE.DoubleSide});
 				materials[4] = makeMaterial({ color:0x909090, transparent:true, opacity:0.5, side:THREE.DoubleSide }); // window
