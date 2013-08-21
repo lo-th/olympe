@@ -98,12 +98,12 @@
 				scene.add( hemiLight );
 
 				pointLight = new THREE.PointLight( 0x000, 0.5, 3000 );
-				pointLight.position.set( -1000, 100, -700 );
+				pointLight.position.set( -1000, 500, -1000 );
 				scene.add( pointLight );
 
 				spotLight = new THREE.SpotLight( 0xffffff );
 				spotLight.intensity = 1.2;
-				spotLight.position.set(1000,2000,500);
+				spotLight.position.set(1000,1500,500);
 				//spotLight.target = player;
 				spotLight.castShadow = true;
 
