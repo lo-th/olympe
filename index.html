@@ -24,6 +24,14 @@
 <a href="https://github.com/lo-th/olympe"><img  src="http://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub" /></a>
 </div>
 <div id="intro"></div>
+<div  id='MiniMenu'>
+<div  id='mbutton' onclick='link(0);'><img class='mlogo' src="res/img/mini/mail.png">3dflashlo@gmail.com</div>
+<div  id='mbutton' onclick='link(1);'><img class='mlogo' src="res/img/mini/wordpress.png">blog</div>
+<div  id='mbutton' onclick='link(2);'><img class='mlogo' src="res/img/mini/linked.png">linked in</div>
+<div  id='mbutton' onclick='link(3);'><img class='mlogo' src="res/img/mini/facebook.png">facebook</div>
+<div  id='mbutton' onclick='link(4);'><img class='mlogo' src="res/img/mini/google.png">google +</div>
+<div  id='mbutton' onclick='link(5);'><img class='mlogo' src="res/img/mini/github.png">github</div>
+</div>
 <script type="text/javascript" src="js/accodion/jquery-1.10.0.min.js" ></script>
 <script type="text/javascript" src="js/accodion/jquery-ui-1.10.3.custom.min.js"></script>
 <script type="text/javascript" src="js/accodion/jquery.accordionImageMenu.js"></script>
@@ -75,6 +83,16 @@ function test(){
 	}
 	else info.innerHTML = message[n];
 	//;
+}
+
+function link(n){
+	if(n==0) return;//window.open ('mailto:' + '3dflashlo%40gmail%2ecom?subject=', '_blank',false);
+	if(n==1)window.open ('http://3dflashlo.wordpress.com/','_blank',false);
+	if(n==2)window.open ('http://fr.linkedin.com/pub/lo-th/27/202/b3/en','_blank',false);
+	if(n==3)window.open ('https://www.facebook.com/laurent.thillet','_blank',false);
+	if(n==4)window.open ('https://plus.google.com/u/0/114170447432405103307/posts','_blank',false);
+	if(n==5)window.open ('https://github.com/lo-th/olympe','_blank',false);
+
 }
 
 //canvas img
