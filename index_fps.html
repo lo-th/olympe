@@ -10,10 +10,10 @@
 		</style>
 	</head>
 	<!-- _     _   _      ___ __  _ ____
-        | |___| |_| |__  |_  )  \/ |__ /
-        | / _ \  _|    |  / / () | ||_ \
-        |_\___/\__|_||_| /___\__/|_|___/
-    -->
+	    | |___| |_| |__  |_  )  \/ |__ /
+	    | / _ \  _|    |  / / () | ||_ \
+	    |_\___/\__|_||_| /___\__/|_|___/
+	-->
 	<body>
 		<div id="viewport"></div>
 		<canvas id="map" width="256" height="256"></canvas>
@@ -361,16 +361,15 @@
 			function initMap(){
 			    map = document.getElementById("map");
 			    ctx = map.getContext("2d");
-
 			    map.style.bottom = "10px";
-                map.style.left =  "10px";
-                map.style.position = "absolute";
+			    map.style.left =  "10px";
+			    map.style.position = "absolute";
 
-                var imageObj = new Image();
-				imageObj.src = 'res/images/height.png';
+			    var imageObj = new Image();
+			    imageObj.src = 'res/images/height.png';
 
-				var imageObj2 = new Image();
-				imageObj2.src = 'res/images/collision.png';
+			    var imageObj2 = new Image();
+			    imageObj2.src = 'res/images/collision.png';
 
 				imageObj.onload=function(){
 				   level.height = imageObj;
@@ -388,15 +387,12 @@
 				if(level.height && level.collision){
 					ctx.clearRect ( 0 , 0 , 256 , 256 );
 					ctx.drawImage(level.collision,0,0,256,256);
-
 					// collision test X
 					pixel = ctx.getImageData(level.x+128, level.oz+128, 1, 1);
 					if(pixel.data[0]!==0) level.x = level.ox;
-					
 					// collision test Z
 					pixel = ctx.getImageData(level.ox+128, level.z+128, 1, 1);
 					if(pixel.data[0]!==0) level.z = level.oz;
-					
 					ctx.drawImage(level.height,0,0,256,256);
 					// get height
 					pixel = ctx.getImageData(level.x+128, level.z+128, 1, 1);
