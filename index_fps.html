@@ -102,13 +102,13 @@
 				scene.add( pointLight );
 
 				spotLight = new THREE.SpotLight( 0xffffff );
-				spotLight.intensity = 1.5;
-				spotLight.position.set(100,200,50);
-				spotLight.target = player;
+				spotLight.intensity = 1.2;
+				spotLight.position.set(1000,2000,500);
+				//spotLight.target = player;
 				spotLight.castShadow = true;
 
-				spotLight.shadowCameraNear = 100;
-				spotLight.shadowCameraFar = 300;
+				spotLight.shadowCameraNear = 1000;
+				spotLight.shadowCameraFar = 3000;
 				spotLight.shadowCameraFov = 75;
 
 				spotLight.shadowMapBias = 0.01;
@@ -116,7 +116,10 @@
 				spotLight.shadowMapWidth = 1024;
 				spotLight.shadowMapHeight = 1024;
 
-				player.add(spotLight);
+				//spotLight.shadowCameraVisible = true; 
+
+				//player.add(spotLight);
+				scene.add(spotLight);
 
 				addSkyBox();
 
@@ -382,11 +385,11 @@
 			//-----------------------------------------------------
 
 			function initMaterial() {
-				materials[0] = makeMaterial({ map:"house.jpg", bump:true, bumpScale:2, shininess:10 });
-				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:2, shininess:60 });
+				materials[0] = makeMaterial({ map:"house.jpg", bump:true, bumpScale:3, shininess:10 });
+				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:5, shininess:60 });
 				materials[2] = makeMaterial({ map:"intern.jpg", bump:true, bumpScale:2, shininess:10 });
 				materials[3] = makeMaterial({ map:"balcon.png", bump:true, bumpScale:2, shininess:10 , transparent:true, side:THREE.DoubleSide});
-				materials[4] = makeMaterial({ color:0x909090, transparent:true, opacity:0.5, side:THREE.DoubleSide }); // window
+				materials[4] = makeMaterial({ color:0x909090, transparent:true, opacity:0.5, side:THREE.DoubleSide, reflectivity:0.96 }); // window
 				materials[5] = makeMaterial({ color:0xb18954, side:THREE.DoubleSide }); // cadre
 				materials[6] = makeMaterial({ color:0x909090 }); // wall
 			}
@@ -414,6 +417,12 @@
 				if(data.transparent) material.transparent = data.transparent;
 				if(data.opacity) material.opacity = data.opacity;
 				if(data.side) material.side = data.side;
+
+				if(data.reflectivity){
+					material.envMap = skyCube; 
+					material.combine= THREE.MixOperation;
+					material.reflectivity=data.reflectivity;
+				}
 
 				material.perPixel = true;
 
