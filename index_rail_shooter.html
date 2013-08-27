@@ -204,9 +204,9 @@
 			ambient = new THREE.AmbientLight( 0x000 );
 			//scene.add( ambient );
 
-			hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+			/*hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
 			hemiLight.position.set( 0, 0, 0 );
-			scene.add( hemiLight );
+			scene.add( hemiLight );*/
 
 			pointLight = new THREE.PointLight( 0x000, 3, 70 );
 			pointLight.position.set( 0, 0, 0 );
@@ -245,8 +245,8 @@
 		function lightColors( cc ){
 			ambient.color.setHex(cc[0]);
 
-			hemiLight.color.setHex( cc[2] );
-			hemiLight.groundColor.setHex( cc[0] );
+			//hemiLight.color.setHex( cc[2] );
+			//hemiLight.groundColor.setHex( cc[0] );
 
 			pointLight.color.setHex( cc[3] );
 			pointLight0.color.setHex( cc[2] );
