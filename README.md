@@ -1,8 +1,8 @@
 olympe
 ======
 
-Full source of [http://loth.olympe.in/](http://loth.olympe.in/)<br>
-mirror [http://lo-th.github.io/olympe/](http://http://lo-th.github.io/olympe/)
+Full source of [loth.olympe.in/](http://loth.olympe.in/)<br>
+mirror [lo-th.github.io/olympe/](http://lo-th.github.io/olympe/)
 
 Is my 3D work for web with [sea3d format](href='https://code.google.com/p/sea3d/) on Three.js and Away3d
 
