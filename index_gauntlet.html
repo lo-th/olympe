@@ -181,7 +181,7 @@
 		vsize.y = window.innerHeight-31;
 		vsize.z = vsize.x / vsize.y;
 
-		renderer = new THREE.WebGLRenderer({ antialias: false});//, alpha: false });
+		renderer = new THREE.WebGLRenderer({ antialias: false });//, alpha: false });
 		renderer.setSize( vsize.x, vsize.y );
 		renderer.setClearColor( Colors[0], 1 );
 
@@ -191,14 +191,13 @@
 		renderer.shadowMapEnabled = true;
 
 		renderer.autoClear = false;
-		renderer.sortObjects = false;
+		renderer.sortObjects = true;
 
 		renderer._microCache = new MicroCache();
 
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		//renderer.shadowMapSoft = true;
-		//renderer.sortObjects = false;
 		//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
