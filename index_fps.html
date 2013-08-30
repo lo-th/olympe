@@ -38,6 +38,9 @@
                 position: absolute;
                 background: transparent;
             }
+            #stats #fps { background: transparent !important }
+            #stats #fps #fpsText { color: #FFFF00 !important }
+            #stats #fps #fpsGraph { display: none }
 		</style>
 	</head>
 	<!-- _     _   _      ___ __  _ ____
@@ -54,10 +57,11 @@
 		<canvas id="mapTest" width="16" height="16"></canvas>
 		<canvas id="mapTest2" width="64" height="64"></canvas>
 		<div id="debug"></div>
-		<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
+		<div id="home"><a href="index.html"><img id="logo" src="res/img/logom.png" onmouseover="this.src='res/img/logo.png'" onmouseout="this.src='res/img/logom.png'" /></a></div>
+		<div id="occ"><img id="logo" src="res/img/oculusm.png" onclick="occulusEffect();" onmouseover="this.src='res/img/oculus.png'" onmouseout="this.src='res/img/oculusm.png'" /></a></div>
 		<div id="option">
 		<!--Speed: <input id="speed" type="range" name="points" min="0" max="10" value="2" step="0.1" /><br/>-->
-		Map scale <input id="position" type="range" min="100" max="1250" value="500" step="1" onchange="changelens()" /><br/>
+		map scale<input id="position" type="range" min="100" max="1250" value="500" step="1" onchange="changelens()" /><br/>
 		<!--Zoom <input id="factor" type="range" min="0.1" max="10" value="2" step="0.1" onchange="changelens()" />-->
 		</div>
 
@@ -70,21 +74,21 @@
 		<script src="js/libs/tween.min.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 
+		<script src="js/effects/OculusRiftEffect.js"></script>
+
 		<script>
 		    var FAR = 4000;
-			var camera, scene, renderer;
+			var camera, scene, renderer, content;
 			var miniCamera, miniScene, miniRenderer, firstRenderTarget;
-			//var level = { x:50, y:0, z:20, ox:50, oy:0, oz:20, firstDraw:false, height:null, collision:null};
-			var level = { x:500, y:0, z:200, ox:500, oy:0, oz:200, firstDraw:false};
-			//var cfg = { speed:0.03, maxSpeed:0.5, worldSize:10, mapSize:1, posY:100};
-			var cfg = { speed:0.25, maxSpeed:5, posY:100};
+			var level = { x:0, y:0, z:0, ox:800, oy:0, oz:600, firstDraw:false };
+			var cfg = { speed:0.25, maxSpeed:5, posY:100 };
 			var cam = { horizontal:90, vertical:90, distance:1 };
 
 			var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
 			var key = { front:false, back:false, left:false, right:false, jump:false, crouch:false };
 			var ease = { x:0, y:0, z:0};
 			var easeRot = { x:0, y:0, z:0, deg:0 };
-			var mouse = { x:0, y:0, down:false, ox:0, oy:0, h:0, v:0 };
+			var mouse = { x:0, y:0, down:false, ox:0, oy:0, h:0, v:0, mx:0, my:0 };
 
 			var Colors= [0x48608c, 0x48608c, 0xAAAAAA];
 			//---------- Bakground, Ambient, Specular
@@ -96,7 +100,10 @@
 			var tmpImage, tmpZone;
 			var mapTest, ctxTest;
 			var mapTest2, ctxTest2;
-
+			var renderLoop;
+			var projector, raycaster;
+			var INTERSECTED;
+			var effect;
 
 			var imgrender
 			var player;
@@ -105,19 +112,21 @@
 			var sky, skyCube;
 			var ambient, hemiLight, spotLight, pointLight;
 			var map, ctx;
-			var map2, ctx2;
+			var marker;
+			//var map2, ctx2;
 			var map3, ctx3;
 			var debug;
 			var materials = [];
 			var meshs = [];
 
-			var isRotate = false;
+			//var isRotate = false;
 			var isFirstShoot = true;
 			var isAutoRender = false;
-			var textures;
+			
 			var imageNames = ["house.jpg", "toit.jpg", "intern.jpg","balcon.png"]
 			var isMapLoaded = false;
 			var imLoader = 0;
+			var textures;
 
 			
 			function init() {
@@ -127,31 +136,27 @@
 			}
 
 			function preLoadBitmap(){
-				var i;
 				var path = "res/textures/house/";
 				textures = [];
-				for( i = 0; i < imageNames.length; i++){
+				for(var i = 0; i < imageNames.length; i++){
 				    textures[i] = THREE.ImageUtils.loadTexture(path + imageNames[i], {}, function() {imLoader++}) ;
 				}
 				init();
 			}
 
-
 			//-----------------------------------------------------
 			//  THREE INIT
 			//-----------------------------------------------------
 			
-
 			function changelens() {
-				//var w, h;
 				var camFactor = 1;
 				var w = position.value;
-				var h = position.value;
 				miniCamera.left = -w / camFactor;
                 miniCamera.right = w / camFactor;
-                miniCamera.top = h / camFactor;
-                miniCamera.bottom = -h / camFactor;
+                miniCamera.top = w / camFactor;
+                miniCamera.bottom = -w / camFactor;
                 miniCamera.updateProjectionMatrix();
+                miniRenderer.render( miniScene, miniCamera);
 			}
 
 			function initMini() {
@@ -183,9 +188,7 @@
                 // get collision color
                 miniRenderer.render( miniScene, miniCamera);
                 var pixelbg = ctx2.getImageData(128, 128, 1, 1);
-                cc = {r:pixelbg.data[0], g:pixelbg.data[1], b:pixelbg.data[2], a:pixelbg.data[3]}
-
-
+                cc = {r:pixelbg.data[0], g:pixelbg.data[1], b:pixelbg.data[2], a:pixelbg.data[3]};
 			}
 
 			function init3D() {
@@ -198,11 +201,21 @@
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
 				renderer.shadowMapEnabled = true;
-
-				camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
+				//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
 				scene = new THREE.Scene();
+
+
+				camera = new THREE.PerspectiveCamera( 60, vsize.z, 1, FAR );
 				scene.add(camera);
+
+				
+				projector = new THREE.Projector();
+				raycaster = new THREE.Raycaster();
+				
+
+				content =new THREE.Object3D();
+				scene.add(content);
 
 				player =new THREE.Object3D();
 				scene.add(player);
@@ -241,6 +254,9 @@
 				//player.add(spotLight);
 				scene.add(spotLight);
 
+				marker = new THREE.Mesh( new THREE.SphereGeometry(10), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+				scene.add(marker);
+
 				addSkyBox();
 
 				initMaterial();
@@ -261,6 +277,8 @@
 				document.addEventListener( 'mouseup', onMouseUp, false );
 
 				initSea3DMesh();
+
+				//occEffect();
 			}
 
 			function onWindowResize() {
@@ -268,7 +286,11 @@
 				camera.aspect = vsize.z;
 				camera.updateProjectionMatrix();
 				renderer.setSize( vsize.x, vsize.y );
-				if(!isAutoRender)renderer.render( scene, camera );
+				if(effect)effect.setSize(  vsize.x, vsize.y );
+				if(!isAutoRender){
+					if(effect) effect.render( scene, camera );
+				    else renderer.render( scene, camera );
+				}
 			}
 
 			//-----------------------------------------------------
@@ -315,6 +337,28 @@
 				Colors[2] = cc[3];
 			}
 
+			function occulusEffect(){
+				// Here is the effect for the Oculus Rift
+				// worldScale 100 means that 100 Units == 1m
+				if(effect == null){
+					effect = new THREE.OculusRiftEffect( renderer, {worldScale: 100} );
+					effect.setSize( vsize.x, vsize.y );
+				}else{
+					//
+					//camera.matrixAutoUpdate = true;
+					//
+					effect.dispose();
+
+
+					effect = null;
+					camera.updateMatrix();
+					camera.matrixWorldNeedsUpdate = true;
+
+				}
+				onWindowResize();
+
+			}
+
 			//-----------------------------------------------------
 			//
 			//  RENDER LOOP
@@ -331,6 +375,7 @@
 				//camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
 				//camera.lookAt( player.position );
 
+
 				if(isAutoRender)renderer.render( scene, camera );
 				else {if(imLoader == 5 && !isMapLoaded){ renderer.render( scene, camera ); isMapLoaded = true;}}
 
@@ -338,9 +383,46 @@
 
 				stats.update();
 
-				tell(imLoader)
-
 			}
+
+			function rayTest() {
+				//tell( mouse.x +"/"+ mouse.y+"   "+ content.children.length);
+				if ( content.children.length > 0 ) {
+				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+				projector.unprojectVector( vector, camera );
+				raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+				var intersects = raycaster.intersectObjects( content.children );
+				//tell( roundD(mouse.mx) +"/"+ roundD(mouse.my)+"   "+intersects.length);
+				if ( intersects.length > 0 ) {
+					marker.position.x = intersects[0].point.x;
+					marker.position.y = intersects[0].point.y;
+					marker.position.z = intersects[0].point.z;
+
+
+				   /* if ( INTERSECTED != intersects[ 0 ].object ){
+				    	if ( INTERSECTED ){ tell(INTERSECTED.name);}
+				    	INTERSECTED = intersects[ 0 ].object;
+				    }
+			    } else {
+				    INTERSECTED = null;*/
+			    }
+			}
+			}
+			
+			function startRender() {
+		        if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( update3D ); }, 1000 / 60 );
+	        }
+
+	        function stopRender() {
+	        	if(renderLoop) {clearInterval(renderLoop); renderLoop = null;}
+         	}
+			
+			function update3D(e) {
+			    camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
+				camera.lookAt( player.position );
+				if(effect) effect.render( scene, camera );
+				else renderer.render( scene, camera );
+         	}
 
 			//-----------------------------------------------------
 			//  PLAYER MOVE
@@ -349,16 +431,12 @@
 			function move() {
 				easeRot.y = degToRad(cam.horizontal);
 				var rot = rotFromDeg(Math.round(cam.horizontal));
+
 				//acceleration
 				if (key.front) ease.z += cfg.speed;
 				if (key.back) ease.z -= cfg.speed;
 				if (key.left) ease.x += cfg.speed;
 				if (key.right) ease.x -= cfg.speed;
-
-				/*if (key.front && !lock.f) ease.z += cfg.speed;
-				if (key.back && !lock.b) ease.z -= cfg.speed;
-				if (key.left && !lock.l) ease.x += cfg.speed;
-				if (key.right && !lock.r) ease.x -= cfg.speed;*/
 				  
 				//speed limite
 				if (ease.x > cfg.maxSpeed) ease.x = cfg.maxSpeed;
@@ -366,13 +444,7 @@
 				if (ease.z > cfg.maxSpeed) ease.z = cfg.maxSpeed;
 				if (ease.z < -cfg.maxSpeed) ease.z = -cfg.maxSpeed;
 
-				/*if (ease.z > 0) if(lock.f || lock.fl || lock.fr) ease.z = 0.001;
-				if (ease.z < 0) if(lock.b || lock.bl || lock.br) ease.z = 0.001;
-				if (ease.x > 0) if(lock.l || lock.fl || lock.bl) ease.x = 0.001;
-				if (ease.x < 0) if(lock.r || lock.fr || lock.br) ease.x = 0.001;
-*/
-
-				//break
+				//deceleration
 				if (!key.front && !key.back) {
 					if (ease.z > cfg.speed) ease.z -= cfg.speed;
 					else if (ease.z < -cfg.speed) ease.z += cfg.speed;
@@ -383,107 +455,55 @@
 					else if (ease.x < -cfg.speed) ease.x += cfg.speed;
 					else ease.x = 0;
 				}
-
-				/*if (ease.z > 0 && lock.front) ease.z = 0;
-				if (ease.z < 0 && lock.back) ease.z = 0;
-				if (ease.x > 0 && lock.left) ease.x = 0;
-				if (ease.x < 0 && lock.right) ease.x = 0;*/
-				//ease.ox = ease.x;
-				//ease.oz = ease.z;
 				
-				// stop move
-				if (ease.x == 0 && ease.z == 0 && !isRotate && level.firstDraw) return;
+				// stop if no move
+				if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw) return;
 
 				// find direction of player
 				easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
 				easeRot.z = Math.cos(easeRot.y) * ease.x - Math.sin(easeRot.y) * ease.z;
 
+				// new position
 				level.x = roundD(level.ox-easeRot.x);
 				level.z = roundD(level.oz+easeRot.z);
 
-				// pixel collision
-				//var cx = false;
-				//var cz = false;
-			/*	if(rot > 67.5 && rot < 112.5){
-					if(level.z < level.oz) if(lock.f) cz = true;//level.oz = level.z;
-					if(level.z > level.oz) if(lock.b) cz = true;//level.oz = level.z;
-					if(level.x < level.ox) if(lock.l) cx = true;//level.ox = level.x;
-					if(level.x > level.ox) if(lock.r) cx = true; //level.ox = level.x;
-				} else if (rot < 67.5 && rot > 22.5){
-					if(level.z < level.oz) if(lock.fl) cz = true;//level.oz = level.z;
-					if(level.z > level.oz) if(lock.br) cz = true;//level.oz = level.z;
-					if(level.x < level.ox) if(lock.bl) cx = true;//level.ox = level.x;
-					if(level.x > level.ox) if(lock.fr) cx = true;
-				}*/
-				drawMap();
+				// update 2d map
+				//drawMap();
+
+				// test pixel collision
+				var nohitx = false;
+				var nohitz = false;
 
 				if(rot >= 45 && rot <= 135){
-					if(level.z < level.oz) if(!lock.f && !lock.fl && !lock.fr) level.oz = level.z;
-					if(level.z > level.oz) if(!lock.b && !lock.bl && !lock.br) level.oz = level.z;
-					if(level.x < level.ox) if(!lock.l && !lock.fl && !lock.bl) level.ox = level.x;
-					if(level.x > level.ox) if(!lock.r && !lock.fr && !lock.br) level.ox = level.x;
+					if(level.z < level.oz) if(!lock.f && !lock.fl && !lock.fr) nohitz = true;
+					if(level.z > level.oz) if(!lock.b && !lock.bl && !lock.br) nohitz = true;
+					if(level.x < level.ox) if(!lock.l && !lock.fl && !lock.bl) nohitx = true;
+					if(level.x > level.ox) if(!lock.r && !lock.fr && !lock.br) nohitx = true;
 				} else if (rot <= -45 && rot >= -135){
-					if(level.z > level.oz) if(!lock.f && !lock.fl && !lock.fr) level.oz = level.z;
-					if(level.z < level.oz) if(!lock.b && !lock.bl && !lock.br) level.oz = level.z;
-					if(level.x > level.ox) if(!lock.l && !lock.fl && !lock.bl) level.ox = level.x;
-					if(level.x < level.ox) if(!lock.r && !lock.fr && !lock.br) level.ox = level.x;
+					if(level.z > level.oz) if(!lock.f && !lock.fl && !lock.fr) nohitz = true;
+					if(level.z < level.oz) if(!lock.b && !lock.bl && !lock.br) nohitz = true;
+					if(level.x > level.ox) if(!lock.l && !lock.fl && !lock.bl) nohitx = true;
+					if(level.x < level.ox) if(!lock.r && !lock.fr && !lock.br) nohitx = true;
 				} else if (rot < 45 && rot > -45){
-					if(level.z > level.oz) if(!lock.l && !lock.fl && !lock.bl) level.oz = level.z;
-					if(level.z < level.oz) if(!lock.r && !lock.fr && !lock.br) level.oz = level.z;
-					if(level.x < level.ox) if(!lock.f && !lock.fl && !lock.fr) level.ox = level.x;
-					if(level.x > level.ox) if(!lock.b && !lock.bl && !lock.br) level.ox = level.x;
+					if(level.z > level.oz) if(!lock.l && !lock.fl && !lock.bl) nohitz = true;
+					if(level.z < level.oz) if(!lock.r && !lock.fr && !lock.br) nohitz = true;
+					if(level.x < level.ox) if(!lock.f && !lock.fl && !lock.fr) nohitx = true;
+					if(level.x > level.ox) if(!lock.b && !lock.bl && !lock.br) nohitx = true;
 				} else {
-					if(level.z < level.oz) if(!lock.l && !lock.fl && !lock.bl) level.oz = level.z;
-					if(level.z > level.oz) if(!lock.r && !lock.fr && !lock.br) level.oz = level.z;
-					if(level.x > level.ox) if(!lock.f && !lock.fl && !lock.fr) level.ox = level.x;
-					if(level.x < level.ox) if(!lock.b && !lock.bl && !lock.br) level.ox = level.x;
+					if(level.z < level.oz) if(!lock.l && !lock.fl && !lock.bl) nohitz = true;
+					if(level.z > level.oz) if(!lock.r && !lock.fr && !lock.br) nohitz = true;
+					if(level.x > level.ox) if(!lock.f && !lock.fl && !lock.fr) nohitx = true;
+					if(level.x < level.ox) if(!lock.b && !lock.bl && !lock.br) nohitx = true;
 				}
 
-				//if(!cx)level.ox = level.x;
-				//if(!cz)level.oz = level.z;
-				/* else{
+				if(nohitx)level.ox = level.x;
+				if(nohitz)level.oz = level.z;
 
-					level.oz = level.z;
-					level.ox = level.x;
-				}*/
+				playerPos.x = level.ox;
+				playerPos.z = level.oz;
 
-
-				//if(!lock.x)
-					//level.x -=  easeRot.x;//*cfg.mapSize;
-				//if(!lock.z)
-					//level.z +=  easeRot.z;//*cfg.mapSize;
-
-				//level.x = roundD(level.x-easeRot.x);
-				//level.z = roundD(level.z+easeRot.z);
-
-				
-
-				//if(level.z > level.oz) if(!lock.l || !lock.fl || !lock.bl)  level.oz = level.z;
-			    //if(level.z < level.oz) if(!lock.r || !lock.fr || !lock.br) 
-			    	//level.oz = level.z;
-
-				//if(level.x < level.ox) if(!lock.f || !lock.fl || !lock.fr) level.ox = level.x;
-			   // else if(level.x > level.ox) if(!lock.b || !lock.bl || !lock.br) 
-			    	//level.ox = level.x;
-					// level.ox = level.x;
-
-
-
-				/*if (ease.z > 0) if(lock.f || lock.fl || lock.fr) ease.z = 0;
-				if (ease.z < 0) if(lock.b || lock.bl || lock.br) ease.z = 0;
-				if (ease.x > 0) if(lock.l || lock.fl || lock.bl) ease.x = 0;
-				if (ease.x < 0) if(lock.r || lock.fr || lock.br) ease.x = 0;
-				*/
-
-
-				//level.ox = roundD(level.x);
-				//level.oz = roundD(level.z);
-
-				playerPos.x = level.ox;//roundD(level.x);
-				playerPos.z = level.oz;//roundD(level.z);
-				
-
-				//drawMap();
+				// update 2d map
+				drawMap();
 
 				if(level.oy !== level.y ){
 					tween = new TWEEN.Tween( { control: level.oy }).to( { control:level.y} , 100 ).easing( TWEEN.Easing.Linear.None );
@@ -495,30 +515,20 @@
 			    playerCam.position.z = playerPos.z;
 				playerCam.rotation.y = -easeRot.y;
 
-			    //drawMap();
-
-			  //  level.ox = level.x;
-				//level.oz = level.z;
-			    
-
 				player.position.copy(playerPos);
 				sky.position.copy(playerPos);
 
-				//if (ease.z > 0 && lock.f) ease.z = 0;
-				//if (ease.z < 0 && lock.b) ease.z = 0;
-				//if (ease.x > 0 && lock.l) ease.x = 0;
-				//if (ease.x < 0 && lock.r) ease.x = 0;
-
-				/*if (ease.z > 0) if(lock.f || lock.fl || lock.fr) ease.z = 0;
-				if (ease.z < 0) if(lock.b || lock.bl || lock.br) ease.z = 0;
-				if (ease.x > 0) if(lock.l || lock.fl || lock.bl) ease.x = 0;
-				if (ease.x < 0) if(lock.r || lock.fr || lock.br) ease.x = 0;*/
-
-				
 				camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
 				camera.lookAt( player.position );
 
-				if(!isAutoRender) renderer.render( scene, camera );
+				rayTest();
+
+				
+
+				if(!isAutoRender){
+					if(effect) effect.render( scene, camera );
+				    else renderer.render( scene, camera );
+				}
 				
 
 				//tell("x:"+parseInt(level.x)+" y:" + parseInt(level.y) + " z:"+ parseInt(level.z) + " h:" +  parseInt(cam.horizontal) + " v:" +  parseInt(cam.vertical));
@@ -526,8 +536,6 @@
 				//tell( roundD(easeRot.x)+"/"+ roundD(easeRot.z)+"||"+playerPos.x+"/"+playerPos.z);
 				//tell(rot+'/'+easeRot.y)
 			}
-
-			
 
 			function initPlayer() {
 				//level.ox = level.x;
@@ -544,6 +552,8 @@
 			//-----------------------------------------------------
 
 			function onMouseDown( e ) {
+				mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+				mouse.my = - ( e.clientY / vsize.y ) * 2 + 1;
 				mouse.ox = e.clientX;
 				mouse.oy = e.clientY;
 				mouse.h = cam.horizontal;
@@ -553,19 +563,20 @@
 
 			function onMouseUp( e ) {
 				mouse.down = false;
-				isRotate = false;
+				//isRotate = false;
 			}
 
 			function onMouseMove( e ) {
+				//e.preventDefault();
+				mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+				mouse.my = - ( e.clientY / vsize.y ) * 2 + 1;
+
 				if(mouse.down){
 					mouse.x = e.clientX;
 				    mouse.y = e.clientY;
 					cam.horizontal =((mouse.x - mouse.ox)*0.3) + mouse.h;
 					cam.vertical = (-(mouse.y - mouse.oy)*0.1) + mouse.v;
-
-					isRotate = true;
-
-					//drawMap();
+					//isRotate = true;
 				}
 			}
 
@@ -605,19 +616,17 @@
 					for (i=0; i < loader.meshes.length; i++){
 						meshs[i] = loader.meshes[i];
 					}
-				    addSea3DMesh()
+				    addSea3DMesh();
 				};
 				loader.load( 'res/models/house.sea' );
 			}
-
-			
 
 			function addSea3DMesh() {
 				var geometry;
 				var material;
 				var mesh;
-				var scale = 0.73;
-				var i;
+				var scale = 1//0.73;
+				var i, j;
 
                 // add to mini
 				for(i=0; i< meshs.length; i++){
@@ -628,9 +637,10 @@
 						miniScene.add( heightMesh );
 					}
 				}
-				// add to scene
+				// add to content
 				for(i=0; i< meshs.length; i++){
 					if(meshs[i].name !== "height"){
+						//meshs[i].scale.set( scale, scale, -scale );
 						geometry = meshs[i].geometry;
 						if(meshs[i].name == "house" || meshs[i].name == "house_ch" ) material = materials[0];
 						else if(meshs[i].name == "toit") material = materials[1];
@@ -639,15 +649,27 @@
 						else if(meshs[i].name == "windows") material = materials[4];
 						else if(meshs[i].name == "cadres") material = materials[5];
 						else if(meshs[i].name == "wall") material = materials[6];
-						
+
+						for( j = 0; j < geometry.vertices.length; j++) {
+							var vertex	= geometry.vertices[j];
+							vertex.x *= scale;
+							vertex.y *= scale;
+							vertex.z *= -scale;
+						}
+						geometry.computeFaceNormals();
+
+						//geometry.computeVertexNormals();
+						//geometry.verticesNeedUpdate = true;
+
 						mesh = new THREE.Mesh( geometry, material );
-					    mesh.scale.set( scale, scale, -scale );
+						//mesh = THREE.SceneUtils.cloneObject(objectProto);
+						//mesh.updateMatrix();
+					    //mesh.scale.set( scale, scale, -scale );
 					    mesh.receiveShadow = true;
 					    mesh.castShadow = true;
-					    scene.add( mesh );
+					    content.add( mesh );
 					}
 				}
-
 				animate();
 			}
 
@@ -656,11 +678,6 @@
 			//-----------------------------------------------------
 
 			function initMaterial() {
-				/*materials[0] = makeMaterial({ map:"house.jpg", bump:true, bumpScale:3, shininess:10 });
-				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:5, shininess:60 });
-				materials[2] = makeMaterial({ map:"intern.jpg", bump:true, bumpScale:2, shininess:10 });
-				materials[3] = makeMaterial({ map:"balcon.png", bump:true, bumpScale:2, shininess:10 , transparent:true, side:THREE.DoubleSide});*/
-
 				materials[0] = makeMaterial({ map:textures[0], bump:true, bumpScale:3, shininess:10 });
 				materials[1] = makeMaterial({ map:textures[1], bump:true, bumpScale:5, shininess:60 });
 				materials[2] = makeMaterial({ map:textures[2], bump:true, bumpScale:2, shininess:10 });
@@ -670,10 +687,6 @@
 				materials[6] = makeMaterial({ color:0x909090 }); // wall
 
 				// collision Material
-				//materials[7] = new THREE.MeshBasicMaterial( { color: 0xff0000, overdraw:true, shading: THREE.FlatShading } );
-				// height Material
-				//materials[8] = new THREE.MeshDepthMaterial( { overdraw:true, shading: THREE.FlatShading } )
-				//materials[8] = new THREE.MeshBasicMaterial( {  depthWrite: false, overdraw:true, shading: THREE.NoShading, transparent: false} );
 				materials[7] = new THREE.MeshBasicMaterial( {  overdraw:true, shading: THREE.FlatShading} );
 				createHeightGradMaterial();
 			}
@@ -684,7 +697,7 @@
 
 				if(data.map) {
 					//map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
-					mmap = data.map;//THREE.ImageUtils.loadTexture( 'res/textures/house/'+ data.map );
+					mmap = data.map;
 				    mmap.repeat.set( 1, -1 );
 				    mmap.wrapS = mmap.wrapT = THREE.RepeatWrapping;
 				    mmap.anisotropy = renderer.getMaxAnisotropy();
@@ -737,9 +750,6 @@
 			//  MAP 2D
 			//-----------------------------------------------------
 
-			
-
-
 			function drawMap(){
 				if(px.space == 0) setMapTestSize(8);
 
@@ -762,7 +772,9 @@
 				if(ctxTest)drawMapTest();
 
 				// height
-			    level.y  = roundD(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*0.6)-130);
+			   // level.y  = roundD(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*0.6)-130);
+			    level.y  = roundD(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180);
+
 
 				if(!level.firstDraw){
 					initPlayer();
@@ -818,18 +830,12 @@
 			    mapTest.style.left =  "130px";
 			    mapTest.style.position = "absolute";
 			    ctxTest = mapTest.getContext("2d");
-			  // ctxTest.width = 32
-			   /* ctxTest.strokeStyle = 'black';
-			    ctxTest.lineWidth = 2;
-			    ctxTest.rect(0,0, 16, 16);
-			    ctxTest.stroke();*/
 
 			    mapTest2 = document.getElementById("mapTest2");
 			    mapTest2.style.bottom = "106px";
 			    mapTest2.style.left =  "106px";
 			    mapTest2.style.position = "absolute";
 			    ctxTest2 = mapTest2.getContext("2d");
-
 			}
 
 			function drawMapTest() {
@@ -837,39 +843,21 @@
 				var id = ctxTest.createImageData(16,16);
 				var d  = id.data;
 				for (var i= 0; i<d.length;i++){ d[i] = 0;}
-				//for (var j= 0; j<d.length/4;j++){ d[(j*4)+3] = 0;}
-				if(lock.f) dp(d, px.f);//d[px.f] = 255;
-			    if(lock.b) dp(d, px.b);///d[px.b] = 255;
-			    if(lock.l) dp(d, px.l);//d[px.l] = 255;
-			    if(lock.r) dp(d, px.r);//d[px.r] = 255;
+				if(lock.f) dp(d, px.f);
+			    if(lock.b) dp(d, px.b);
+			    if(lock.l) dp(d, px.l);
+			    if(lock.r) dp(d, px.r);
 
-			    if(lock.fl) dp(d, px.fl);//d[px.fl] = 255;
-			    if(lock.fr) dp(d, px.fr);//d[px.fr] = 255;
-			    if(lock.bl) dp(d, px.bl);//d[px.bl] = 255;
-			    if(lock.br) dp(d, px.br);//d[px.br] = 255;
+			    if(lock.fl) dp(d, px.fl);
+			    if(lock.fr) dp(d, px.fr);
+			    if(lock.bl) dp(d, px.bl);
+			    if(lock.br) dp(d, px.br);
 				ctxTest.putImageData( id, 0, 0); 
 
-				//var Ti = ctxTest.getImageData(0, 0, 16, 16);
 				ctxTest2.clearRect ( 0 , 0 , 64 , 64 );
 				ctxTest2.drawImage(mapTest, 0, 0, 64, 64);
-
-				/*ctxTest.strokeStyle = 'black';
-			    ctxTest.lineWidth = 2;
-			    ctxTest.rect(0,0, 16, 16);
-			    ctxTest.stroke();*/
-				//
-
-
-
-
-			/*	if(lock.f) drawPixel(true, px.f/4);
-				else drawPixel(false, px.f/4);
-
-				if(lock.b) drawPixel(true, px.b/4);
-				else drawPixel(false, px.b/4);*/
-
-
 			}
+
 			function dp(d, p) {
 				d[p] = 255;
 				d[p+1] = 255;
@@ -877,7 +865,7 @@
 			}
 
 			function drawPlayer(ctx) {
-			    ctx.fillStyle = "rgba(255,255,200,0.2)";;
+			    ctx.fillStyle = "rgba(255,255,200,0.2)";
 			    ctx.globalAlpha = 1.0;
 			    ctx.beginPath();
 			    ctx.moveTo(0, 0);
@@ -904,6 +892,11 @@
                 home.style.position = "absolute";
                 home.style.top = "10px";
                 home.style.left = "10px";
+
+                var occ = document.getElementById("occ");
+                occ.style.position = "absolute";
+                occ.style.top = "74px";
+                occ.style.left = "10px";
 
                 var option = document.getElementById("option");
                 option.style.position = "absolute";
