@@ -75,10 +75,11 @@
 		<script src="js/libs/stats.min.js"></script>
 
 		<script src="js/effects/OculusRiftEffect.js"></script>
+		<script src="js/greensock/TweenLite.min.js"></script>
 
 		<script>
 		    var FAR = 4000;
-			var camera, scene, renderer, content;
+			var camera, scene, renderer, content, bulletContent;
 			var miniCamera, miniScene, miniRenderer, firstRenderTarget;
 			var level = { x:0, y:0, z:0, ox:800, oy:0, oz:600, firstDraw:false };
 			var cfg = { speed:0.25, maxSpeed:5, posY:100 };
@@ -217,6 +218,9 @@
 				content =new THREE.Object3D();
 				scene.add(content);
 
+				bulletContent =new THREE.Object3D();
+				scene.add(bulletContent);
+
 				player =new THREE.Object3D();
 				scene.add(player);
 				
@@ -254,7 +258,7 @@
 				//player.add(spotLight);
 				scene.add(spotLight);
 
-				marker = new THREE.Mesh( new THREE.SphereGeometry(10), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+				marker = new THREE.Mesh( new THREE.SphereGeometry(2,6,6), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
 				scene.add(marker);
 
 				addSkyBox();
@@ -356,7 +360,6 @@
 
 				}
 				onWindowResize();
-
 			}
 
 			//-----------------------------------------------------
@@ -385,7 +388,7 @@
 
 			}
 
-			function rayTest() {
+			function rayTest(sh) {
 				//tell( mouse.x +"/"+ mouse.y+"   "+ content.children.length);
 				if ( content.children.length > 0 ) {
 				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
@@ -397,6 +400,8 @@
 					marker.position.x = intersects[0].point.x;
 					marker.position.y = intersects[0].point.y;
 					marker.position.z = intersects[0].point.z;
+
+					if(sh)shoot();
 
 
 				   /* if ( INTERSECTED != intersects[ 0 ].object ){
@@ -457,7 +462,7 @@
 				}
 				
 				// stop if no move
-				if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw) return;
+				if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw && !isOnFire) return;
 
 				// find direction of player
 				easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
@@ -547,6 +552,40 @@
 				//player.position.copy(playerPos);
 			}
 
+
+			var bullets = [];
+			var tween = [];
+			var numBullet=0;
+			var obj = [];
+			var isOnFire = false;
+
+			function shoot() {
+				var n = numBullet;
+				bullet = new THREE.Mesh( new THREE.SphereGeometry(5,6,6), new THREE.MeshLambertMaterial( { color: 0xff0000 } ) );
+				bulletContent.add(bullet);
+				obj[n] = {x:playerPos.x, y:playerPos.y, z:playerPos.z};
+				bullets[n]= bullet;
+
+				TweenLite.to(obj[n], 0.5, {x:marker.position.x,y:marker.position.y,z: marker.position.z,
+					onUpdate:updateHandler,
+					onUpdateParams:[n],
+					onComplete:completeHandler, 
+					onCompleteParams:[n]
+				});
+				numBullet++;
+			}
+
+			function updateHandler(n) {
+				isOnFire=true;
+				bullets[n].position.x = obj[n].x;
+				bullets[n].position.y = obj[n].y;
+				bullets[n].position.z = obj[n].z;
+			}
+
+			function completeHandler(n) {
+				isOnFire=false;
+			}
+
 			//-----------------------------------------------------
 			//  MOUSE
 			//-----------------------------------------------------
@@ -559,6 +598,9 @@
 				mouse.h = cam.horizontal;
 				mouse.v = cam.vertical;
 				mouse.down = true;
+
+				rayTest(true);
+				
 			}
 
 			function onMouseUp( e ) {
@@ -630,10 +672,10 @@
 
                 // add to mini
 				for(i=0; i< meshs.length; i++){
-					geometry = meshs[i].geometry;
 					if(meshs[i].name == "height"){
+						geometry = meshs[i].geometry;
+						scaleGeometry(geometry, scale);
 						heightMesh = new THREE.Mesh( geometry, materials[7] );
-					    heightMesh.scale.set( scale, scale, -scale );
 						miniScene.add( heightMesh );
 					}
 				}
@@ -650,27 +692,28 @@
 						else if(meshs[i].name == "cadres") material = materials[5];
 						else if(meshs[i].name == "wall") material = materials[6];
 
-						for( j = 0; j < geometry.vertices.length; j++) {
-							var vertex	= geometry.vertices[j];
-							vertex.x *= scale;
-							vertex.y *= scale;
-							vertex.z *= -scale;
-						}
-						geometry.computeFaceNormals();
-
-						//geometry.computeVertexNormals();
-						//geometry.verticesNeedUpdate = true;
+						scaleGeometry(geometry, scale);
 
 						mesh = new THREE.Mesh( geometry, material );
-						//mesh = THREE.SceneUtils.cloneObject(objectProto);
-						//mesh.updateMatrix();
-					    //mesh.scale.set( scale, scale, -scale );
 					    mesh.receiveShadow = true;
 					    mesh.castShadow = true;
 					    content.add( mesh );
 					}
 				}
 				animate();
+			}
+
+			function scaleGeometry(geometry, scale) {
+				for( var i = 0; i < geometry.vertices.length; i++) {
+					var vertex	= geometry.vertices[i];
+					vertex.x *= scale;
+					vertex.y *= scale;
+					vertex.z *= -scale;
+				}
+				geometry.computeFaceNormals();
+
+				geometry.computeVertexNormals();
+				geometry.verticesNeedUpdate = true;
 			}
 
 			//-----------------------------------------------------
