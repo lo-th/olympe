@@ -75,10 +75,11 @@
 		<script src="js/libs/stats.min.js"></script>
 
 		<script src="js/effects/OculusRiftEffect.js"></script>
+		<script src="js/greensock/TweenLite.min.js"></script>
 
 		<script>
 		    var FAR = 4000;
-			var camera, scene, renderer, content;
+			var camera, scene, renderer, content, bulletContent;
 			var miniCamera, miniScene, miniRenderer, firstRenderTarget;
 			var level = { x:0, y:0, z:0, ox:800, oy:0, oz:600, firstDraw:false };
 			var cfg = { speed:0.25, maxSpeed:5, posY:100 };
@@ -123,7 +124,7 @@
 			var isFirstShoot = true;
 			var isAutoRender = false;
 			
-			var imageNames = ["house.jpg", "toit.jpg", "intern.jpg","balcon.png"]
+			var imageNames = ["house.jpg", "toit.jpg", "intern.jpg", "balcon.png"]
 			var isMapLoaded = false;
 			var imLoader = 0;
 			var textures;
@@ -217,6 +218,9 @@
 				content =new THREE.Object3D();
 				scene.add(content);
 
+				bulletContent =new THREE.Object3D();
+				scene.add(bulletContent);
+
 				player =new THREE.Object3D();
 				scene.add(player);
 				
@@ -254,7 +258,11 @@
 				//player.add(spotLight);
 				scene.add(spotLight);
 
-				marker = new THREE.Mesh( new THREE.SphereGeometry(10), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+				//marker = new THREE.Mesh( new THREE.SphereGeometry(2,6,6), new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+				var geometry = new THREE.CylinderGeometry( 0, 3, 10, 3 );
+				geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 5, 0 ) );
+				geometry.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI / 2 ) );
+				marker = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
 				scene.add(marker);
 
 				addSkyBox();
@@ -262,12 +270,7 @@
 				initMaterial();
 
 				
-
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '10px';
-				stats.domElement.style.right = '10px';
-				document.body.appendChild(stats.domElement);
+				
 
 				window.addEventListener( 'resize', onWindowResize, false );
 				document.addEventListener( 'keydown', onKeyDown, false );
@@ -341,22 +344,13 @@
 				// Here is the effect for the Oculus Rift
 				// worldScale 100 means that 100 Units == 1m
 				if(effect == null){
-					effect = new THREE.OculusRiftEffect( renderer, {worldScale: 100} );
+					effect = new THREE.OculusRiftEffect( renderer, { worldScale: 100 } );
 					effect.setSize( vsize.x, vsize.y );
 				}else{
-					//
-					//camera.matrixAutoUpdate = true;
-					//
 					effect.dispose();
-
-
 					effect = null;
-					camera.updateMatrix();
-					camera.matrixWorldNeedsUpdate = true;
-
 				}
 				onWindowResize();
-
 			}
 
 			//-----------------------------------------------------
@@ -379,37 +373,27 @@
 				if(isAutoRender)renderer.render( scene, camera );
 				else {if(imLoader == 5 && !isMapLoaded){ renderer.render( scene, camera ); isMapLoaded = true;}}
 
-				//if(!level.firstDraw) drawMap()
-
 				stats.update();
 
 			}
 
-			function rayTest() {
-				//tell( mouse.x +"/"+ mouse.y+"   "+ content.children.length);
+			function rayTest(sh) {
 				if ( content.children.length > 0 ) {
-				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
-				projector.unprojectVector( vector, camera );
-				raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
-				var intersects = raycaster.intersectObjects( content.children );
-				//tell( roundD(mouse.mx) +"/"+ roundD(mouse.my)+"   "+intersects.length);
-				if ( intersects.length > 0 ) {
-					marker.position.x = intersects[0].point.x;
-					marker.position.y = intersects[0].point.y;
-					marker.position.z = intersects[0].point.z;
-
-
-				   /* if ( INTERSECTED != intersects[ 0 ].object ){
-				    	if ( INTERSECTED ){ tell(INTERSECTED.name);}
-				    	INTERSECTED = intersects[ 0 ].object;
+					var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+					projector.unprojectVector( vector, camera );
+					raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+					var intersects = raycaster.intersectObjects( content.children );
+					if ( intersects.length > 0 ) {
+						marker.position.set( 0, 0, 0 );
+						marker.lookAt(intersects[0].face.normal);
+						marker.position.copy( intersects[0].point );
+						
+						if(sh)shoot();
 				    }
-			    } else {
-				    INTERSECTED = null;*/
-			    }
-			}
+				}
 			}
 			
-			function startRender() {
+			/*function startRender() {
 		        if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( update3D ); }, 1000 / 60 );
 	        }
 
@@ -422,7 +406,7 @@
 				camera.lookAt( player.position );
 				if(effect) effect.render( scene, camera );
 				else renderer.render( scene, camera );
-         	}
+         	}*/
 
 			//-----------------------------------------------------
 			//  PLAYER MOVE
@@ -430,7 +414,7 @@
 
 			function move() {
 				easeRot.y = degToRad(cam.horizontal);
-				var rot = rotFromDeg(Math.round(cam.horizontal));
+				var rot = unwrapDegrees(Math.round(cam.horizontal));
 
 				//acceleration
 				if (key.front) ease.z += cfg.speed;
@@ -457,7 +441,7 @@
 				}
 				
 				// stop if no move
-				if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw) return;
+				if (ease.x == 0 && ease.z == 0 && !mouse.down && level.firstDraw && !isOnFire) return;
 
 				// find direction of player
 				easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
@@ -538,13 +522,54 @@
 			}
 
 			function initPlayer() {
-				//level.ox = level.x;
-			    //level.oz = level.z;
 				level.oy = level.y;
-				playerPos.z = level.oz// * cfg.worldSize;
-				playerPos.x = level.ox// * cfg.worldSize;
+				playerPos.z = level.oz;
+				playerPos.x = level.ox;
 				playerPos.y = level.y + cfg.posY;
-				//player.position.copy(playerPos);
+			}
+
+			//-----------------------------------------------------
+			//  BULLET
+			//-----------------------------------------------------
+
+			var bullets = [];
+			var obj = [];
+			var isOnFire = false;
+
+			function shoot() {
+				var n = bullets.length;
+				bullet = new THREE.Mesh( new THREE.SphereGeometry(3,6,6), materials[8] );
+				bulletContent.add(bullet);
+				obj[n] = {x:playerPos.x, y:playerPos.y, z:playerPos.z};
+				bullets[n]= bullet;
+
+				var distance = distanceTest(playerPos, marker.position);
+
+				TweenLite.to(obj[n], distance*0.001, {x:marker.position.x,y:marker.position.y,z: marker.position.z,
+					onUpdate:updateHandler,
+					onUpdateParams:[n],
+					onComplete:completeHandler, 
+					onCompleteParams:[n]
+				});
+			}
+
+			function updateHandler(n) {
+				isOnFire=true;
+				bullets[n].position.x = obj[n].x;
+				bullets[n].position.y = obj[n].y;
+				bullets[n].position.z = obj[n].z;
+			}
+
+			function completeHandler(n) {
+				setTimeout(function() {destroyBullet(n)}, 1000);
+			}
+
+			function destroyBullet(n) {
+				bulletContent.remove(bullets[n]);
+				bullets[n].geometry.dispose();
+				bullets.slice(n, 1);
+				obj.slice(n,1);
+				isOnFire=false;
 			}
 
 			//-----------------------------------------------------
@@ -559,6 +584,9 @@
 				mouse.h = cam.horizontal;
 				mouse.v = cam.vertical;
 				mouse.down = true;
+
+				rayTest(true);
+				
 			}
 
 			function onMouseUp( e ) {
@@ -630,10 +658,10 @@
 
                 // add to mini
 				for(i=0; i< meshs.length; i++){
-					geometry = meshs[i].geometry;
 					if(meshs[i].name == "height"){
+						geometry = meshs[i].geometry;
+						scaleGeometry(geometry, scale);
 						heightMesh = new THREE.Mesh( geometry, materials[7] );
-					    heightMesh.scale.set( scale, scale, -scale );
 						miniScene.add( heightMesh );
 					}
 				}
@@ -650,27 +678,29 @@
 						else if(meshs[i].name == "cadres") material = materials[5];
 						else if(meshs[i].name == "wall") material = materials[6];
 
-						for( j = 0; j < geometry.vertices.length; j++) {
-							var vertex	= geometry.vertices[j];
-							vertex.x *= scale;
-							vertex.y *= scale;
-							vertex.z *= -scale;
-						}
-						geometry.computeFaceNormals();
-
-						//geometry.computeVertexNormals();
-						//geometry.verticesNeedUpdate = true;
+						scaleGeometry(geometry, scale);
 
 						mesh = new THREE.Mesh( geometry, material );
-						//mesh = THREE.SceneUtils.cloneObject(objectProto);
-						//mesh.updateMatrix();
-					    //mesh.scale.set( scale, scale, -scale );
 					    mesh.receiveShadow = true;
 					    mesh.castShadow = true;
 					    content.add( mesh );
 					}
 				}
 				animate();
+			}
+
+			function scaleGeometry(geometry, scale) {
+				for( var i = 0; i < geometry.vertices.length; i++) {
+					var vertex	= geometry.vertices[i];
+					vertex.x *= scale;
+					vertex.y *= scale;
+					vertex.z *= -scale;
+				}
+				geometry.computeFaceNormals();
+
+				geometry.computeCentroids();
+				geometry.computeVertexNormals();
+				geometry.verticesNeedUpdate = true;
 			}
 
 			//-----------------------------------------------------
@@ -689,6 +719,10 @@
 				// collision Material
 				materials[7] = new THREE.MeshBasicMaterial( {  overdraw:true, shading: THREE.FlatShading} );
 				createHeightGradMaterial();
+
+				// bullet material
+				materials[8] = makeMaterial({ color:0x909090 });//, shading: THREE.FlatShading });
+				//materials[8] = new THREE.MeshBasicMaterial( {  color:0xFF3030, overdraw:true, shading: THREE.FlatShading} );
 			}
 
 			function makeMaterial (data){
@@ -714,6 +748,7 @@
 				if(data.transparent) material.transparent = data.transparent;
 				if(data.opacity) material.opacity = data.opacity;
 				if(data.side) material.side = data.side;
+				if(data.shading) material.shading = data.shading;
 
 				if(data.reflectivity){
 					material.envMap = skyCube; 
@@ -731,7 +766,7 @@
 				var ct = c.getContext("2d");
 				c.width = 16;
 				c.height = 256;
-				var gradient=ct.createLinearGradient(0,0,0,256);
+				var gradient = ct.createLinearGradient(0,0,0,256);
 				gradient.addColorStop("1","white");
 				gradient.addColorStop("0","black");
 				ct.fillStyle = gradient;
@@ -903,6 +938,12 @@
                 option.style.bottom = "300px";
                 option.style.left = "10px";
                 option.style.height = "10px";
+
+                stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '10px';
+				stats.domElement.style.right = '10px';
+				document.body.appendChild(stats.domElement);
 			}
 
 			function tell(Value) {
@@ -912,6 +953,10 @@
 			//-----------------------------------------------------
 			//  MATH
 			//-----------------------------------------------------
+
+			function distanceTest(p01, p02){
+				return Math.round(Math.sqrt(Math.pow(p01.x-p02.x,2)+Math.pow(p01.y-p02.y,2)+Math.pow(p01.z-p02.z,2)));	
+			}
 
 			function degToRad(Value) {
 				return Value * Math.PI / 180;
@@ -923,10 +968,10 @@
 			    return Math.round( nombre*tmp )/tmp;
 			}
 
-			function rotFromDeg( rot ){
-				var r = rot
-				while ( r > 180 ) r -= 360;
-				while ( r < -180 ) r += 360;
+			function unwrapDegrees(r){
+				r = r % 360;
+				if (r > 180) r -= 360;
+				if (r < -180) r += 360;
 				return r;
 			}
 
@@ -940,7 +985,7 @@
 				return p;
 			}
 
-			window.onload = preLoadBitmap;//init;
+			window.onload = preLoadBitmap;
 
 		</script>
 	</body>
