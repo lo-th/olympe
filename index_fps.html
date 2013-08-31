@@ -269,9 +269,6 @@
 
 				initMaterial();
 
-				
-				
-
 				window.addEventListener( 'resize', onWindowResize, false );
 				document.addEventListener( 'keydown', onKeyDown, false );
 				document.addEventListener( 'keyup', onKeyUp, false );
@@ -280,8 +277,6 @@
 				document.addEventListener( 'mouseup', onMouseUp, false );
 
 				initSea3DMesh();
-
-				//occEffect();
 			}
 
 			function onWindowResize() {
@@ -653,7 +648,7 @@
 				var geometry;
 				var material;
 				var mesh;
-				var scale = 1//0.73;
+				var scale = 1;
 				var i, j;
 
                 // add to mini
@@ -690,11 +685,12 @@
 			}
 
 			function scaleGeometry(geometry, scale) {
+				var s = 1 || scale;
 				for( var i = 0; i < geometry.vertices.length; i++) {
 					var vertex	= geometry.vertices[i];
-					vertex.x *= scale;
-					vertex.y *= scale;
-					vertex.z *= -scale;
+					vertex.x *= s;
+					vertex.y *= s;
+					vertex.z *= -s;
 				}
 				geometry.computeFaceNormals();
 

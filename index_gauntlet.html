@@ -495,11 +495,27 @@
 				//list += i + ":"+meshs[i].name+"<br>";
 			}
 			//tell(list);
+			reversWall();
 			intro3D();
 
 			document.getElementById("scoreboard").style.visibility = "visible";
 		};
 		loader.load( 'res/models/gauntlet_dog_nomat.sea' );
+	}
+
+	function scaleGeometry(geometry, scale) {
+		var s = 1 || scale;
+		for( var i = 0; i < geometry.vertices.length; i++) {
+			var vertex	= geometry.vertices[i];
+			vertex.x *= s;
+			vertex.y *= s;
+			vertex.z *= -s;
+		}
+		geometry.computeFaceNormals();
+
+		geometry.computeCentroids();
+		geometry.computeVertexNormals();
+		geometry.verticesNeedUpdate = true;
 	}
 
 	//===========================================================================
@@ -738,10 +754,18 @@
 		
 	}
 
+	function reversWall() {
+		var geo;
+		for(var i=0; i<16; i++){
+			geo = meshs[i].geometry;
+			scaleGeometry(geo);
+		}
+	}
+
 	function add3DWall(x, y, sx, sy) {
 		var geo = meshs[sx].geometry; // get reference wall * 16
 		var block = new THREE.Mesh( geo, materials[2]);
-		block.scale.set( 1, 1, -1 );
+		//block.scale.set( 1, 1, -1 );
 		block.position.set( x*32, 0, y*32 );
 		level.add(block);
 		block.castShadow = true;

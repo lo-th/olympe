@@ -58,10 +58,11 @@
 	
 	<script src='js/libs/dat.gui.min.js'></script>
 	<script src="js/libs/tween.min.js"></script>
+	<script src="js/greensock/TweenLite.min.js"></script>
 
 	<script>
 	    var vsize = { x:100, y:100, z:0 };
-	    var mouse = { x:0, y:0, move:true };
+	    var mouse = { x:0, y:0, move:true, mx:0, my:0 };
 
 	    var inRender = true, inResize = false, isNeedPause = false;
 	    var FAR = 2000;
@@ -71,15 +72,18 @@
 
 		var camera, controls, scene, renderer, composer, renderPass, delta;
 		var ambient, hemiLight, pointLight, pointLight0, light;
-		
+		var bulletContent;
+		var marker;
 		var clock = new THREE.Clock();
 		var ground;
 		var skyCube;
 
 		var tunnels = [];
 		var materials = []; 
+		var wallMaterial;
 		var center;
 		var level;
+		var projector, raycaster;
 
 		var gui;
 
@@ -135,6 +139,12 @@
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x000000 , 0, 900 );
 
+			projector = new THREE.Projector();
+			raycaster = new THREE.Raycaster();
+
+			bulletContent =new THREE.Object3D();
+			scene.add(bulletContent);
+
 			// CAMERA
 			camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
 			camera.position.z = 100;
@@ -150,6 +160,12 @@
 
 			initLightAndSky();
 
+			var geometry = new THREE.CylinderGeometry( 0, 0.2, 2, 3 );
+			geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 1, 0 ) );
+			geometry.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI / 2 ) );
+			marker = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+			scene.add(marker);
+
 
 			level = new THREE.Object3D();
 			scene.add(level);
@@ -158,12 +174,15 @@
 
 			
 
-			
+			wallMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xaaaaaa } );
+			bulletMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xFF0000 } );
 
 			importTunnel();
 
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
+
+		
 
 		//-----------------------------------------------------
 		//
@@ -177,6 +196,8 @@
 
 			TWEEN.update();
 
+
+
 			// sea update
 			/*
 			delta = clock.getDelta();
@@ -185,9 +206,14 @@
 
 			// camera update
 			if(camera)camera.lookAt(center);
+
+			//rayTest();
+
             if(pointLight)pointLight.position.set(center.x/3, -15+center.y/3,20);
 
 			if(tunnels[0])animTunnel();
+
+			updateBullet();
 
 			// render update
 			if(viewConfig.withEffect) composer.render(delta);
@@ -353,6 +379,75 @@
 			}
 		}
 
+		//-----------------------------------------------------
+		//  BULLET
+		//-----------------------------------------------------
+
+		var bullets = [];
+		var obj = [];
+		var isOnFire = false;
+		var playerPos = new THREE.Vector3(0,-25, 200);
+
+		function rayTest(sh) {
+			if ( level.children.length > 0 ) {
+				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+				projector.unprojectVector( vector, camera );
+				raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+				var intersects = raycaster.intersectObjects( level.children );
+				if ( intersects.length > 0 ) {
+					marker.position.set( 0, 0, 0 );
+					marker.lookAt(intersects[0].face.normal);
+					marker.position.copy( intersects[0].point );
+					
+					if(sh)shoot();
+			    }
+			}
+		}
+
+		function shoot() {
+			var n = bullets.length;
+			bullet = new THREE.Mesh( new THREE.SphereGeometry(1,6,6), bulletMaterial );
+			bulletContent.add(bullet);
+			obj[n] = {x:playerPos.x, y:playerPos.y, z:playerPos.z, move:true};
+			bullets[n]= bullet;
+
+			var distance = distanceTest(playerPos, marker.position);
+
+			TweenLite.to(obj[n], distance*0.001, {x:marker.position.x,y:marker.position.y,z: marker.position.z,
+				onUpdate:updateHandler,
+				onUpdateParams:[n],
+				onComplete:completeHandler, 
+				onCompleteParams:[n]
+			});
+		}
+
+		function updateHandler(n) {
+			isOnFire=true;
+			bullets[n].position.x = obj[n].x;
+			bullets[n].position.y = obj[n].y;
+			bullets[n].position.z = obj[n].z;
+		}
+
+		function completeHandler(n) {
+			obj[n].move = false;
+			setTimeout(function() {destroyBullet(n)}, 3000);
+		}
+
+		function destroyBullet(n) {
+			bulletContent.remove(bullets[n]);
+			bullets[n].geometry.dispose();
+			bullets.slice(n, 1);
+			obj.slice(n,1);
+			isOnFire=false;
+		}
+
+		function updateBullet() {
+			for(var i=0; i<bullets.length; i++){
+				if(!obj[i].move) bullets[i].position.z += viewConfig.speed;
+			}
+
+		}
+
 		
 		//-----------------------------------------------------
 		//
@@ -364,12 +459,18 @@
 
 			var loader = new THREE.SEA3D( false );
 			var size = 1;
+			var geo;
 			var i;
 
 			loader.onComplete = function( e ) {
 				for (i=0; i < loader.meshes.length; i++){
-					tunnels[i] = loader.meshes[i];
-					tunnels[i].scale.set( size, size, -size );
+					//tunnels[i] = loader.meshes[i];
+					//tunnels[i].scale.set( size, size, -size );
+
+					geo = loader.meshes[i].geometry;
+					scaleGeometry(geo);
+
+					tunnels[i] = new THREE.Mesh(geo, wallMaterial);
 					level.add( tunnels[i] );
 					tunnels[i].position.z = 200-(i*100);
 			    }
@@ -380,6 +481,21 @@
 
 			
 			loader.load( 'res/models/tunnel.sea' );
+		}
+
+		function scaleGeometry(geometry, scale) {
+			var s = 1 || scale;
+			for( var i = 0; i < geometry.vertices.length; i++) {
+				var vertex	= geometry.vertices[i];
+				vertex.x *= s;
+				vertex.y *= s;
+				vertex.z *= -s;
+			}
+			geometry.computeFaceNormals();
+
+			geometry.computeCentroids();
+			geometry.computeVertexNormals();
+			geometry.verticesNeedUpdate = true;
 		}
 
 
@@ -429,6 +545,11 @@
 		//  LISTENER
 		//-----------------------------------------------------
 		function onMouseDown( e ) {
+			mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+			mouse.my = - ( e.clientY / vsize.y ) * 2 + 1;
+			rayTest(true);
+
+
 			cursorImg.src = "res/img/cursor2.png";
 			//tell('shoot');
 		}
@@ -507,6 +628,9 @@
 		//-----------------------------------------------------
 		//  HUB
 		//-----------------------------------------------------
+		function distanceTest(p01, p02){
+			return Math.round(Math.sqrt(Math.pow(p01.x-p02.x,2)+Math.pow(p01.y-p02.y,2)+Math.pow(p01.z-p02.z,2)));	
+		}
 
 		function toRad(Value) {
 			return Value * Math.PI / 180;
