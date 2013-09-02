@@ -102,14 +102,12 @@
 			cursor.style.position = "absolute";
 			document.body.style.cursor = 'none';
 
-			document.addEventListener( 'mousemove', onMouseMove, false );
-			document.addEventListener( 'mousedown', onMouseDown, false );
-			document.addEventListener( 'mouseup', onMouseUp, false );
+			
 
 			addGUI();
 			addGUIView();
 
-			animate();
+			
 		}
 
 		function initScene3D() {
@@ -119,12 +117,12 @@
 			vsize.z = vsize.x / vsize.y;
 			
 			// RENDERER
-			renderer = new THREE.WebGLRenderer({ antialias: false });
+			renderer = new THREE.WebGLRenderer({ antialias: false, scale:2 });
 			renderer.setSize( vsize.x, vsize.y );
 
 			renderer.setClearColor( 0x000000, 1 );
 			renderer.shadowMapEnabled = true;
-			renderer.shadowMapCullFace = THREE.CullFaceBack;
+			//renderer.shadowMapCullFace = THREE.CullFaceBack;
 			//renderer.shadowMapSoft = true;
 			renderer.physicallyBasedShading = true;
 			renderer.gammaInput = true;
@@ -146,11 +144,13 @@
 			scene.add(bulletContent);
 
 			// CAMERA
-			camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
+			camera = new THREE.PerspectiveCamera( 70, vsize.z, .1, FAR );
+			camera.zoom = 2;
 			camera.position.z = 100;
 			camera.position.y = -25;
+			scene.add(camera);
 
-			center = new THREE.Vector3( 0,0,0 );
+			center = new THREE.Vector3( 0,0,-100 );
 			/*controls = new THREE.OrbitControls( camera, renderer.domElement );
 			controls.center.set( 0, -25, 0 );
 			controls.keys = [];
@@ -169,17 +169,24 @@
 
 			level = new THREE.Object3D();
 			scene.add(level);
+			level.frustumCulled = false;
 
 			if(viewConfig.withEffect)initComposer();
 
 			
 
-			wallMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xaaaaaa } );
+			wallMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xaaaaaa, overdraw: 0.5 } );
 			bulletMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xFF0000 } );
 
 			importTunnel();
 
 			window.addEventListener( 'resize', onWindowResize, false );
+
+			animate();
+
+			document.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mousedown', onMouseDown, false );
+			document.addEventListener( 'mouseup', onMouseUp, false );
 		}
 
 		
@@ -217,7 +224,7 @@
 
 			// render update
 			if(viewConfig.withEffect) composer.render(delta);
-			else if(renderer) renderer.render( scene, camera );
+			else renderer.render( scene, camera );
 		}
 
 
@@ -471,6 +478,8 @@
 					scaleGeometry(geo);
 
 					tunnels[i] = new THREE.Mesh(geo, wallMaterial);
+					tunnels[i].frustumCulled = false;
+					//tunnels[i].frustumCullingInheritsScale = false;
 					level.add( tunnels[i] );
 					tunnels[i].position.z = 200-(i*100);
 			    }
@@ -493,7 +502,7 @@
 			}
 			geometry.computeFaceNormals();
 
-			geometry.computeCentroids();
+			//geometry.computeCentroids();
 			geometry.computeVertexNormals();
 			geometry.verticesNeedUpdate = true;
 		}
@@ -517,7 +526,9 @@
 		//-----------------------------------------------------
 
 		function animTunnel(){
+			
 			level.position.z += viewConfig.speed;
+			tell(level.position.z)
 			if(level.position.z>100)tunnels[0].position.z = -1000;
 			if(level.position.z>200)tunnels[1].position.z = -1100;
 			if(level.position.z>300)tunnels[2].position.z = -1200;
@@ -575,7 +586,7 @@
 	    		document.body.style.cursor = 'none';
 		    	cursor.style.visibility = 'visible';
 		    	mouse.move = true;
-		    	tweenMouse.stop();
+		    	if(tweenMouse)tweenMouse.stop();
 		    }
 		}
 

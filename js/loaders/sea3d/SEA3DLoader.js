@@ -220,9 +220,8 @@ THREE.SEA3D.prototype.scaleColor = function(color, scale) {
 
 THREE.SEA3D.prototype.applyMatrix = function(obj3d, mtx, inv) {
 	obj3d.position.getPositionFromMatrix( mtx );
-	obj3d.rotation.setEulerFromRotationMatrix( mtx );	
-	//obj3d.setEulerFromRotationMatrix( mtx );	
-	//obj3d.rotation.makeRotationFromMatrix( mtx );
+	//obj3d.rotation.setEulerFromRotationMatrix( mtx );
+	obj3d.rotation.setFromRotationMatrix( mtx );
 	obj3d.scale.getScaleFromMatrix( mtx );	
 	
 	if (inv) {
