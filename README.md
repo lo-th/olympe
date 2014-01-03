@@ -20,7 +20,7 @@ Demo [http://lo-th.github.io/olympe/index_rail_shooter.html](http://lo-th.github
 
 **Gauntlet 3d** version 0.1 
 > Test for full game 3d assets with [Gauntlet javascript](http://https://github.com/jakesgordon/javascript-gauntlet/) game engine by Jakes Gordon<br>
-All model asset for 313 kb (9 animated model)
+All model asset for 313 kb (9 animated model)<br>
 Demo [http://lo-th.github.io/olympe/index_gauntlet.html](http://lo-th.github.io/olympe/index_gauntlet.html)
 
 **Mini FPS** version 0.1 
