@@ -625,7 +625,7 @@ Game.Event = {
   stop: function(ev) {
     ev.preventDefault();
     ev.cancelBubble = true;
-    ev.returnValue = false;
+    //ev.returnValue = false;
     return false;
   },
 

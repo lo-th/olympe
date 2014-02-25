@@ -1,31 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-	<link href="css/normalize.css" media="screen, print" rel="stylesheet" type="text/css" />
-	<link href="css/gauntlet.css"  media="screen, print" rel="stylesheet" type="text/css" />
-	<link href="css/loth.css" rel="stylesheet" type="text/css"  />
-	<title>Javascript Gauntlet 3D</title>
+<title>Gautlet 3D</title>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=11" />
+<meta charset="utf-8">
+<link href="css/gauntlet.css"  media="screen, print" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
 <div id="viewport"></div>
+
 <div id="hubs">
 	<div id="debug"></div>
 	<div id="gui"></div>
-	<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
 	<div id="info">
-	GAUNTLET 3D 0.1a <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2013</a>
-	| <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d</a> 
-	. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
-	| <a href="https://github.com/jakesgordon/javascript-gauntlet/" target="_blank">Gauntlet source</a> 
+	<a href="http://3dflashlo.wordpress.com/" target="_blank">Loth 2014</a>
+	. <a href="https://code.google.com/p/sea3d/" target="_blank">Sea3d</a>
+	. <a href="http://github.com/mrdoob/three.js" target="_blank">Three.js</a>
+	. <a href="https://github.com/jakesgordon/javascript-gauntlet/" target="_blank">Gauntlet 2d</a>
 	</div>
-	<div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File." style="visibility: hidden;"></div>
+	<div id="loading"><img src="res/images/loader.gif" alt="Loading SEA3D File." style="visibility: hidden;"></div>
 </div>
 
 <div id="gauntlet">
-	<img id="booting" src='res/img/loader.gif'>
+	<img id="booting" src='res/images/loader.gif'>
 	<img id="splash"  src='res/images/splash0.png'>
 	<canvas id="canvas">
 		<div class="unsupported">Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element</div>
@@ -81,24 +80,24 @@
 			<div class='multi'>multiplayer coming soon</div>
 		</div>
 		<div id='sound' class='on' title='toggle music and fx'>
-			<img id="soundIn" src='res/img/son.png'>
+			<img id="soundIn" src='res/images/son.png'>
 		</div>
 	</div>
 </div>
 
-
-<!-- _     _   _      ___ __  _ ____
-    | |___| |_| |__  |_  )  \/ |__ /
-    | / _ \  _|    |  / / () | ||_ \
-    |_\___/\__|_||_| /___\__/|_|___/
+<!-- _     _   _
+    | |___| |_| |__ 
+    | / _ \  _|    |
+    |_\___/\__|_||_| 2014
 --> 
 
-<script src="js/three.min.js"></script>
+<script src="js/three.min.66.js"></script>
+<script src="js/BufferGeometryUtils.66.js"></script>
 
-<script src="js/loaders/sea3d/SEA3D.js"></script>
-<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
-<script src="js/loaders/sea3d/SEA3DLZMA.js"></script> 
+<script src="js/loadersNew/sea3d/SEA3D.js"></script>
+<script src="js/loadersNew/sea3d/SEA3DLoader.js"></script>
+<script src="js/loadersNew/sea3d/SEA3DDeflate.js"></script>
+<script src="js/loadersNew/sea3d/SEA3DLZMA.js"></script> 
 
 <script src="js/gauntlet/vendor.js"></script>
 <script src="js/gauntlet/game.js"></script>
@@ -110,15 +109,13 @@
 
 <script>
       
-
-	var vsize = { x:100, y:100, z:0 };
+	var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
 	var mouse = { x:0, y:0, move:true };
-	var camera, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight, renderLoop;
+	var camera, center, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight, renderLoop;
 	var clock = new THREE.Clock();
 
-
-	var Colors= [0x161616, 0x333333, 0x606060];
-	//---------- Bakground, Ambient, Specular
+	var Colors= [0x000000, 0x333333, 0x606060];
+	//--------- Bakground, Ambient, Specular
 
 	var materials = [];
 
@@ -163,6 +160,9 @@
 		distance : 200
 	}
 
+	var container = document.getElementById( 'viewport' );
+	container.style.cssText ="position:absolute; padding:0; height:100%; width:100%; top:0; left:0; overflow: hidden;";
+
 	function initGame() {
 	}
 
@@ -177,21 +177,15 @@
 	}
 
 	function initScene3D() {
-		vsize.x = window.innerWidth;
-		vsize.y = window.innerHeight-31;
-		vsize.z = vsize.x / vsize.y;
 
-		renderer = new THREE.WebGLRenderer({ antialias: false });//, alpha: false });
+		renderer = new THREE.WebGLRenderer({precision: "lowp", antialias: false });//, alpha: false });
 		renderer.setSize( vsize.x, vsize.y );
-		renderer.setClearColor( Colors[0], 1 );
-
-		renderer.physicallyBasedShading = true;
+		renderer.autoClear = false;
 		renderer.gammaInput = true;
 		renderer.gammaOutput = true;
 		renderer.shadowMapEnabled = true;
-
-		renderer.autoClear = false;
-		renderer.sortObjects = true;
+		
+		//renderer.sortObjects = true;
 
 		renderer._microCache = new MicroCache();
 
@@ -200,22 +194,21 @@
 		//renderer.shadowMapSoft = true;
 		//renderer.shadowMapCullFace = THREE.CullFaceBack;
 
-		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
-		renderer.domElement.style.top = 31 + "px";
-		renderer.domElement.style.position = "absolute";
+		container.appendChild( renderer.domElement );
+		
 
 		// SCENE
 		scene = new THREE.Scene();
-		//scene.fog = new THREE.Fog(  Colors[0], 300, 500 );
+		scene.fog = new THREE.Fog(  Colors[0], 100, 400 );
 
 		projector = new THREE.Projector();
 		raycaster = new THREE.Raycaster();
 
 		// CAMERA
 		camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, 2000 );
+		center = new THREE.Vector3(0,0,0);
 		camera.position.z = 100;
 		camera.position.y = 200;
-		//scene.add(camera);
 
 		target = new THREE.Object3D();
 		scene.add(target);
@@ -269,23 +262,26 @@
 		addGUICamera();
 
 		window.addEventListener( 'resize', onResize, false );
+
+		animate();
 	}
 
 	//===========================================================================
 	// RENDER LOOP
 	//===========================================================================
 
-	function startRender() {
-		if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( animate ); }, 1000 / 60 );
-	}
-
-	function stopRender() {
-		if(renderLoop) {clearInterval(renderLoop); renderLoop = null;}
-	}
+	var nloop = 0;
 
 	function animate() {
+		requestAnimationFrame( animate );
+
 		delta = clock.getDelta();
-		THREE.AnimationHandler.update( delta );
+
+		nloop++
+	    if(nloop===2){
+	        nloop = 0;
+	        THREE.AnimationHandler.update( delta*2 );
+	    }
 		
 		camera.position.copy( Orbit( target.position, camConfig.horizontal, camConfig.vertical, camConfig.distance ) );
 		camera.lookAt( target.position );
@@ -307,11 +303,11 @@
 					INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
 					INTERSECTED.material.emissive.setHex( 0x909090 );
 					//list = ("select "+INTERSECTED.name);
-					if(players.length>0){
-						if ( INTERSECTED.name === "G0" )if(players[0].currentAnimation.name !== "walk") players[0].play("walk");
-						if ( INTERSECTED.name === "G1" )if(players[1].currentAnimation.name !== "walk") players[1].play("walk");
-						if ( INTERSECTED.name === "G2" )if(players[2].currentAnimation.name !== "walk") players[2].play("walk");
-						if ( INTERSECTED.name === "G3" )if(players[3].currentAnimation.name !== "walk") players[3].play("walk");
+					if(heroesAnim.length>0){
+						if ( INTERSECTED.name === "G0" ) heroesAnim[0].play("walk");
+						if ( INTERSECTED.name === "G1" ) heroesAnim[1].play("walk");
+						if ( INTERSECTED.name === "G2" ) heroesAnim[2].play("walk");
+						if ( INTERSECTED.name === "G3" ) heroesAnim[3].play("walk");
 				    }
 				}
 			} else {
@@ -324,7 +320,7 @@
 		renderer.render( scene, camera );
 
 		if(viewConfig.fullStats){
-			stats.update();
+			//stats.update();
 			rendererStats.update(renderer);
 		}
 		//tell(list);
@@ -334,11 +330,11 @@
 
 	function fullStats(){
 		if(viewConfig.fullStats){
-			stats = new Stats();
+			/*stats = new Stats();
 			stats.domElement.style.position	= 'absolute'
 			stats.domElement.style.right	= '10px'
 			stats.domElement.style.bottom	= '161px'
-			document.body.appendChild( stats.domElement );
+			document.body.appendChild( stats.domElement );*/
 
 
 			rendererStats = new THREEx.RendererStats();
@@ -348,7 +344,7 @@
 			document.body.appendChild( rendererStats.domElement );
 		} else {
 			if (rendererStats.domElement )document.body.removeChild(rendererStats.domElement);
-			if (stats.domElement )document.body.removeChild(stats.domElement);
+			//if (stats.domElement )document.body.removeChild(stats.domElement);
 		}
 
 		//isFullStats = true;
@@ -361,8 +357,9 @@
 
 	function onResize( event ) {
 		vsize.x = window.innerWidth;
-		vsize.y = window.innerHeight-31;
+		vsize.y = window.innerHeight;
 		vsize.z = vsize.x / vsize.y;
+
 		camera.aspect = vsize.z;
 		camera.updateProjectionMatrix();
 		renderer.setSize( vsize.x, vsize.y );
@@ -405,7 +402,7 @@
 		materials[1] = makeMaterial({ map:"avatar2.jpg", skinning:true }); // player 2 / 3;
 
 		materials[2] = makeMaterial({ map:"wall.jpg", bump:true, bumpScale:12, shininess:10 }); // wall bump
-		materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
+		//materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
 
 		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
 		materials[5] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 6 / 7
@@ -462,7 +459,7 @@
 		if(data.color) material.color.setHex( data.color );
 		if(data.transparent) material.transparent = data.transparent;
 
-		material.perPixel = true;
+		//material.perPixel = true;
 
 		return material;
 	}
@@ -471,15 +468,21 @@
 	// IMPORT SEA3D ASSETS
 	//===========================================================================
 
+	var monstersName = ["monster_4_b5", "monster_3_b6", "monster_2_b7", "monster_1_b8", "monster_5_b9"];
+	var monstersGeo, monstersMat;
+
+	var wallRef = [];
+	var itemRef = [];
+
 	function initSea3DMesh() {
 
 		//var 
-		loader = new THREE.SEA3D( false );
+		var SeaLoader = new THREE.SEA3D( true );
 		var size = 1;
 		var i;
 		//list = "";
 
-		loader.onComplete = function( e ) {
+		SeaLoader.onComplete = function( e ) {
 			// 0 -> 15 walls
 			// 16 -> 23 treasure
 			// 24 - 25 doors
@@ -487,55 +490,186 @@
 			// 27 -> 30 Hero 
 			// 31 -> 35 Monster 
 			// 36 - floor
-			for (i=0; i < loader.meshes.length; i++){
-				meshs[i] = loader.meshes[i];
-				if(meshs[i].name !== "weapon0" && meshs[i].name !== "weapon1" && meshs[i].name !== "weapon2" && meshs[i].name !== "weapon3") 
-					meshs[i].scale.set( size, size, -size );
-				else meshs[i].material = materials[12];
-				//list += i + ":"+meshs[i].name+"<br>";
+			for (i=0; i < SeaLoader.meshes.length; i++){
+				meshs[i] = SeaLoader.meshes[i];
 			}
-			//tell(list);
-			reversWall();
+
+			// level geometry
+			for( i = 0; i < 16; i++) {
+				if(i<10) wallRef[i] = getSeaGeometry("wall00"+i);
+			    else wallRef[i] = getSeaGeometry("wall0"+i);
+		    }
+		    wallRef[16] = getSeaGeometry("floor");
+
+		    // items geometry
+		    for( i = 0; i < 8; i++) {
+				itemRef[i] = getSeaGeometry("Item00"+i, true);
+		    }
+		    itemRef[8] = getSeaGeometry("door001", true);
+		    itemRef[9] = getSeaGeometry("door002", true);
+		    itemRef[10] = getSeaGeometry("exit", true);
+
+		    // moster geometry
+		    monstersGeo = [];
+		    for( i = 0; i < monstersName.length; i++) {
+		    	monstersGeo.push(getMeshByName(monstersName[i]).geometry);
+		    }
+		    monstersMat = [ materials[4],  materials[4],  materials[5],  materials[5],  materials[6]];
+
+			definePlayer();
+
 			intro3D();
 
 			document.getElementById("scoreboard").style.visibility = "visible";
 		};
-		loader.load( 'res/models/gauntlet_dog_nomat.sea' );
+		SeaLoader.load( 'res/models/g2.sea' );
 	}
 
-	function scaleGeometry(geometry, scale) {
-		var s = 1 || scale;
+	//===========================================================================
+	// SEA3D TOOLS
+	//===========================================================================
+
+	var getSeaGeometry = function (name, buffer, scale, axe, child, deep){
+		var c = child || 0;
+		var d = deep || 0;
+		var a = axe || "z";
+		var b = buffer || false;
+		var s = scale || 1;
+		var g;
+		if(c === 0 && d === 0) g = getMeshByName(name).geometry;
+		else if(c >= 1 && d === 0) g = getMeshByName(name).children[c-1].geometry;
+		else if(c >= 1 && d === 1) g = getMeshByName(name).children[0].children[c-1].geometry;
+		else if(c >= 1 && d === 2) g = getMeshByName(name).children[0].children[0].children[c-1].geometry;
+		scaleSea3DGeometry(g, s, a);
+
+		if(b) g = THREE.BufferGeometryUtils.fromGeometry(g);
+		//return m;
+		return g;
+	}
+
+	var getMeshByName = function (name){
+		for (var i=0; i !== meshs.length; i++){
+			if(meshs[i].name === name){
+				return meshs[i];
+			} 
+		} 
+	}
+
+	var scaleSea3DGeometry = function (geometry, scale, Axe) {
+		var s = 1;
+		var axe = Axe || 'z';
+
 		for( var i = 0; i < geometry.vertices.length; i++) {
 			var vertex	= geometry.vertices[i];
-			vertex.x *= s;
-			vertex.y *= s;
-			vertex.z *= -s;
+			if(axe==='x')vertex.x *= -s;
+			else vertex.x *= s;
+			if(axe==='y')vertex.y *= -s;
+			else vertex.y *= s;
+			if(axe==='z')vertex.z *= -s;
+			else vertex.z *= s;
 		}
 		geometry.computeFaceNormals();
-
 		geometry.computeCentroids();
 		geometry.computeVertexNormals();
 		geometry.verticesNeedUpdate = true;
 	}
 
+	THREE.Animator = function(mesh, name){
+		this.mesh = mesh;
+		this.name = name;
+		this.current = null;
+		this.animation = [];
+	}
+
+	THREE.Animator.prototype = {
+		constructor: THREE.Animator,
+		add:function(name, loop){
+			var a = new THREE.Animation( this.mesh, this.name+"/"+name, name);
+			a.loop = loop || false;
+			a.name = name;
+			this.animation.push(a);
+			if(name === "idle") this.current = a;
+		},
+		play:function(name){
+			if(name!==this.current.name || this.current === null){
+				this.current.stop();
+				for(var i=0, l=this.animation.length; i<l; i++ ){
+					if(this.animation[i].name === name){
+						this.animation[i].play();
+						this.current = this.animation[i];
+					} 
+				}
+			}
+		},
+		stop:function(){
+			this.current.stop();
+		},
+		clear:function(){
+			this.current.stop();
+			this.animation.length = 0;
+			this.current = null;
+			this.mesh = null;
+			this.name = "";
+		}
+	}
+
+	//===========================================================================
+	// HEROES CREATION
+	//===========================================================================
+
+	var heroes = ["hero_1_warrior", "hero_2_valkyrie", "hero_3_wizard", "hero_4_elf"];
+	var heroesGeo, heroesMat, weaponsGeo, heroesAnim;
+
+	function definePlayer(){
+
+		heroesGeo = [getMeshByName(heroes[0]).geometry, getMeshByName(heroes[1]).geometry, getMeshByName(heroes[2]).geometry, getMeshByName(heroes[3]).geometry ];
+		weaponsGeo = [getMeshByName("weapon0").geometry, getMeshByName("weapon1").geometry, getMeshByName("weapon2").geometry, getMeshByName("weapon3").geometry ];
+		heroesMat = [materials[0], materials[0], materials[1], materials[1] ];
+		heroesAnim = [];
+
+		var mat, w, bone;
+		for (var i = 0; i<4; i++){
+			players[i] = new THREE.SkinnedMesh( heroesGeo[i], heroesMat[i], false );
+			players[i].scale.set(1,1,-1);
+
+			// weapon
+			w = new THREE.Mesh( weaponsGeo[i], materials[10], false );
+            bone = players[i].bones[12];
+            w.name = bone.name;
+            w.matrix = bone.skinMatrix;
+            w.matrixAutoUpdate = false;
+            players[i].add( w );
+
+            players[i].castShadow = players[i].receiveShadow = true;
+
+			// animations
+			heroesAnim[i] = new THREE.Animator(players[i], heroes[i]);
+			heroesAnim[i].add("idle", true);
+			heroesAnim[i].add("walk", true);
+			heroesAnim[i].add("death", false);
+			heroesAnim[i].add("jump", false);
+			heroesAnim[i].add("none", false);
+		}
+	}
+
 	//===========================================================================
 	// INTRO
 	//===========================================================================
-
+	
 	function intro3D(){
+		
 		intro = new THREE.Object3D();
 		scene.add(intro);
 		target.position.set(0,22.5,0);
 
 		for (var i = 0; i<4; i++){
-			players[i] = meshs[27+i];
-			if(i===27 || i===28) players[i].material = materials[0];
-			else players[i].material =  materials[1];
+
+			heroesAnim[i].play("jump");
 
 			intro.add(players[i]);
-			players[i].play("jump");
+			
 			players[i].position.set((i*60)-90, 22.5, 0);
-			players[i].rotation.y = degToRad(0);
+			players[i].rotation.y = 0;
 
 			grounds[i] = new THREE.Mesh(new THREE.CubeGeometry( 56, 2, 56 ), materials[20+i]);
 			intro.add(grounds[i]);
@@ -560,9 +694,9 @@
 		levels[2].position.set(0, -10-8, 28+10);
 		intro.add(levels[2]);
 
-		levels[0].rotation.x = - degToRad(45);
-		levels[1].rotation.x = - degToRad(45);
-		levels[2].rotation.x = - degToRad(45);
+		levels[0].rotation.x = - 45 * ToRad;
+		levels[1].rotation.x = - 45 * ToRad;
+		levels[2].rotation.x = - 45 * ToRad;
 
 		// get the current game level
 		currentLevel = window.game.getLevel();
@@ -573,7 +707,7 @@
 		isIntroStart = true;
 		isIntro=true;
 
-		startRender();
+		//startRender();
 		setTimeout(introAnimEnd, 1000);
 	}
 
@@ -589,7 +723,7 @@
 	function intro3DIdle(){
 		if(players.length>0 && !isIntroStart){
 			for (var i = 0; i<4; i++){
-				if(players[i].currentAnimation.name !== "idle") players[i].play("idle");
+				if(heroesAnim[i].current !== "idle") heroesAnim[i].play("idle");
 			}
 	    }
 	}
@@ -601,18 +735,18 @@
 		for ( i = intro.children.length - 1; i >= 0 ; i -- ) {
 			obj = intro.children[ i ];
 			intro.remove(obj);
-			if(obj.animations) obj.stop();
-			obj.geometry.dispose();
+			//if(obj.animations) obj.stop();
+			//obj.geometry.dispose();
 		}
 
 		scene.remove(intro);
 		levels.length = 0;
 		grounds.length = 0;
-		players.length = 0;
-		isIntro=false;
+		//players.length = 0;
+		isIntro = false;
 		intro = null;
 
-		stopRender();
+		//stopRender();
 	}
 
 	function createLabel(text, size, color, n) {
@@ -681,7 +815,7 @@
 		tell(list);
 	}
 
-	function entitiesTo3D( entities ) {
+	/*function entitiesTo3D( entities ) {
 		var n, max, entity;
 		for(n = 0, max = entities.length ; n < max ; n++) {
 			entity = entities[n];
@@ -696,9 +830,9 @@
 			if(entity.weapon) weapon3D(n, entity ); 
 			if(entity.fx) fx3D(n, entity );
 		}
-	}
+	}*/
 
-	function entities3D( entity , n) {
+	function entities3D( entity ,n ) {
 
 		if(entity.monster) monster3D(n, entity);
 		if(entity.generator){ if(entity.type.sx>31){ generator3D(n, entity); }}
@@ -710,19 +844,25 @@
 		// move and pool
 		if(entity.weapon) weapon3D(n, entity );
 		if(entity.fx) fx3D(n, entity );
+
 	}
 
 	//===========================================================================
 	// THE MAP ++
 	//===========================================================================
 
+	var levelGeometry;
+	
+
 	function init3DLevel(){
 		if(intro)clear3Dintro();
 		if(level)clear3DLevel();
+
 		level = new THREE.Object3D();
+		levelGeometry = new THREE.Geometry();
 		scene.add(level);
 
-		startRender();
+		//startRender();
 	}
 
 	function clear3DLevel(end){
@@ -731,13 +871,20 @@
 		for ( i = level.children.length - 1; i >= 0 ; i -- ) {
 			obj = level.children[ i ];
 			level.remove(obj);
-			if(obj.animations) obj.stop();
-			obj.geometry.dispose();
+			//if(obj.animations) obj.stop();
+			//obj.geometry.dispose();
 		}
+
+		/*for ( i = monstersAnim.length - 1; i >= 0 ; i -- ) {
+			monstersAnim[i].clear();
+		}*/
+
+		levelGeometry.dispose();
 
 		generator.length = 0;
 		treasure.length = 0;
 		monster.length = 0;
+		monstersAnim.length = 0;
 		weapon.length = 0;
 		exit.length = 0;
 		door.length = 0;
@@ -748,67 +895,64 @@
 		scene.remove(level);
 		level = null;
 
-		stopRender();
+		//stopRender();
 
 		if(end)intro3D();
 		
 	}
 
-	function reversWall() {
-		var geo;
-		for(var i=0; i<16; i++){
-			geo = meshs[i].geometry;
-			scaleGeometry(geo);
-		}
-	}
+	//===========================================================================
+	// 3D MAP
+	//===========================================================================
 
 	function add3DWall(x, y, sx, sy) {
-		var geo = meshs[sx].geometry; // get reference wall * 16
-		var block = new THREE.Mesh( geo, materials[2]);
-		//block.scale.set( 1, 1, -1 );
+		var block = new THREE.Mesh( wallRef[sx] );
 		block.position.set( x*32, 0, y*32 );
-		level.add(block);
-		block.castShadow = true;
-		block.receiveShadow = true;
+		THREE.GeometryUtils.merge(levelGeometry, block);
 	}
 
 	function add3DFloor(x, y, sx, sy) {
 		if(sy!=0) return; //no need shadow cell
-		var geo = meshs[36].geometry;
-		var block = new THREE.Mesh( geo, materials[3]);
-		block.scale.set( 1, 1, -1 );
+		var block = new THREE.Mesh(  wallRef[16] );
 		block.position.set( x*32, 0, y*32 );
-		level.add(block);
-		block.castShadow = false;
+		THREE.GeometryUtils.merge(levelGeometry, block);
+	}
+
+	function add3DLevel(){
+		var block = new THREE.Mesh(THREE.BufferGeometryUtils.fromGeometry(levelGeometry), materials[2]);
+		block.castShadow = true;
 		block.receiveShadow = true;
+		level.add(block);
 	}
 
 	//===========================================================================
 	// 3D PLAYER
 	//===========================================================================
 
+	var currentPlayer;
+
 	function init3DPlayer(type) {
-		player = meshs[27+type.sy];
-		player.play('idle');
+		currentPlayer = type.sy;
+		player = players[currentPlayer];
+		heroesAnim[currentPlayer].play('idle');
 		scene.add(player);
 	}
 
 	function remove3DPlayer() {
 		scene.remove(player);
-		player.stop();
-		player.geometry.dispose();
+		heroesAnim[currentPlayer].stop();
 	}
 
 	function move3DPlayer( ee ) {
 	    if(player){
 
-			player.rotation.y = degToRad((-ee.dir*45)+180);
+			player.rotation.y = ((-ee.dir*45)+180) * ToRad;
 			player.position.set(ee.x, 22.5, ee.y);
 			target.position.set(ee.x, 22.5, ee.y);
 
-			if(ee.moving.dir!=null && player.currentAnimation.name == "idle") player.play('walk');
-			else if( ee.moving.dir == null && player.currentAnimation.name == "walk") player.play('idle');
-			else if( ee.health === 0 && player.currentAnimation.name !== "death") player.play('death');
+			if(ee.moving.dir!=null && heroesAnim[currentPlayer].current.name == "idle") heroesAnim[currentPlayer].play('walk');
+			else if( ee.moving.dir == null && heroesAnim[currentPlayer].current.name == "walk") heroesAnim[currentPlayer].play('idle');
+			else if( ee.health === 0 && heroesAnim[currentPlayer].current.name !== "death") heroesAnim[currentPlayer].play('death');
 
 			//player info for animation
 			//tell("Fire:"+pp.firing+"<br>"+"Move:"+pp.moving.dir+"<br>"+"Hurt:"+pp.hurting+"<br>"+"Dead:"+pp.dead+"<br>"+ player.currentAnimation.name);
@@ -821,9 +965,7 @@
 
 	function exit3D(n, ee) {
 		if(!exit[n]){
-			var geo = meshs[26].geometry;
-			var block = new THREE.Mesh( geo, materials[7]);
-			block.scale.set( 1, 1, -1 );
+			var block = new THREE.Mesh( itemRef[10], materials[7]);
 			block.position.set(ee.x, 0, ee.y);
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
@@ -832,14 +974,12 @@
 	}
 
 	//===========================================================================
-	// 3D TREASURE ++
+	// 3D ITEMS ++
 	//===========================================================================
 
 	function Treasure3D(n, ee) {
 		if(!treasure[n]){
-			var geo = meshs[ee.type.sx+16].geometry;
-			var block = new THREE.Mesh( geo, materials[8] );
-			block.scale.set( 1, 1, -1 );
+			var block = new THREE.Mesh( itemRef[ee.type.sx], materials[8] );
 			block.position.set(ee.x, 0, ee.y);
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
@@ -860,12 +1000,10 @@
 
 	function door3D(n, ee) {
 		if(!door[n]){
-			var geo; 
-			if(ee.type.sx === 10) { geo = meshs[24].geometry; }
-			else { geo = meshs[25].geometry; }
+			var block;
+			if(ee.type.sx === 10) { block = new THREE.Mesh( itemRef[8], materials[7]); }
+			else { block = new THREE.Mesh( itemRef[9], materials[7]); }
 
-			var block = new THREE.Mesh( geo, materials[7]);
-			block.scale.set( 1, 1, -1 );
 			block.position.set(ee.x, 0, ee.y);
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
@@ -914,32 +1052,55 @@
 	// 3D MONSTER
 	//===========================================================================
 
+	var monstersAnim = [];
+
 	function monster3D(n, ee) {
+		var h;
 		if(!monster[n]){
-			var block = meshs[27+ee.type.sy].clone(); //loader.getMesh(meshs[27+ee.type.sy].name).clone();
-			if( ee.type.sy == 4 || ee.type.sy == 5 ) block.material = materials[4];
-			else if( ee.type.sy == 6 || ee.type.sy == 7 ) block.material = materials[5];
-			else block.material = materials[6];
-			//var block = new THREE.SkinnedMesh( meshs[27+ee.type.sy].geometry.clone(), meshs[27+ee.type.sy].material, false);
-			//block.scale.set( 1, 1, -1 );
-			//block.animations = meshs[27+ee.type.sy].animations;
-			//var animation = new THREE.Animation( block, "idle" );
-			//THREE.AnimationHandler.add( block.geometry.animations );
-			block.play("idle");
+			h=ee.type.sy-4;
+			var block = new THREE.SkinnedMesh( monstersGeo[h], monstersMat[h], false);
+			block.scale.set(1,1,-1);
 			block.castShadow = block.receiveShadow = true;
+			
+			monstersAnim[n] = new THREE.Animator( block, monstersName[h] );
+			monstersAnim[n].add("idle", true);
+			monstersAnim[n].add("walk", true);
+			monstersAnim[n].add("death", false);
+			monstersAnim[n].add("none", false);
+
 			level.add( block );
 			monster[n] = block;
+
 		} else {
-			if(monster[n].currentAnimation.name !== "stop"){
-			    monster[n].rotation.y = degToRad((-ee.dir*45)+180);
-			    if(ee.type.sy == 6) monster[n].position.set(ee.x, 5, ee.y); // dog
-			    else 
-			    monster[n].position.set(ee.x, 25, ee.y);
-		    }
-			if(ee.thinking == 0 && monster[n].currentAnimation.name == "idle") monster[n].play('walk');
-			else if( ee.thinking > 0 && monster[n].currentAnimation.name == "walk") monster[n].play('idle');
-			//else if (ee.health < 1 && monster[n].currentAnimation.name !== "death") monster[n].play('death');
-			else if(!ee.active && monster[n].currentAnimation.name !== "stop") monster[n].play('stop');
+			if( ee.active ){
+				if(monstersAnim[n].current.name !== "none"){
+				    monster[n].rotation.y = ((-ee.dir*45)+180) * ToRad;
+				    if(ee.type.sy == 6) monster[n].position.set(ee.x, 5, ee.y); // dog
+				    else monster[n].position.set(ee.x, 25, ee.y);
+			    }
+				if(ee.thinking == 0 && monstersAnim[n].current.name == "idle") monstersAnim[n].play('walk');
+				else if( ee.thinking > 0 && monstersAnim[n].current.name == "walk") monstersAnim[n].play('idle');
+				//else if (ee.health < 1 && monstersAnim[n].current.name !== "death") monstersAnim[n].play('death');
+			} else {
+
+				if (ee.health === 0 ){ 
+					monstersAnim[n].play('death'); 
+					setTimeout( function() {
+						if(monster[n]){
+						monster[n].castShadow = monster[n].receiveShadow = false;
+						//monstersAnim[n].clear();
+						level.remove( monster[n] );
+						//monster[n] = false;
+					}
+						//monster[n] = null;
+					}, 1000);
+				}
+			    //monstersAnim[n].play('none');
+			   /* monstersAnim[n].clear();
+			    monster[n].castShadow = monster[n].receiveShadow = false;
+			    level.remove( monster[n] );
+			    monster[n] = null;*/
+			}
 		}
 	}
 
@@ -971,10 +1132,10 @@
 	function weapon3D(n, ee) {
 		if(!weapon[n]){
 			weapon[n] = new THREE.Mesh(WaponGeo, materials[10]);
-			//weapon[n].material = materials[0];
+			//weapon[n].material = materials[0];  
 			level.add(weapon[n]);
 		} else {
-			weapon[n].rotation.y = degToRad((-ee.dir*45)+90);
+			weapon[n].rotation.y = ((-ee.dir*45)+90) * ToRad;
 		    weapon[n].position.set(ee.x, 20, ee.y);
 		}
 	}
@@ -993,14 +1154,12 @@
 	//  MATH
 	//-----------------------------------------------------
 
-	function degToRad(Value) {
-		return Value * Math.PI / 180;
-	}
+	var ToRad = Math.PI / 180;
 
 	function Orbit(origine, horizontal, vertical, distance) {
-		var p = new THREE.Vector3();
-		var phi = degToRad( horizontal );
-		var theta = degToRad( vertical );
+		var p = new THREE.Vector3(); 
+		var phi = horizontal * ToRad;
+		var theta = vertical * ToRad;
 		p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
 		p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
 		p.y = (distance * Math.cos(phi)) + origine.y;
@@ -1014,7 +1173,7 @@
 	function addGUI() {
 		gui = new dat.GUI({autoPlace:false, width:204});
 		document.getElementById('gui').appendChild(gui.domElement);
-		gui.open();
+		gui.close();
 	}
 
 	function addGUIView() {

@@ -2046,7 +2046,6 @@ AnimatorChain.prototype = {
 
 
 AudioFX = function() {
-
   //---------------------------------------------------------------------------
 
   var hasAudio = false, audio = document.createElement('audio'), audioSupported = function(type) { var s = audio.canPlayType(type); return (s === 'probably') || (s === 'maybe'); };

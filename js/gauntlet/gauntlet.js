@@ -883,6 +883,10 @@ Gauntlet = function() {
           self.addMonster(x, y, MONSTERS[type(pixel) < MONSTERS.length ? type(pixel) : 0]);
       });
 
+      //////////////////////////////////////
+      add3DLevel();
+      //////////////////////////////////////
+
     },
 
     //-------------------------------------------------------------------------
@@ -1858,8 +1862,8 @@ Gauntlet = function() {
     toggleMute: function(on) {
       AudioFX.mute = game.storage.mute = on;
       $('sound').setClassName(AudioFX.mute ? 'off' : 'on');
-      if(AudioFX.mute) $('soundIn').src = 'res/img/soff.png';
-      else $('soundIn').src = 'res/img/son.png';
+      if(AudioFX.mute) $('soundIn').src = 'res/images/soff.png';
+      else $('soundIn').src = 'res/images/son.png';
     },
 
     toggleMusic: function() {
