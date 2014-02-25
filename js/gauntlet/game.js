@@ -625,7 +625,11 @@ Game.Event = {
   stop: function(ev) {
     ev.preventDefault();
     ev.cancelBubble = true;
+<<<<<<< HEAD
     ev.returnValue = false;
+=======
+    //ev.returnValue = false;
+>>>>>>> origin/master
     return false;
   },
 

@@ -58,10 +58,18 @@
 	
 	<script src='js/libs/dat.gui.min.js'></script>
 	<script src="js/libs/tween.min.js"></script>
+<<<<<<< HEAD
 
 	<script>
 	    var vsize = { x:100, y:100, z:0 };
 	    var mouse = { x:0, y:0, move:true };
+=======
+	<script src="js/greensock/TweenLite.min.js"></script>
+
+	<script>
+	    var vsize = { x:100, y:100, z:0 };
+	    var mouse = { x:0, y:0, move:true, mx:0, my:0 };
+>>>>>>> origin/master
 
 	    var inRender = true, inResize = false, isNeedPause = false;
 	    var FAR = 2000;
@@ -71,15 +79,27 @@
 
 		var camera, controls, scene, renderer, composer, renderPass, delta;
 		var ambient, hemiLight, pointLight, pointLight0, light;
+<<<<<<< HEAD
 		
+=======
+		var bulletContent;
+		var marker;
+>>>>>>> origin/master
 		var clock = new THREE.Clock();
 		var ground;
 		var skyCube;
 
 		var tunnels = [];
 		var materials = []; 
+<<<<<<< HEAD
 		var center;
 		var level;
+=======
+		var wallMaterial;
+		var center;
+		var level;
+		var projector, raycaster;
+>>>>>>> origin/master
 
 		var gui;
 
@@ -98,14 +118,22 @@
 			cursor.style.position = "absolute";
 			document.body.style.cursor = 'none';
 
+<<<<<<< HEAD
 			document.addEventListener( 'mousemove', onMouseMove, false );
 			document.addEventListener( 'mousedown', onMouseDown, false );
 			document.addEventListener( 'mouseup', onMouseUp, false );
+=======
+			
+>>>>>>> origin/master
 
 			addGUI();
 			addGUIView();
 
+<<<<<<< HEAD
 			animate();
+=======
+			
+>>>>>>> origin/master
 		}
 
 		function initScene3D() {
@@ -115,12 +143,20 @@
 			vsize.z = vsize.x / vsize.y;
 			
 			// RENDERER
+<<<<<<< HEAD
 			renderer = new THREE.WebGLRenderer({ antialias: false });
+=======
+			renderer = new THREE.WebGLRenderer({ antialias: false, scale:2 });
+>>>>>>> origin/master
 			renderer.setSize( vsize.x, vsize.y );
 
 			renderer.setClearColor( 0x000000, 1 );
 			renderer.shadowMapEnabled = true;
+<<<<<<< HEAD
 			renderer.shadowMapCullFace = THREE.CullFaceBack;
+=======
+			//renderer.shadowMapCullFace = THREE.CullFaceBack;
+>>>>>>> origin/master
 			//renderer.shadowMapSoft = true;
 			renderer.physicallyBasedShading = true;
 			renderer.gammaInput = true;
@@ -135,12 +171,29 @@
 			scene = new THREE.Scene();
 			scene.fog = new THREE.Fog( 0x000000 , 0, 900 );
 
+<<<<<<< HEAD
 			// CAMERA
 			camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
 			camera.position.z = 100;
 			camera.position.y = -25;
 
 			center = new THREE.Vector3( 0,0,0 );
+=======
+			projector = new THREE.Projector();
+			raycaster = new THREE.Raycaster();
+
+			bulletContent =new THREE.Object3D();
+			scene.add(bulletContent);
+
+			// CAMERA
+			camera = new THREE.PerspectiveCamera( 70, vsize.z, .1, FAR );
+			camera.zoom = 2;
+			camera.position.z = 100;
+			camera.position.y = -25;
+			scene.add(camera);
+
+			center = new THREE.Vector3( 0,0,-100 );
+>>>>>>> origin/master
 			/*controls = new THREE.OrbitControls( camera, renderer.domElement );
 			controls.center.set( 0, -25, 0 );
 			controls.keys = [];
@@ -150,21 +203,52 @@
 
 			initLightAndSky();
 
+<<<<<<< HEAD
 
 			level = new THREE.Object3D();
 			scene.add(level);
+=======
+			var geometry = new THREE.CylinderGeometry( 0, 0.2, 2, 3 );
+			geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 1, 0 ) );
+			geometry.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI / 2 ) );
+			marker = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x00ff00 } ) );
+			scene.add(marker);
+
+
+			level = new THREE.Object3D();
+			scene.add(level);
+			level.frustumCulled = false;
+>>>>>>> origin/master
 
 			if(viewConfig.withEffect)initComposer();
 
 			
 
+<<<<<<< HEAD
 			
+=======
+			wallMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xaaaaaa, overdraw: 0.5 } );
+			bulletMaterial = new THREE.MeshPhongMaterial( { shininess: 10,  color: 0xFF0000 } );
+>>>>>>> origin/master
 
 			importTunnel();
 
 			window.addEventListener( 'resize', onWindowResize, false );
+<<<<<<< HEAD
 		}
 
+=======
+
+			animate();
+
+			document.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mousedown', onMouseDown, false );
+			document.addEventListener( 'mouseup', onMouseUp, false );
+		}
+
+		
+
+>>>>>>> origin/master
 		//-----------------------------------------------------
 		//
 		//  RENDER LOOP
@@ -177,6 +261,11 @@
 
 			TWEEN.update();
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> origin/master
 			// sea update
 			/*
 			delta = clock.getDelta();
@@ -185,13 +274,27 @@
 
 			// camera update
 			if(camera)camera.lookAt(center);
+<<<<<<< HEAD
+=======
+
+			//rayTest();
+
+>>>>>>> origin/master
             if(pointLight)pointLight.position.set(center.x/3, -15+center.y/3,20);
 
 			if(tunnels[0])animTunnel();
 
+<<<<<<< HEAD
 			// render update
 			if(viewConfig.withEffect) composer.render(delta);
 			else if(renderer) renderer.render( scene, camera );
+=======
+			updateBullet();
+
+			// render update
+			if(viewConfig.withEffect) composer.render(delta);
+			else renderer.render( scene, camera );
+>>>>>>> origin/master
 		}
 
 
@@ -353,6 +456,78 @@
 			}
 		}
 
+<<<<<<< HEAD
+=======
+		//-----------------------------------------------------
+		//  BULLET
+		//-----------------------------------------------------
+
+		var bullets = [];
+		var obj = [];
+		var isOnFire = false;
+		var playerPos = new THREE.Vector3(0,-25, 200);
+
+		function rayTest(sh) {
+			if ( level.children.length > 0 ) {
+				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+				projector.unprojectVector( vector, camera );
+				raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+				var intersects = raycaster.intersectObjects( level.children );
+				if ( intersects.length > 0 ) {
+					marker.position.set( 0, 0, 0 );
+					marker.lookAt(intersects[0].face.normal);
+					marker.position.copy( intersects[0].point );
+					
+					if(sh)shoot();
+			    }
+			}
+		}
+
+		function shoot() {
+			var n = bullets.length;
+			bullet = new THREE.Mesh( new THREE.SphereGeometry(1,6,6), bulletMaterial );
+			bulletContent.add(bullet);
+			obj[n] = {x:playerPos.x, y:playerPos.y, z:playerPos.z, move:true};
+			bullets[n]= bullet;
+
+			var distance = distanceTest(playerPos, marker.position);
+
+			TweenLite.to(obj[n], distance*0.001, {x:marker.position.x,y:marker.position.y,z: marker.position.z,
+				onUpdate:updateHandler,
+				onUpdateParams:[n],
+				onComplete:completeHandler, 
+				onCompleteParams:[n]
+			});
+		}
+
+		function updateHandler(n) {
+			isOnFire=true;
+			bullets[n].position.x = obj[n].x;
+			bullets[n].position.y = obj[n].y;
+			bullets[n].position.z = obj[n].z;
+		}
+
+		function completeHandler(n) {
+			obj[n].move = false;
+			setTimeout(function() {destroyBullet(n)}, 3000);
+		}
+
+		function destroyBullet(n) {
+			bulletContent.remove(bullets[n]);
+			bullets[n].geometry.dispose();
+			bullets.slice(n, 1);
+			obj.slice(n,1);
+			isOnFire=false;
+		}
+
+		function updateBullet() {
+			for(var i=0; i<bullets.length; i++){
+				if(!obj[i].move) bullets[i].position.z += viewConfig.speed;
+			}
+
+		}
+
+>>>>>>> origin/master
 		
 		//-----------------------------------------------------
 		//
@@ -364,12 +539,28 @@
 
 			var loader = new THREE.SEA3D( false );
 			var size = 1;
+<<<<<<< HEAD
+=======
+			var geo;
+>>>>>>> origin/master
 			var i;
 
 			loader.onComplete = function( e ) {
 				for (i=0; i < loader.meshes.length; i++){
+<<<<<<< HEAD
 					tunnels[i] = loader.meshes[i];
 					tunnels[i].scale.set( size, size, -size );
+=======
+					//tunnels[i] = loader.meshes[i];
+					//tunnels[i].scale.set( size, size, -size );
+
+					geo = loader.meshes[i].geometry;
+					scaleGeometry(geo);
+
+					tunnels[i] = new THREE.Mesh(geo, wallMaterial);
+					tunnels[i].frustumCulled = false;
+					//tunnels[i].frustumCullingInheritsScale = false;
+>>>>>>> origin/master
 					level.add( tunnels[i] );
 					tunnels[i].position.z = 200-(i*100);
 			    }
@@ -382,6 +573,24 @@
 			loader.load( 'res/models/tunnel.sea' );
 		}
 
+<<<<<<< HEAD
+=======
+		function scaleGeometry(geometry, scale) {
+			var s = 1 || scale;
+			for( var i = 0; i < geometry.vertices.length; i++) {
+				var vertex	= geometry.vertices[i];
+				vertex.x *= s;
+				vertex.y *= s;
+				vertex.z *= -s;
+			}
+			geometry.computeFaceNormals();
+
+			//geometry.computeCentroids();
+			geometry.computeVertexNormals();
+			geometry.verticesNeedUpdate = true;
+		}
+
+>>>>>>> origin/master
 
 		function importMonster(){
 			var loader = new THREE.SEA3D( false );
@@ -401,7 +610,13 @@
 		//-----------------------------------------------------
 
 		function animTunnel(){
+<<<<<<< HEAD
 			level.position.z += viewConfig.speed;
+=======
+			
+			level.position.z += viewConfig.speed;
+			tell(level.position.z)
+>>>>>>> origin/master
 			if(level.position.z>100)tunnels[0].position.z = -1000;
 			if(level.position.z>200)tunnels[1].position.z = -1100;
 			if(level.position.z>300)tunnels[2].position.z = -1200;
@@ -429,6 +644,14 @@
 		//  LISTENER
 		//-----------------------------------------------------
 		function onMouseDown( e ) {
+<<<<<<< HEAD
+=======
+			mouse.mx = ( e.clientX / vsize.x ) * 2 - 1;
+			mouse.my = - ( e.clientY / vsize.y ) * 2 + 1;
+			rayTest(true);
+
+
+>>>>>>> origin/master
 			cursorImg.src = "res/img/cursor2.png";
 			//tell('shoot');
 		}
@@ -454,7 +677,11 @@
 	    		document.body.style.cursor = 'none';
 		    	cursor.style.visibility = 'visible';
 		    	mouse.move = true;
+<<<<<<< HEAD
 		    	tweenMouse.stop();
+=======
+		    	if(tweenMouse)tweenMouse.stop();
+>>>>>>> origin/master
 		    }
 		}
 
@@ -507,6 +734,12 @@
 		//-----------------------------------------------------
 		//  HUB
 		//-----------------------------------------------------
+<<<<<<< HEAD
+=======
+		function distanceTest(p01, p02){
+			return Math.round(Math.sqrt(Math.pow(p01.x-p02.x,2)+Math.pow(p01.y-p02.y,2)+Math.pow(p01.z-p02.z,2)));	
+		}
+>>>>>>> origin/master
 
 		function toRad(Value) {
 			return Value * Math.PI / 180;

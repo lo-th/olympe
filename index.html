@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!doctype html>
 <html>
   <head>
@@ -52,4 +53,142 @@
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
   </body>
+=======
+<!DOCTYPE HTML>
+<html lang="en">
+<!-- _     _   _      ___ __  _ ____
+    | |___| |_| |__  |_  )  \/ |__ /
+    | / _ \  _|    |  / / () | ||_ \
+    |_\___/\__|_||_| /___\__/|_|___/
+--> 
+<head>
+<title>loth home</title>
+<meta charset="utf-8">
+<meta property="og:image" content="res/img/logo_256.png"><!-- need full adress -->
+<meta name="description" content="My 3d experiment ." />
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1"/>
+<link rel="shortcut icon" href="res/img/favicon.ico"><!-- need full adress -->
+<link rel="stylesheet" type="text/css" href="css/loth.css" />
+<link rel="stylesheet" type="text/css" href="history/history.css" />
+<script type="text/javascript" src="history/history.js"></script>
+<link href="css/menu.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<canvas id="myCanvas" width="256" height="256"></canvas>
+<div id="ribbon" style="position: absolute; top: 0; right: 0; border: 0;">
+<a href="https://github.com/lo-th/olympe"><img  src="http://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub" /></a>
+</div>
+<div id="intro"></div>
+<div  id='MiniMenu'>
+<div  id='mbutton' onclick='link(0);'><img class='mlogo' src="res/img/mini/mail.png">3dflashlo@gmail.com</div>
+<div  id='mbutton' onclick='link(1);'><img class='mlogo' src="res/img/mini/wordpress.png">blog</div>
+<div  id='mbutton' onclick='link(2);'><img class='mlogo' src="res/img/mini/linked.png">linked in</div>
+<div  id='mbutton' onclick='link(3);'><img class='mlogo' src="res/img/mini/facebook.png">facebook</div>
+<div  id='mbutton' onclick='link(4);'><img class='mlogo' src="res/img/mini/google.png">google +</div>
+<div  id='mbutton' onclick='link(5);'><img class='mlogo' src="res/img/mini/github.png">github</div>
+</div>
+<script type="text/javascript" src="js/accodion/jquery-1.10.0.min.js" ></script>
+<script type="text/javascript" src="js/accodion/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript" src="js/accodion/jquery.accordionImageMenu.js"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-42907246-1', 'olympe.in');
+  ga('send', 'pageview');
+</script>
+
+<!-- RUN SCRIPT -->
+<script type="text/javascript">
+var myTimer;
+var n;
+var message;
+var canvas;
+var inCanvas;
+var info;
+
+
+function init(){
+	message=['Welcome', 'I am french free-lance', '3d modeler & coder', 'Flash and Javascript', 'Look my experiment below'];
+    canvas= document.getElementById("myCanvas");
+    inCanvas = canvas.getContext("2d");
+    info = document.getElementById('intro');
+	n=0;
+	info.innerHTML = message[n];
+	myTimer = setInterval(function(){test()},2000);
+	onWindowResize();
+	window.addEventListener( 'resize', onWindowResize, false );
+}
+
+function onWindowResize(event){
+    canvas.style.top = 0;//( window.innerHeight-256)/2 + "px";
+    canvas.style.left = (window.innerWidth-256)/2 + "px";
+    info.style.top = 256 + "px";//-30+( window.innerHeight-256)/2 + "px";
+    info.style.left = (window.innerWidth-400)/2 + "px";
+}
+
+function test(){
+	n++;
+	if(n == message.length){
+		//clearInterval(myTimer);
+		//window.open ('index3d.html','_self',false);
+		n=0;
+	}
+	else info.innerHTML = message[n];
+	//;
+}
+
+function link(n){
+	if(n==0) return;//window.open ('mailto:' + '3dflashlo%40gmail%2ecom?subject=', '_blank',false);
+	if(n==1)window.open ('http://3dflashlo.wordpress.com/','_blank',false);
+	if(n==2)window.open ('http://fr.linkedin.com/pub/lo-th/27/202/b3/en','_blank',false);
+	if(n==3)window.open ('https://www.facebook.com/laurent.thillet','_blank',false);
+	if(n==4)window.open ('https://plus.google.com/u/0/114170447432405103307/posts','_blank',false);
+	if(n==5)window.open ('https://github.com/lo-th/olympe','_blank',false);
+
+}
+
+//canvas img
+
+var imageObj = new Image();
+imageObj.src = 'res/img/logo_128.png';
+imageObj.onload=function(){
+   var img=document.getElementById("logo");
+   inCanvas.drawImage(imageObj,64,64,128,128);
+ //  inCanvas.drawImage(imageObj,0,0,256,256);
+}
+
+
+$(document).ready(function() {
+	
+		jQuery('#acc-menu2').AccordionImageMenu({
+		  'border' : 1,
+		  'openItem':0,
+		  'duration': 400,
+		  'openDim': 256,
+		  'closeDim': 150,
+		  'effect': 'easeOutBack',
+		  'width':20,
+		 //'fadeInTitle': false,
+		  'height':256
+		});	
+		
+	});
+
+init();
+
+</script>
+
+<div id="acc-menu2" style="margin:10px auto">
+<a href="index_diana.html"><span>Diana 0.1</span><img id="image" src="res/img/menu_diana.jpg" alt="" title="Diana" width="256" height="256" /></a>
+<a href="index_rail_shooter.html"><span>Rail Shooter 0.1</span><img src="res/img/menu_shooter.jpg" alt="" title="Rail Shooter" width="256" height="256" class="alignnone size-medium wp-image-803" /></a>
+<a href="index_gauntlet.html"><span>Gauntlet 3d 0.1</span><img src="res/img/menu_gautlet.jpg" alt="" title="Gaultlet 3d" width="256" height="256" class="alignnone size-medium wp-image-801" /></a>
+<a href="index_fps.html"><span>miniFPS 0.1</span><img src="res/img/menu_fps.jpg" alt="" title="FPS style" width="256" height="256" class="alignnone size-medium wp-image-800" /></a>
+</div>
+
+</body>
+>>>>>>> origin/master
 </html>

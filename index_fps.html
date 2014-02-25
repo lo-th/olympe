@@ -61,7 +61,11 @@
 		<div id="occ"><img id="logo" src="res/img/oculusm.png" onclick="occulusEffect();" onmouseover="this.src='res/img/oculus.png'" onmouseout="this.src='res/img/oculusm.png'" /></a></div>
 		<div id="option">
 		<!--Speed: <input id="speed" type="range" name="points" min="0" max="10" value="2" step="0.1" /><br/>-->
+<<<<<<< HEAD
 		map scale<input id="position" type="range" min="100" max="1250" value="500" step="1" onchange="changelens()" /><br/>
+=======
+		map scale<input id="position" type="range" min="10" max="500" value="500" step="1" onchange="changelens()" /><br/>
+>>>>>>> origin/master
 		<!--Zoom <input id="factor" type="range" min="0.1" max="10" value="2" step="0.1" onchange="changelens()" />-->
 		</div>
 
@@ -79,10 +83,19 @@
 
 		<script>
 		    var FAR = 4000;
+<<<<<<< HEAD
 			var camera, scene, renderer, content, bulletContent;
 			var miniCamera, miniScene, miniRenderer, firstRenderTarget;
 			var level = { x:0, y:0, z:0, ox:800, oy:0, oz:600, firstDraw:false };
 			var cfg = { speed:0.25, maxSpeed:5, posY:100 };
+=======
+		    var clock = new THREE.Clock();
+		    var delta, elaps;
+			var camera, scene, renderer, content, bulletContent;
+			var miniCamera, miniScene, miniRenderer, firstRenderTarget;
+			var level = { x:0, y:0, z:0, ox:800, oy:0, oz:600, firstDraw:false };
+			var cfg = { speed:0.5, maxSpeed:10, posY:100 };
+>>>>>>> origin/master
 			var cam = { horizontal:90, vertical:90, distance:1 };
 
 			var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
@@ -90,6 +103,10 @@
 			var ease = { x:0, y:0, z:0};
 			var easeRot = { x:0, y:0, z:0, deg:0 };
 			var mouse = { x:0, y:0, down:false, ox:0, oy:0, h:0, v:0, mx:0, my:0 };
+<<<<<<< HEAD
+=======
+			var twe = {y:0};
+>>>>>>> origin/master
 
 			var Colors= [0x48608c, 0x48608c, 0xAAAAAA];
 			//---------- Bakground, Ambient, Specular
@@ -129,6 +146,31 @@
 			var imLoader = 0;
 			var textures;
 
+<<<<<<< HEAD
+=======
+			var rays = [
+                new THREE.Vector3(0, 0, 1),
+                new THREE.Vector3(1, 0, 1),
+                new THREE.Vector3(1, 0, 0),
+                new THREE.Vector3(1, 0, -1),
+                new THREE.Vector3(0, 0, -1),
+                new THREE.Vector3(-1, 0, -1),
+                new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(-1, 0, 1)
+            ];
+            var caster = new THREE.Raycaster();
+            var lineContener;
+            var lines = [];
+            var ball = [];
+            var rayPosY = -50;
+            var isWithRayTest = false;
+            
+            
+
+            
+            var linesMaterial = [];
+
+>>>>>>> origin/master
 			
 			function init() {
 				initDebug();
@@ -145,6 +187,89 @@
 				init();
 			}
 
+<<<<<<< HEAD
+=======
+			function rayFullTest(){
+				var collisions, i, distance = 30;
+				for ( i = 0; i < rays.length; i ++) {
+					//var vector = new THREE.Vector3(lineContener.position.x+(rays[i].x*distance),lineContener.position.y, lineContener.position.z+(rays[i].z*distance));
+					//vector.add(lineContener.position);
+					caster.set(lineContener.position, rays[i].normalize());
+					collisions = caster.intersectObjects( content.children );
+					if (collisions.length > 0) {
+	                    if(collisions[0].distance < distance){
+							lines[i].material = linesMaterial[2];
+							lines[i].geometry.vertices[1].set(rays[i].x*collisions[0].distance, 0, rays[i].z*collisions[0].distance);
+							ball[i].material = linesMaterial[5];
+							ball[i].position.set(rays[i].x*collisions[0].distance, 0, rays[i].z*collisions[0].distance);
+						} else {
+							lines[i].material = linesMaterial[1];
+							lines[i].geometry.vertices[1].set(rays[i].x*collisions[0].distance, 0, rays[i].z*collisions[0].distance);
+							ball[i].material = linesMaterial[4];
+							ball[i].position.set(rays[i].x*collisions[0].distance, 0, rays[i].z*collisions[0].distance);
+						}
+						
+						 // Yep, this.rays[i] gives us : 0 => up, 1 => up-left, 2 => left, ...
+		                /*if ((i === 0 || i === 1 || i === 7) && direction.z === 1) {
+		                    direction.setZ(0);
+		                } else if ((i === 3 || i === 4 || i === 5) && direction.z === -1) {
+		                    direction.setZ(0);
+		                }
+		                if ((i === 1 || i === 2 || i === 3) && direction.x === 1) {
+		                    direction.setX(0);
+		                } else if ((i === 5 || i === 6 || i === 7) && direction.x === -1) {
+		                    direction.setX(0);
+		                }*/
+
+					} else {
+						lines[i].material = linesMaterial[0];
+						lines[i].geometry.vertices[1].set(rays[i].x*distance, 0, rays[i].z*distance);
+						ball[i].material = linesMaterial[3];
+						ball[i].position.set(rays[i].x*distance, 0, rays[i].z*distance);
+					}
+					lines[i].geometry.verticesNeedUpdate = true;
+				}
+
+			}
+
+			function drawRayTest(){
+				var distance = 10;
+				var geometry;
+				linesMaterial[0] = new THREE.LineBasicMaterial({ color: 0x0000ff });
+				linesMaterial[1] = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+				linesMaterial[2] = new THREE.LineBasicMaterial({ color: 0xff0000 });
+
+				linesMaterial[3] = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+				linesMaterial[4] = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+				linesMaterial[5] = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+				for ( var i = 0; i < rays.length; i ++) {
+					geometry = new THREE.Geometry();
+					geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+					geometry.vertices.push(new THREE.Vector3(rays[i].x*distance, 0, rays[i].z*distance));
+					geometry.dynamic = true;
+					lines[i] = new THREE.Line( geometry, linesMaterial[0] );
+					ball[i] = new THREE.Mesh(  new THREE.SphereGeometry(1,6,6), linesMaterial[3] ); 
+					ball[i].position.set(rays[i].x*distance, 0, rays[i].z*distance);
+					lineContener.add(lines[i]);
+					lineContener.add(ball[i]);
+			    }
+			}
+
+			function activRayTest(){
+				if(!isWithRayTest){
+					isWithRayTest = true;
+					lineContener = new THREE.Object3D();
+					scene.add(lineContener);
+					drawRayTest();
+				} else {
+					isWithRayTest = false;
+					scene.remove(lineContener);
+				}
+
+			}
+
+>>>>>>> origin/master
 			//-----------------------------------------------------
 			//  THREE INIT
 			//-----------------------------------------------------
@@ -269,9 +394,12 @@
 
 				initMaterial();
 
+<<<<<<< HEAD
 				
 				
 
+=======
+>>>>>>> origin/master
 				window.addEventListener( 'resize', onWindowResize, false );
 				document.addEventListener( 'keydown', onKeyDown, false );
 				document.addEventListener( 'keyup', onKeyUp, false );
@@ -281,7 +409,11 @@
 
 				initSea3DMesh();
 
+<<<<<<< HEAD
 				//occEffect();
+=======
+				
+>>>>>>> origin/master
 			}
 
 			function onWindowResize() {
@@ -362,10 +494,23 @@
 			function animate() {
 				requestAnimationFrame( animate );
 
+<<<<<<< HEAD
 				TWEEN.update();
 
 				move();
 
+=======
+				delta = clock.getDelta();
+				elaps = clock.getElapsedTime();
+
+				//TWEEN.update();
+				if(isWithRayTest)rayFullTest();
+
+				move();
+
+				
+
+>>>>>>> origin/master
 				//camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
 				//camera.lookAt( player.position );
 
@@ -393,15 +538,25 @@
 				}
 			}
 			
+<<<<<<< HEAD
 			/*function startRender() {
 		        if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( update3D ); }, 1000 / 60 );
+=======
+			function startRender() {
+				//if(!renderLoop) renderLoop = setInterval( function () { animate();}, 1000 / 120 );
+		        if(!renderLoop) renderLoop = setInterval( function () { requestAnimationFrame( animate ); }, 1000 / 60 );
+>>>>>>> origin/master
 	        }
 
 	        function stopRender() {
 	        	if(renderLoop) {clearInterval(renderLoop); renderLoop = null;}
          	}
 			
+<<<<<<< HEAD
 			function update3D(e) {
+=======
+			/*function update3D(e) {
+>>>>>>> origin/master
 			    camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
 				camera.lookAt( player.position );
 				if(effect) effect.render( scene, camera );
@@ -452,7 +607,11 @@
 				level.z = roundD(level.oz+easeRot.z);
 
 				// update 2d map
+<<<<<<< HEAD
 				//drawMap();
+=======
+				drawMap();
+>>>>>>> origin/master
 
 				// test pixel collision
 				var nohitx = false;
@@ -487,6 +646,7 @@
 				playerPos.z = level.oz;
 
 				// update 2d map
+<<<<<<< HEAD
 				drawMap();
 
 				if(level.oy !== level.y ){
@@ -494,12 +654,40 @@
 					tween.onUpdate(function(){ level.oy = this.control; playerPos.y = this.control + cfg.posY; });
 					tween.start();
 			    }
+=======
+				//drawMap();
+
+				/*if(level.oy !== level.y ){
+					tween = new TWEEN.Tween( { control: level.oy }).to( { control:level.y} , 100 ).easing( TWEEN.Easing.Linear.None );
+					tween.onUpdate(function(){ level.oy = this.control; playerPos.y = this.control + cfg.posY; });
+					tween.start();
+			    }*/
+			   //if(level.oy-level.y>2 || level.oy-level.y<-2 ){
+			   //	tell(delta)
+			   if(level.oy !== level.y ) TweenLite.to(level, 0.17, {oy:level.y, onUpdate:updateUp });
+			   // } else {
+			   // 	tell("mm")
+			   // 	level.oy = level.y;
+			   // 	playerPos.y = level.oy + cfg.posY;
+			   // }
+			  /* if(level.y > level.oy) level.oy++;
+			   else if(level.y < level.oy) level.oy--;
+			   else level.oy = level.y;*/
+
+			   playerPos.y = level.oy + cfg.posY;
+
+
+>>>>>>> origin/master
 
 			    playerCam.position.x = playerPos.x;
 			    playerCam.position.z = playerPos.z;
 				playerCam.rotation.y = -easeRot.y;
 
 				player.position.copy(playerPos);
+<<<<<<< HEAD
+=======
+				if(isWithRayTest)lineContener.position.set(playerPos.x, playerPos.y+rayPosY, playerPos.z)
+>>>>>>> origin/master
 				sky.position.copy(playerPos);
 
 				camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
@@ -521,6 +709,14 @@
 				//tell(rot+'/'+easeRot.y)
 			}
 
+<<<<<<< HEAD
+=======
+			function updateUp(){ 
+				//level.oy = twe.y;
+				//playerPos.y = level.oy + cfg.posY; 
+			}
+
+>>>>>>> origin/master
 			function initPlayer() {
 				level.oy = level.y;
 				playerPos.z = level.oz;
@@ -653,7 +849,11 @@
 				var geometry;
 				var material;
 				var mesh;
+<<<<<<< HEAD
 				var scale = 1//0.73;
+=======
+				var scale = 1;
+>>>>>>> origin/master
 				var i, j;
 
                 // add to mini
@@ -687,6 +887,7 @@
 					}
 				}
 				animate();
+<<<<<<< HEAD
 			}
 
 			function scaleGeometry(geometry, scale) {
@@ -695,6 +896,18 @@
 					vertex.x *= scale;
 					vertex.y *= scale;
 					vertex.z *= -scale;
+=======
+				//startRender();
+			}
+
+			function scaleGeometry(geometry, scale) {
+				var s = 1 || scale;
+				for( var i = 0; i < geometry.vertices.length; i++) {
+					var vertex	= geometry.vertices[i];
+					vertex.x *= s;
+					vertex.y *= s;
+					vertex.z *= -s;
+>>>>>>> origin/master
 				}
 				geometry.computeFaceNormals();
 
@@ -808,7 +1021,11 @@
 
 				// height
 			   // level.y  = roundD(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*0.6)-130);
+<<<<<<< HEAD
 			    level.y  = roundD(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180);
+=======
+			    level.y = Math.round(((tmpZone[px.m]+tmpZone[px.m+1]+tmpZone[px.m+2])*1)-180);
+>>>>>>> origin/master
 
 
 				if(!level.firstDraw){
