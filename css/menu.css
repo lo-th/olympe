@@ -1,6 +1,0 @@
-		.aim{position:relative;overflow:hidden;margin:0;clear:both; padding:0; top:300px; }
-		.aim a{background-position:center center;cursor:pointer;display:block;overflow:hidden;position:relative;float:left;text-decoration:none;}
-		.aim a:hover, .aim a:visited{text-decoration:none}
-		.aim ul{list-style:none}
-		.aim li{display:block;overflow:hidden;float:left;}
-		.aim a span{color:#FFFFFF;bottom:10px; left:10px;width:100%;display:block; padding:2px 5px 5px;position:absolute;background:#000;font-size:12px;font-weight:bold;height:15px; line-height:18px}
