@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>loth FPS</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body { margin: 0px; background-color: #000000; overflow: hidden; }
+			*{ -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: -moz-none;
+			   -o-user-select: none;  user-select: none; }
+		</style>
+	</head>
+	<!-- _     _   _      ___ __  _ ____
+	    | |___| |_| |__  |_  )  \/ |__ /
+	    | / _ \  _|    |  / / () | ||_ \
+	    |_\___/\__|_||_| /___\__/|_|___/
+	-->
+	<body>
+		<div id="viewport"></div>
+		<canvas id="map" width="256" height="256"></canvas>
+		<div id="debug"></div>
+		<div id="home"><a href="index.html"><img id="logo" src="res/img/home.png" onmouseover="this.src='res/img/home_s.png'" onmouseout="this.src='res/img/home.png'" /></a></div>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+
+		<script src="js/libs/tween.min.js"></script>
+
+		<script>
+		    var FAR = 4000;
+			var camera, scene, renderer;
+			var level = { x:50, y:0, z:20, ox:0, oy:0, oz:0, firstDraw:false, height:null, collision:null};
+			var cfg = { speed:0.03, maxSpeed:0.5, worldSize:10, mapSize:1, posY:100};
+			var cam = { horizontal:90, vertical:90, distance:10 };
+
+			var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
+			var key = { front:false, back:false, left:false, right:false, jump:false, crouch:false };
+			var ease = { x:0, y:0, z:0 };
+			var easeRot = { x:0, y:0, z:0 };
+			var mouse = { x:0, y:0, down:false, ox:0, oy:0, h:0, v:0 };
+
+			var Colors= [0x48608c, 0x48608c, 0xAAAAAA];
+			//---------- Bakground, Ambient, Specular
+
+			var player;
+			var playerPos;
+			var sky, skyCube;
+			var ambient, hemiLight, spotLight, pointLight;
+			var map, ctx;
+			var debug;
+			var materials = [];
+			var meshs = [];
+
+			var content;
+//
+			//initMap();
+			//initDebug();
+			//init();
+		//	animate();
+
+			//-----------------------------------------------------
+			//  THREE INIT
+			//-----------------------------------------------------
+			
+			function init() {
+			 vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
+				initMap();
+			initDebug();
+
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( vsize.x, vsize.y );
+				renderer.setClearColor( Colors[0], 1 );
+				renderer.physicallyBasedShading = true;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMapEnabled = true;
+				document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+				renderer.domElement.style.position = "absolute";
+				
+
+				camera = new THREE.PerspectiveCamera( 70, vsize.z, 1, FAR );
+
+				scene = new THREE.Scene();
+
+				player =new THREE.Object3D();
+				scene.add(player);
+				content=new THREE.Object3D();
+				scene.add(content);
+
+				playerPos = new THREE.Vector3();
+
+				ambient = new THREE.AmbientLight( Colors[1] );
+				scene.add( ambient );/*
+
+				hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+				hemiLight.position.set( 0, 0, 0 );
+				scene.add( hemiLight );*/
+
+				pointLight = new THREE.PointLight( 0x000, 0.5, 3000 );
+				pointLight.position.set( -1000, 500, -1000 );
+				scene.add( pointLight );
+
+				spotLight = new THREE.SpotLight( 0xffffff );
+				spotLight.intensity = 1.2;
+				spotLight.position.set(1000,1500,500);
+				//spotLight.target = player;
+				spotLight.castShadow = true;
+
+				spotLight.shadowCameraNear = 1000;
+				spotLight.shadowCameraFar = 3000;
+				spotLight.shadowCameraFov = 75;
+
+				spotLight.shadowMapBias = 0.01;
+				spotLight.shadowMapDarkness = 0.7;
+				spotLight.shadowMapWidth = 1024;
+				spotLight.shadowMapHeight = 1024;
+
+				//spotLight.shadowCameraVisible = true; 
+
+				//player.add(spotLight);
+				scene.add(spotLight);
+
+				addSkyBox();
+
+				initMaterial();
+
+			initSea3DMesh();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				document.addEventListener( 'keydown', onKeyDown, false );
+				document.addEventListener( 'keyup', onKeyUp, false );
+				document.addEventListener( 'mousemove', onMouseMove, false );
+				document.addEventListener( 'mousedown', onMouseDown, false );
+				document.addEventListener( 'mouseup', onMouseUp, false );
+
+
+			//init();
+			animate();
+			}
+
+			function onWindowResize() {
+				vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
+				camera.aspect = vsize.z;
+				camera.updateProjectionMatrix();
+				renderer.setSize( vsize.x, vsize.y );
+			}
+
+			//-----------------------------------------------------
+			//  SKY BOX
+			//-----------------------------------------------------
+
+			function addSkyBox() {
+				var cubes = [2, 14, 26, 30,31,32,33];
+				var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a, 0x9b8379, 0x6f7488, 0xffffd9],
+								  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+								  ];
+				var n = Math.floor(Math.random()*cubes.length);
+				lightColors( cubesColors[n] );
+				var format = ".jpg";
+				var r = "res/textures/cube/sky"+cubes[n]+"/";
+				var urls = [ r + "posx"+format, r + "negx"+format, r + "posy"+format, r + "negy"+format, r + "posz"+format, r + "negz"+format ];
+				skyCube = THREE.ImageUtils.loadTextureCube( urls );
+				skyCube.format = THREE.RGBFormat;
+				var shader = THREE.ShaderLib[ "cube" ];
+				shader.uniforms[ "tCube" ].value = skyCube;
+
+				var material = new THREE.ShaderMaterial( {
+					fragmentShader: shader.fragmentShader,
+					vertexShader: shader.vertexShader,
+					uniforms: shader.uniforms,
+					depthWrite: false,
+					side: THREE.BackSide
+				});
+
+				sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
+				sky.castShadow = false;
+				sky.receiveShadow = false;
+				scene.add( sky );
+			}
+
+			function lightColors( cc ){
+				ambient.color.setHex(cc[2]);
+				//hemiLight.color.setHex( cc[2] );
+				//hemiLight.groundColor.setHex( cc[0] );
+				pointLight.color.setHex( cc[1] );
+				spotLight.color.setHex( cc[3] );
+				Colors[0] = cc[2];
+				Colors[1] = cc[2];
+				Colors[2] = cc[3];
+			}
+
+			//-----------------------------------------------------
+			//
+			//  RENDER LOOP
+			//
+			//-----------------------------------------------------
+
+			function animate() {
+				requestAnimationFrame( animate );
+
+				TWEEN.update();
+
+				move();
+
+				camera.position.copy( Orbit( player.position, cam.horizontal, cam.vertical, cam.distance ) );
+				camera.lookAt( player.position );
+
+				renderer.render( scene, camera );
+
+				if(!level.firstDraw)drawMap( degToRad(cam.horizontal));
+
+			}
+
+			//-----------------------------------------------------
+			//  PLAYER MOVE
+			//-----------------------------------------------------
+
+			function move() {
+				easeRot.y = degToRad(cam.horizontal);
+				//acceleration
+				if (key.front) ease.z += cfg.speed;
+				if (key.back) ease.z -= cfg.speed;
+				if (key.left) ease.x += cfg.speed;
+				if (key.right) ease.x -= cfg.speed;
+				
+				//speed limite
+				if (ease.x > cfg.maxSpeed) ease.x = cfg.maxSpeed;
+				if (ease.z > cfg.maxSpeed) ease.z = cfg.maxSpeed;
+				if (ease.x < -cfg.maxSpeed) ease.x = -cfg.maxSpeed;
+				if (ease.z < -cfg.maxSpeed) ease.z = -cfg.maxSpeed;
+
+				//break
+				if (!key.front && !key.back) {
+					if (ease.z > cfg.speed) ease.z -= cfg.speed;
+					else if (ease.z < -cfg.speed) ease.z += cfg.speed;
+					else ease.z = 0;
+				}
+				if (!key.left && !key.right) {
+					if (ease.x > cfg.speed) ease.x -= cfg.speed;
+					else if (ease.x < -cfg.speed) ease.x += cfg.speed;
+					else ease.x = 0;
+				}
+				
+				// stop move
+				if (ease.x == 0 && ease.z == 0) return;
+
+				// find direction of player
+				easeRot.x = Math.sin(easeRot.y) * ease.x + Math.cos(easeRot.y) * ease.z;
+				easeRot.z = Math.cos(easeRot.y) * ease.x - Math.sin(easeRot.y) * ease.z;
+				
+				level.x -=  easeRot.x*cfg.mapSize;
+				level.z +=  easeRot.z*cfg.mapSize;
+				
+				drawMap();
+
+				level.ox = level.x;
+				level.oz = level.z;
+				
+				playerPos.z = level.z * cfg.worldSize;
+				playerPos.x = level.x * cfg.worldSize;
+
+				if(level.oy != level.y ){
+					tween = new TWEEN.Tween( { control: level.oy }).to( { control:level.y} , 100 ).easing( TWEEN.Easing.Linear.None );
+					tween.onUpdate(function(){ level.oy = this.control; playerPos.y = this.control + cfg.posY; });
+					tween.start();
+			    }
+
+				player.position.copy(playerPos);
+				sky.position.copy(playerPos);
+
+				tell("x:"+parseInt(level.x)+" y:" + parseInt(level.y) + " z:"+ parseInt(level.z) + " h:" +  parseInt(cam.horizontal) + " v:" +  parseInt(cam.vertical));
+			}
+
+			function initPlayer() {
+				level.ox = level.x;
+				level.oz = level.z;
+				level.oy = level.y;
+				playerPos.z = level.z * cfg.worldSize;
+				playerPos.x = level.x * cfg.worldSize;
+				playerPos.y = (level.y) + cfg.posY;
+				player.position.copy(playerPos);
+			}
+
+			//-----------------------------------------------------
+			//  MOUSE
+			//-----------------------------------------------------
+
+			function onMouseDown( e ) {
+				mouse.ox = e.clientX;
+				mouse.oy = e.clientY;
+				mouse.h = cam.horizontal;
+				mouse.v = cam.vertical;
+				mouse.down = true;
+			}
+
+			function onMouseUp( e ) {
+				mouse.down = false;
+			}
+
+			function onMouseMove( e ) {
+				if(mouse.down){
+					mouse.x = e.clientX;
+				    mouse.y = e.clientY;
+					cam.horizontal =((mouse.x - mouse.ox)*0.3) + mouse.h;
+					cam.vertical = (-(mouse.y - mouse.oy)*0.1) + mouse.v;
+
+					drawMap( degToRad(cam.horizontal));
+				}
+			}
+
+			//-----------------------------------------------------
+			//  KEYBOARD
+			//-----------------------------------------------------
+			
+			function onKeyDown ( event ) {
+				switch ( event.keyCode ) {
+				    case 38: case 87: case 90: key.front = true; break; // up, W, Z
+					case 40: case 83: key.back = true; break;           // down, S
+					case 37: case 65: case 81: key.left = true; break;  // left, A, Q
+					case 39: case 68: key.right = true; break;          // right, D
+					case 17: case 67: key.crouch = false; break;        // ctrl, c
+					case 32: key.jump = false; break;                   // space
+				}
+			}
+
+			function onKeyUp ( event ) {
+				switch( event.keyCode ) {
+					case 38: case 87: case 90: key.front = false; break; // up, W, Z
+					case 40: case 83: key.back = false; break;           // down, S
+					case 37: case 65: case 81: key.left = false; break;  // left, A, Q
+					case 39: case 68: key.right = false; break;          // right, D
+					case 17: case 67: key.crouch = false; break;         // ctrl, c
+					case 32: key.jump = false; break;                    // space
+				}
+			}
+
+			//-----------------------------------------------------
+			//  SEA3D IMPORT
+			//-----------------------------------------------------
+
+			function initSea3DMesh() {
+				var loader = new THREE.SEA3D( false );
+				loader.onComplete = function( e ) {
+					for (i=0; i < loader.meshes.length; i++){
+						meshs[i] = loader.meshes[i];
+					}
+				    addSea3DMesh()
+				};
+				loader.load( 'res/models/house.sea' );
+			}
+
+			
+
+			function addSea3DMesh() {
+				//var geometry;
+				//var 
+				//var mesh;
+				var scale = 0.73;
+				
+				for(var i=0; i<meshs.length; i++){
+					var geometry = meshs[i].geometry;
+					var material=new THREE.MeshPhongMaterial( { color: 0xff0000 } );;
+					if(meshs[i].name == "house" || meshs[i].name == "house_ch" ) material = materials[0];
+					else if(meshs[i].name == "toit") material = materials[1];
+					else if(meshs[i].name == "intern") material = materials[2];
+					else if(meshs[i].name == "balcon") material = materials[3];
+					else if(meshs[i].name == "windows") material = materials[4];
+					else if(meshs[i].name == "cadres") material = materials[5];
+					else material = materials[6];
+					
+					var mesh = new THREE.Mesh( geometry, material );
+				    mesh.scale.set( scale, scale, -scale );
+				    mesh.receiveShadow = true;
+				    mesh.castShadow = true;
+				   // scene.add( mesh );
+				   content.add( mesh );
+				}
+			}
+
+			//-----------------------------------------------------
+			//  MATERIAL
+			//-----------------------------------------------------
+
+			function initMaterial() {
+				materials[0] = makeMaterial({ map:"house.jpg", bump:true, bumpScale:3, shininess:10 });
+				materials[1] = makeMaterial({ map:"toit.jpg", bump:true, bumpScale:5, shininess:60 });
+				materials[2] = makeMaterial({ map:"intern.jpg", bump:true, bumpScale:2, shininess:10 });
+				materials[3] = makeMaterial({ map:"balcon.png", bump:true, bumpScale:2, shininess:10 , transparent:true, side:THREE.DoubleSide});
+				materials[4] = makeMaterial({ color:0x909090, transparent:true, opacity:0.5, side:THREE.DoubleSide, reflectivity:0.96 }); // window
+				materials[5] = makeMaterial({ color:0xb18954, side:THREE.DoubleSide }); // cadre
+				materials[6] = makeMaterial({ color:0x909090 }); // wall
+			}
+
+			function makeMaterial (data){
+				var bitmap;
+				var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 50 } );
+
+			//	var material = new THREE.MeshPhongMaterial( { color:0x909090 } );
+
+
+				if(data.map) {
+					//map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
+					bitmap = THREE.ImageUtils.loadTexture( 'res/textures/house/'+ data.map );
+				    bitmap.repeat.set( 1, -1 );
+				    bitmap.wrapS = bitmap.wrapT = THREE.RepeatWrapping;
+				    bitmap.anisotropy = renderer.getMaxAnisotropy();
+				    material.map = bitmap;
+				}
+
+				if(data.bump && data.map){
+					 material.bumpMap = map;
+					 material.bumpScale = data.bumpScale || 1;
+				}
+
+				if(data.skinning) material.skinning = data.skinning;
+				if(data.color) material.color.setHex( data.color );
+				if(data.transparent) material.transparent = data.transparent;
+				if(data.opacity) material.opacity = data.opacity;
+				if(data.side) material.side = data.side;
+
+				if(data.reflectivity){
+					material.envMap = skyCube; 
+					material.combine= THREE.MixOperation;
+					material.reflectivity=data.reflectivity;
+				}
+
+				//material.perPixel = true;
+
+				return material;
+			}
+
+			//-----------------------------------------------------
+			//  MAP 2D
+			//-----------------------------------------------------
+
+			function initMap(){
+			    map = document.getElementById("map");
+			    ctx = map.getContext("2d");
+			    map.style.bottom = "10px";
+			    map.style.left =  "10px";
+			    map.style.position = "absolute";
+
+			    var imageObj = new Image();
+			    imageObj.src = 'res/images/height.png';
+
+			    var imageObj2 = new Image();
+			    imageObj2.src = 'res/images/collision.png';
+
+				imageObj.onload=function(){
+				   level.height = imageObj;
+				}
+
+				imageObj2.onload=function(){
+				   level.collision = imageObj2;
+				}
+
+				level.firstDraw = false;
+			}
+
+			function drawMap(){
+				var pixel;
+				if(level.height && level.collision){
+					ctx.clearRect ( 0 , 0 , 256 , 256 );
+					ctx.drawImage(level.collision,0,0,256,256);
+					// collision test X
+					pixel = ctx.getImageData(level.x+128, level.oz+128, 1, 1);
+					if(pixel.data[0]!==0) level.x = level.ox;
+					// collision test Z
+					pixel = ctx.getImageData(level.ox+128, level.z+128, 1, 1);
+					if(pixel.data[0]!==0) level.z = level.oz;
+					ctx.drawImage(level.height,0,0,256,256);
+					// get height
+					pixel = ctx.getImageData(level.x+128, level.z+128, 1, 1);
+				    level.y = (pixel.data[0]+pixel.data[1]+pixel.data[2])*0.33;
+
+				    ctx.globalAlpha = 0.2;
+				    ctx.drawImage(level.collision,0,0,256,256);
+				    ctx.globalAlpha = 1;
+
+				    ctx.save();
+				    ctx.translate(level.x+128, level.z+128);
+				    ctx.rotate(easeRot.y);
+				    drawPlayer(ctx);
+				    ctx.restore();
+
+				    if(!level.firstDraw)initPlayer();
+
+				    level.firstDraw = true;
+				}
+			}
+
+			function drawPlayer(ctx) {
+			   ctx.fillStyle = "rgba(255,255,200,0.2)";;
+			   ctx.globalAlpha = 1.0;
+			   ctx.beginPath();
+			   ctx.moveTo(0, 0);
+			   ctx.lineTo(-30, -30);
+			   ctx.lineTo(-30, 30);
+			   ctx.closePath();
+			   ctx.fill();
+
+			   ctx.fillStyle = "rgba(200,200,100,1)";
+			   ctx.fillRect(-2, -4, 4, 6);
+			}
+
+			function initDebug(){
+				debug = document.getElementById("debug");
+				debug.style.bottom = "276px";
+                debug.style.left = "10px";
+                debug.style.width = "200px";
+                debug.style.height = "12px";
+                debug.style.fontSize ="12px";
+                debug.style.fontFamily="Lucida Sans Unicode"
+                debug.style.color = "#a2a2a2";
+                debug.style.position = "absolute";
+
+                var home = document.getElementById("home");
+                home.style.position = "absolute";
+                home.style.top = "10px";
+                home.style.left = "10px";
+			}
+
+			function tell(Value) {
+				debug.innerHTML = Value;
+			}
+
+			//-----------------------------------------------------
+			//  MATH
+			//-----------------------------------------------------
+
+			function degToRad(Value) {
+				return Value * Math.PI / 180;
+			}
+
+			function Orbit(origine, horizontal, vertical, distance) {
+					var p = new THREE.Vector3();
+					var phi = degToRad( vertical );
+					var theta = degToRad( horizontal );
+					p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+					p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+					p.y = (distance * Math.cos(phi)) + origine.y;
+					return p;
+			}
+
+			window.onload = init;
+
+		</script>
+	</body>
+</html>
