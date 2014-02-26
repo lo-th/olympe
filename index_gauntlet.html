@@ -902,19 +902,46 @@
 	}
 
 	//===========================================================================
+	// GLOBAL 3D POSITION
+	//===========================================================================
+
+	function setPosition(m, x, y, z, r) {
+		m.position.set( x, y, z );
+		if(r !== undefined) m.rotation.y = r * ToRad;
+		//m.position.copy( latLongToVector3(x, z, 1000, y) );
+	}
+
+	function latLongToVector3(lat, lon, radius, heigth) {
+		var p = new THREE.Vector3();
+	    var phi = (lat)*ToRad;
+	    var theta = (lon)*ToRad;
+	    p.x = (radius+heigth) * Math.cos(phi) * Math.cos(theta);
+	    p.y = (radius+heigth) * Math.sin(phi) * Math.cos(theta);
+	    p.z = (radius+heigth) * Math.sin(theta);
+	    /*
+	    p.x = -(radius+heigth) * Math.cos(phi) * Math.cos(theta);
+	    p.y = (radius+heigth) * Math.sin(phi);
+	    p.z = (radius+heigth) * Math.cos(phi) * Math.sin(theta);*/
+	    return p;
+	}
+
+
+	//===========================================================================
 	// 3D MAP
 	//===========================================================================
 
 	function add3DWall(x, y, sx, sy) {
 		var block = new THREE.Mesh( wallRef[sx] );
-		block.position.set( x*32, 0, y*32 );
+		//block.position.set( x*32, 0, y*32 );
+		setPosition(block, x*32, 0, y*32 );
 		THREE.GeometryUtils.merge(levelGeometry, block);
 	}
 
 	function add3DFloor(x, y, sx, sy) {
 		if(sy!=0) return; //no need shadow cell
 		var block = new THREE.Mesh(  wallRef[16] );
-		block.position.set( x*32, 0, y*32 );
+		//block.position.set( x*32, 0, y*32 );
+		setPosition(block, x*32, 0, y*32 );
 		THREE.GeometryUtils.merge(levelGeometry, block);
 	}
 
@@ -946,9 +973,12 @@
 	function move3DPlayer( ee ) {
 	    if(player){
 
-			player.rotation.y = ((-ee.dir*45)+180) * ToRad;
-			player.position.set(ee.x, 22.5, ee.y);
-			target.position.set(ee.x, 22.5, ee.y);
+			//player.rotation.y = ((-ee.dir*45)+180) * ToRad;
+
+			setPosition(player, ee.x, 22.5, ee.y, ((-ee.dir*45)+180)  );
+			setPosition(target, ee.x, 22.5, ee.y );
+			//player.position.set(ee.x, 22.5, ee.y);
+			//target.position.set(ee.x, 22.5, ee.y);
 
 			if(ee.moving.dir!=null && heroesAnim[currentPlayer].current.name == "idle") heroesAnim[currentPlayer].play('walk');
 			else if( ee.moving.dir == null && heroesAnim[currentPlayer].current.name == "walk") heroesAnim[currentPlayer].play('idle');
@@ -966,7 +996,8 @@
 	function exit3D(n, ee) {
 		if(!exit[n]){
 			var block = new THREE.Mesh( itemRef[10], materials[7]);
-			block.position.set(ee.x, 0, ee.y);
+			//block.position.set(ee.x, 0, ee.y);
+			setPosition(block, ee.x, 0, ee.y );
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
 			exit[n] = block;
@@ -980,7 +1011,8 @@
 	function Treasure3D(n, ee) {
 		if(!treasure[n]){
 			var block = new THREE.Mesh( itemRef[ee.type.sx], materials[8] );
-			block.position.set(ee.x, 0, ee.y);
+			//block.position.set(ee.x, 0, ee.y);
+			setPosition(block, ee.x, 0, ee.y );
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
 			treasure[n] = block;
@@ -1004,7 +1036,8 @@
 			if(ee.type.sx === 10) { block = new THREE.Mesh( itemRef[8], materials[7]); }
 			else { block = new THREE.Mesh( itemRef[9], materials[7]); }
 
-			block.position.set(ee.x, 0, ee.y);
+			//block.position.set(ee.x, 0, ee.y);
+			setPosition(block, ee.x, 0, ee.y );
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
 			door[n] = block;
@@ -1027,7 +1060,8 @@
 	function generator3D(n, ee) {
 		if(!generator[n]){
 			generator[n] = new THREE.Mesh( genGeo, materials[11] );//materials[ee.type.sy+19]);
-			generator[n].position.set(ee.x, 30, ee.y);
+			//generator[n].position.set(ee.x, 30, ee.y);
+			setPosition( generator[n], ee.x, 30, ee.y );
 			level.add( generator[n] );
 			generator[n].castShadow = true;
 			generator[n].receiveShadow = true;
@@ -1074,9 +1108,12 @@
 		} else {
 			if( ee.active ){
 				if(monstersAnim[n].current.name !== "none"){
-				    monster[n].rotation.y = ((-ee.dir*45)+180) * ToRad;
-				    if(ee.type.sy == 6) monster[n].position.set(ee.x, 5, ee.y); // dog
-				    else monster[n].position.set(ee.x, 25, ee.y);
+				    //monster[n].rotation.y = ((-ee.dir*45)+180) * ToRad;
+				   // if(ee.type.sy == 6) monster[n].position.set(ee.x, 5, ee.y); // dog
+				   // else monster[n].position.set(ee.x, 25, ee.y);
+
+				    if(ee.type.sy == 6) setPosition( monster[n], ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
+				    else setPosition( monster[n], ee.x, 25, ee.y, ((-ee.dir*45)+180));
 			    }
 				if(ee.thinking == 0 && monstersAnim[n].current.name == "idle") monstersAnim[n].play('walk');
 				else if( ee.thinking > 0 && monstersAnim[n].current.name == "walk") monstersAnim[n].play('idle');
@@ -1118,7 +1155,8 @@
 		} else {
 			//if(ee.type.sx === 13) fx[n].material =  materials[27];
 		    //else if(ee.type.sx === 19) fx[n].material =  materials[29];
-		    fx[n].position.set(ee.x, 19+(n*0.01), ee.y);
+		    //fx[n].position.set(ee.x, 19+(n*0.01), ee.y);
+		    setPosition( fx[n], ee.x,  19+(n*0.01), ee.y );
 		    fx[n].lookAt(camera.position)
 		}
 	}
@@ -1135,8 +1173,9 @@
 			//weapon[n].material = materials[0];  
 			level.add(weapon[n]);
 		} else {
-			weapon[n].rotation.y = ((-ee.dir*45)+90) * ToRad;
-		    weapon[n].position.set(ee.x, 20, ee.y);
+			//weapon[n].rotation.y = ((-ee.dir*45)+90) * ToRad;
+		    //weapon[n].position.set(ee.x, 20, ee.y);
+		    setPosition( weapon[n], ee.x,  20, ee.y, ((-ee.dir*45)+90) );
 		}
 	}
 
