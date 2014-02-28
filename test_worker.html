@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Worker lab</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+    * {  margin: 0; padding: 0; border: 0;}
+    body { background-color: #383838; overflow: hidden; color: #eeeeee; font-family: monospace; font-size: 12px; }
+    input{ margin:0; padding:4px; }
+    #interface{ position: absolute; left:10px; top:10px; width:456px; height:20px; }
+    #info{ pointer-events:none; position: absolute; left:10px; top:10px; width: 400px; height: 400px; }
+</style>
+
+<script src="js/SourceLoader.js"></script>
+
+</head>
+<body>
+<div id='container'></div>
+<div id="info">
+    Oimo.js web worker example
+</div>
+
+
+<!--++++++++++++++++++++++++++++++++-->
+<!--           RVO WORKER           -->
+<!--++++++++++++++++++++++++++++++++-->
+
+<script id="workerRvo" type="javascript/worker">
+var simulator = null;
+var perf = "";
+var target01;
+var target02;
+var goals = [];
+
+self.onmessage = function(e) {
+
+    var rvoMatrixs = e.data.rvoMatrixs;
+    //var clock, newTime=0, oldTime=0
+
+    var N = e.data.N;
+    var t = 0;
+
+    if ( simulator == null && e.data.url !== "") { // init
+        // Load rvo script
+        importScripts(e.data.url);
+
+        simulator = new RVO.Simulator();
+        simulator.setTimeStep(e.data.step || 0.25);
+        target01 = new RVO.Vector2( 0, 0 );
+        target02 = new RVO.Vector2( 0, 0 );
+        simulator.setAgentDefaults(15, 10, 10, 10, 0.5, 0.5);
+
+        for(var i=0; i!==N; i++){
+            var c = 0;
+            var v = new RVO.Vector2(Math.cos(i * 2 * Math.PI / N), Math.sin(i * 2 * Math.PI / N));
+            simulator.addAgent(v.mul_k(50));
+           // simulator.setAgentMaxSpeed(c, .5 + Math.random() * 1);
+        }
+    } else { // loop
+        var p, r, goalVector, ag;
+        t = Date.now();
+        
+        simulator.doStep();
+        
+        var clock = 0.001 * (Date.now() - e.data.oldTime);
+
+        var i = N;
+        while(i--){
+
+            if(i < N*0.5) goals[i] = target01;
+            else goals[i] = target02;
+
+            ag = simulator.agents_[i];
+            p = simulator.getAgentPosition(i);
+            r = simulator.getAgentOrientation(i);
+
+            
+            goalVector = goals[i].moins( p );
+            if ( goalVector.length() > 1) goalVector = goalVector.normalize();
+            simulator.setAgentPrefVelocity(i, goalVector);
+
+            rvoMatrixs[(6*i) + 3 ] = ((p.x-rvoMatrixs[(6*i) + 0 ]))/clock;
+            rvoMatrixs[(6*i) + 4 ] = ((p.y-rvoMatrixs[(6*i) + 1 ]))/clock;
+            rvoMatrixs[(6*i) + 5 ] = ((r-rvoMatrixs[(6*i) + 2 ]))/clock;
+
+            rvoMatrixs[(6*i) + 0 ] = p.x;
+            rvoMatrixs[(6*i) + 1 ] = p.y;
+            rvoMatrixs[(6*i) + 2 ] = r;
+        }
+
+        perf = simulator.performance.fpsint;
+       
+    }
+    //oldTime = Date.now();
+    self.postMessage({ perf:perf, oldTime:t, rvoMatrixs:rvoMatrixs }, [rvoMatrixs.buffer]);
+
+}
+</script>
+
+
+<!--++++++++++++++++++++++++++++++++-->
+<!--          OIMO WORKER           -->
+<!--++++++++++++++++++++++++++++++++-->
+
+<script id="workerOimo" type="javascript/worker">    
+var world = null;
+var perf = "";
+var body = [];
+
+self.onmessage = function(e) {
+    var ToRad = Math.PI / 180;
+    var matrixs = e.data.matrixs;
+    var rvoVel = e.data.rvoVel;
+    var N = e.data.N;
+
+    if ( world == null && e.data.url !== "") { // init
+        // Load oimo script
+        importScripts(e.data.url);
+        
+        // Init physics
+        OIMO.WORLD_SCALE = 1;
+        OIMO.INV_SCALE = 1;
+        world = new OIMO.World(e.data.dt, 2, 8);
+        world.gravity.init(0,-100,0);
+        matrixs = e.data.matrixs;
+
+        // Ground plane
+        var ground = new OIMO.Body({size:[400, 4, 400], pos:[0,-2,0], world:world, config:[0, 0.1, 0.1]});
+
+        // wall
+
+
+        
+        var vx, vy;
+        for(var i=0; i!==N; i++){
+            if(i >= N*0.5) {
+                vx =-10+Math.random()*20;
+                vy =-10+Math.random()*20;
+                body[i] = new OIMO.Body({type:'sphere', size:[0.25], pos:[vx, 0.5,vy], move:true, world:world});
+            }else{
+                vx = (Math.cos(i * 2 * Math.PI /( N*0.5)))*50;
+                vy = (Math.sin(i * 2 * Math.PI /( N*0.5)))*50;
+                body[i] = new OIMO.Body({type:'box', size:[0.5,  1,  0.5], pos:[vx,0.5,vy], move:true, world:world, config:[2, 0.1, 0.1]});
+            } 
+        }
+    } else { // loop
+
+        world.step();
+
+        var i = N;
+        var m, j;
+
+        while(i--){
+            j = 16;
+            m = body[i].body.getMatrix();
+            if(i < N*0.5){
+                body[i].body.linearVelocity.x = e.data.rvoVel[(i*3)+0];
+                body[i].body.linearVelocity.y = 0;
+                body[i].body.linearVelocity.z = e.data.rvoVel[(i*3)+1];
+
+                body[i].body.angularVelocity.x = 0;
+                body[i].body.angularVelocity.y = e.data.rvoVel[(i*3)+2]*ToRad;
+                body[i].body.angularVelocity.z = 0;
+                body[i].body.angularVelocity.w = 0;
+
+                body[i].body.orientation.x = 0;
+                body[i].body.orientation.y = e.data.rvoVel[(i*3)+2]*ToRad;
+                body[i].body.orientation.z = 0;
+                body[i].body.orientation.w = 0;
+
+                body[i].body.orientation.normalize(body[i].body.orientation);
+            }
+            while(j--){
+                matrixs[(16*i) + j] = m[j];
+            }   
+        }
+   // }
+
+        perf = world.performance.fpsint;
+
+    }
+    // Send data back to the main thread
+    self.postMessage({ perf:perf, matrixs:matrixs }, [matrixs.buffer]);
+};
+</script>
+
+
+<!--++++++++++++++++++++++++++++++++-->
+<!--          MAIN SCRIPT           -->
+<!--++++++++++++++++++++++++++++++++-->
+
+<script>
+
+// Parameters
+var ToRad = Math.PI / 180;
+var info = document.getElementById("info");
+var sourceInfo = "";
+
+// THREE var
+var container, camera, scene, renderer, camPos, mouse;;
+var oimoMeshes=[]
+var rvoMeshes=[];
+
+var fps=0, time, time_prev=0, fpsint = 0;
+var bgcolor = 0x383838;
+
+//OIMO worker var
+var dt = 1/60, N=200;
+var matrixs = new Float32Array(N*16);
+var workerOimo = new Worker(window.URL.createObjectURL( new Blob([document.querySelector('#workerOimo').textContent])));
+workerOimo.postMessage = workerOimo.webkitPostMessage || workerOimo.postMessage;
+var oimoSendTime; // time when we sent last message
+var oimoInfo = 0; // fps info 
+
+// RVO worker var
+var Nagent = 100;
+var dtrvo = 1/60;
+var rvoMatrixs = new Float32Array(Nagent*6);
+var rvoVel = new Float32Array(Nagent*3);
+var oldTime = 0;
+var workerRvo = new Worker(window.URL.createObjectURL(new Blob([document.querySelector('#workerRvo').textContent])));
+workerRvo.postMessage = workerRvo.webkitPostMessage || workerRvo.postMessage;
+var rvoSendTime; // time when we sent last message
+var rvoInfo = 0; // fps info 
+
+//-----------------------------------
+// ALL SOURCE LOADED FROM PNG 
+//-----------------------------------
+
+function sourceLoaded (s){
+    if(s) sourceInfo = s;
+    
+    // send OIMO script to worker
+    var blobO = new Blob([document.querySelector('#OIMO').textContent]);
+    var url1 = window.URL.createObjectURL(blobO);
+    sendDataToOimoWorker(url1);
+
+     // send RVO script to worker
+    var blobR = new Blob([document.querySelector('#RVO').textContent]);
+    var url2 = window.URL.createObjectURL(blobR);
+    sendDataToRvoWorker(url2);
+
+    init();
+    loop();
+}
+
+//-----------------------------------
+// OIMO WORKER 
+//-----------------------------------
+
+workerOimo.onmessage = function(e) {
+
+    matrixs = e.data.matrixs;
+    i = N;
+    while(i--){
+        var m = [];
+        var mtx = new THREE.Matrix4();
+        j = 16;
+        while(j--) m[j] = matrixs[16*i + j];
+        mtx.fromArray( m );
+        oimoMeshes[i].position.setFromMatrixPosition( mtx )
+        oimoMeshes[i].rotation.setFromRotationMatrix( mtx );
+    }
+
+    var delay = dt * 1000 - (Date.now()-oimoSendTime);
+    if(delay < 0) delay = 0;
+
+    oimoInfo = e.data.perf;
+    
+    setTimeout(sendDataToOimoWorker, delay);
+}
+
+function sendDataToOimoWorker(url){
+       oimoSendTime = Date.now();
+       workerOimo.postMessage({ N: N, dt: dt, url: url || "", rvoVel:rvoVel, matrixs: matrixs },[matrixs.buffer]);
+}
+
+//-----------------------------------
+// RVO WORKER 
+//-----------------------------------
+
+workerRvo.onmessage = function(e) {
+    // Get fresh data from the worker
+    rvoMatrixs = e.data.rvoMatrixs;
+
+    i = Nagent;
+    while(i--){
+        rvoMeshes[i].position.x = rvoMatrixs[6*i + 0];
+        rvoMeshes[i].position.z = rvoMatrixs[6*i + 1];
+        rvoMeshes[i].rotation.y = rvoMatrixs[6*i + 2]*ToRad;
+
+        rvoVel[(3*i) + 0 ] = rvoMatrixs[6*i + 3];
+        rvoVel[(3*i) + 1 ] = rvoMatrixs[6*i + 4];
+        rvoVel[(3*i) + 2 ] = rvoMatrixs[6*i + 5];
+    }
+
+    rvoInfo = e.data.perf;
+
+    var delay = dtrvo * 1000 - (Date.now()-rvoSendTime);
+    if(delay < 0) delay = 0;
+
+    oldTime = e.data.oldTime;
+    
+    setTimeout(sendDataToRvoWorker, delay);
+
+}
+
+function sendDataToRvoWorker(url){
+    rvoSendTime = Date.now();
+    workerRvo.postMessage({ oldTime:oldTime, N: Nagent, url: url || "", rvoMatrixs: rvoMatrixs },[rvoMatrixs.buffer]);
+}
+
+//-----------------------------------
+// THREE JS SIDE 
+//-----------------------------------
+
+function init() {
+    if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+    camPos = { horizontal: 90, vertical: 30, distance: 300, automove: false };
+    mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, down:false, over:false, moving:true };
+
+
+    renderer = new THREE.WebGLRenderer( {precision: "lowp", antialias: false } );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor( bgcolor, 1 );
+
+    container = document.getElementById("container");
+    container.appendChild( renderer.domElement );
+
+    //renderer.gammaInput = true;
+    //renderer.gammaOutput = true;
+    renderer.shadowMapEnabled = true;
+    renderer.autoClearColor = false;
+    renderer.autoClear = false;
+
+    // scene
+    scene = new THREE.Scene();
+
+    // camera
+    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.5, 10000 );
+    camera.position.set( 0, 30, 100 );
+    center = new THREE.Vector3();
+    moveCamera();
+
+    scene.add( camera );
+
+    // lights
+    var light, materials;
+    scene.add( new THREE.AmbientLight( bgcolor ) );
+
+    light = new THREE.DirectionalLight( 0xffffff, 1.3 );
+    var d = 40;
+
+    light.position.set( d, d, d );
+
+    light.castShadow = true;
+    //light.shadowCameraVisible = true;
+
+    light.shadowMapWidth = 1024;
+    light.shadowMapHeight = 1024;
+
+    light.shadowCameraLeft = -d;
+    light.shadowCameraRight = d;
+    light.shadowCameraTop = d;
+    light.shadowCameraBottom = -d;
+
+    light.shadowCameraFar = 3*d;
+    light.shadowCameraNear = d;
+    light.shadowDarkness = 0.5;
+
+    scene.add( light );
+
+    var backMat = new THREE.MeshBasicMaterial( { color: bgcolor, side:THREE.BackSide, depthWrite: false } );
+    var backGeo = new THREE.Mesh( new THREE.SphereGeometry( 2000, 6, 6 ), backMat );
+    scene.add( backGeo );
+
+    var material = new THREE.MeshBasicMaterial( { color: bgcolor } );
+    var cubeMaterial01 = new THREE.MeshPhongMaterial( { color: 0xCC8888 } );
+    var cubeMaterial02 = new THREE.MeshPhongMaterial( { color: 0x88CC88 } );
+
+    var sphereMaterial = new THREE.MeshPhongMaterial( { color: 0x8888CC } );
+
+    var planeMaterial01 = new THREE.MeshPhongMaterial( { color: 0xCC8888 - 0x444444 } );
+    var planeMaterial02 = new THREE.MeshPhongMaterial( { color: 0x88CC88 - 0x444444 } );
+
+    geometry = THREE.BufferGeometryUtils.fromGeometry( new THREE.PlaneGeometry( 400, 400, 1, 1 ) );
+    
+    var mesh = new THREE.Mesh( geometry, material );
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    mesh.rotation.x = -90 * ToRad;
+    scene.add( mesh );
+       
+    // geometry
+    var cubeGeo = THREE.BufferGeometryUtils.fromGeometry(new THREE.CubeGeometry( 0.5,  1,  0.25, 1, 1, 1));
+    var sphereGeo = THREE.BufferGeometryUtils.fromGeometry(new THREE.SphereGeometry( 0.25, 12, 8));
+    var planeGeo = THREE.BufferGeometryUtils.fromGeometry(new THREE.PlaneGeometry( 0.5, 0.25, 1, 1));
+    planeGeo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+
+    for(var i=0; i<N*0.5; i++){
+        if(i<N*0.25) mesh = new THREE.Mesh( cubeGeo, cubeMaterial01 );
+        else mesh = new THREE.Mesh( cubeGeo, cubeMaterial02 );
+        mesh.castShadow = true;
+        oimoMeshes.push(mesh);
+        scene.add( mesh );
+    }
+
+    for(var i=0; i<N*0.5; i++){
+        mesh = new THREE.Mesh( sphereGeo, sphereMaterial );
+        mesh.castShadow = true;
+        oimoMeshes.push(mesh);
+        scene.add( mesh );
+    }
+
+    for(var i=0; i<Nagent; i++){
+        if(i<Nagent*0.5) mesh = new THREE.Mesh( planeGeo, planeMaterial01 );
+        else mesh = new THREE.Mesh( planeGeo, planeMaterial02 );
+        mesh.castShadow = false;
+        mesh.position.y= 0.01;
+        rvoMeshes.push(mesh);
+        scene.add( mesh );
+    }
+
+    var body = document.body;
+
+    window.addEventListener( 'resize', resize, false );
+    container.addEventListener( 'mousemove', onMouseMove, false );
+    container.addEventListener( 'mousedown', onMouseDown, false );
+    container.addEventListener( 'mouseout', onMouseUp, false );
+    container.addEventListener( 'mouseup', onMouseUp, false );
+    if( body.addEventListener ){
+        body.addEventListener( 'mousewheel', onMouseWheel, false ); //chrome
+        body.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
+    }else if( body.attachEvent ){
+        body.attachEvent("onmousewheel" , onMouseWheel); // ie
+    }
+}
+
+function resize() {
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+}
+
+function loop() {
+    requestAnimationFrame( loop );
+    renderer.render( scene, camera );
+    displayInfo();
+}
+
+function displayInfo(){
+    time = Date.now();
+    if (time - 1000 > time_prev) {
+        time_prev = time; fpsint = fps; fps = 0;
+    } fps++;
+
+    var info =[
+        "<h3>WORKER LAB</h3><br>",
+        sourceInfo,
+        "<br>Oimo Physics: " + oimoInfo +" fps<br>",
+        "Rvo simulator: " + rvoInfo +" fps<br>",
+        "Three Render: " + fpsint +" fps<br>"
+    ].join("\n");
+    document.getElementById("info").innerHTML = info;
+}
+
+//-----------------------------------
+// MATH
+//-----------------------------------
+
+function Orbit(origine, horizontal, vertical, distance) {
+    var p = new THREE.Vector3();
+    var phi = vertical*ToRad;
+    var theta = horizontal*ToRad;
+    p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+    p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+    p.y = (distance * Math.cos(phi)) + origine.y;
+    return p;
+}
+
+//-----------------------------------
+// MOUSE & NAVIGATION 
+//-----------------------------------
+
+function moveCamera() {
+    camera.position.copy(Orbit(center, camPos.horizontal, camPos.vertical, camPos.distance));
+    camera.lookAt(center);
+}
+
+function onMouseDown(e) {
+    e.preventDefault();
+    mouse.ox = e.clientX;
+    mouse.oy = e.clientY;
+    mouse.h = camPos.horizontal;
+    mouse.v = camPos.vertical;
+    mouse.down = true;
+}
+
+function onMouseUp(e) {
+    mouse.down = false;
+    document.body.style.cursor = 'auto';
+}
+
+function onMouseMove(e) {
+    e.preventDefault();
+    if (mouse.down ) {
+        document.body.style.cursor = 'move';
+        camPos.horizontal = ((e.clientX - mouse.ox) * 0.3) + mouse.h;
+        camPos.vertical = (-(e.clientY - mouse.oy) * 0.3) + mouse.v;
+        moveCamera();
+    }
+}
+
+function onMouseWheel(e) {
+    var delta = 0;
+    if(e.wheelDelta){delta=e.wheelDelta*-1;}
+    else if(e.detail){delta=e.detail*20;}
+    camPos.distance+=(delta/10);
+    moveCamera();   
+    e.preventDefault();
+}
+
+</script>
+</body>
+</html>

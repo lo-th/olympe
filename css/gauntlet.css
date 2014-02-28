@@ -41,6 +41,17 @@ body {
 }
 #info {
 	position: absolute;
+	top: 6px;
+	height: 20px;
+	width: 350px;
+	left: 250px;
+	color: #a2a2a2;
+	text-align: left;
+	font-size:12px;
+	font-weight:normal;
+}
+#copy {
+	position: absolute;
 	bottom: 6px;
 	height: 20px;
 	width: 350px;

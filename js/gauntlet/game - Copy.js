@@ -171,9 +171,7 @@ Game = {
       return this.game;
     },
 
-    timestamp: function() { return new Date().getTime();
-   // return Date.now();//
-     },
+    timestamp: function() { return new Date().getTime(); },
 
     start: function() {
 
@@ -195,18 +193,17 @@ Game = {
         end    = timestamp();
         self.updateStats(middle - start, end - middle);
         last = start;
-        if (!stopping)
-          requestAnimationFrame(step);
-        //if (stopping)clearInterval(this.timer);
+       // if (!stopping)
+         // requestAnimationFrame(step);
       }
 
       this.stop = function() {
-       stopping = true;
-      // clearInterval(this.timer);
+       //stopping = true;
+       clearInterval(this.timer);
 
       }
-      step();
-      //this.timer = setInterval(step, 1000/this.fps );
+      //step();
+      this.timer = setInterval(step, 1000/this.fps );
 
     },
 
@@ -636,7 +633,6 @@ Game.Event = {
     ev.preventDefault();
     ev.cancelBubble = true;
     //ev.returnValue = false;
-    //ev.preventDefault();
     return false;
   },
 

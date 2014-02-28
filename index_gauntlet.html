@@ -14,7 +14,8 @@
 <div id="hubs">
 	<div id="debug"></div>
 	<div id="gui"></div>
-	<div id="info">
+	<div id="info"></div>
+	<div id="copy">
 	<a href="http://3dflashlo.wordpress.com/" target="_blank">Loth 2014</a>
 	. <a href="https://code.google.com/p/sea3d/" target="_blank">Sea3d</a>
 	. <a href="http://github.com/mrdoob/three.js" target="_blank">Three.js</a>
@@ -105,14 +106,16 @@
 
 <script src='js/libs/dat.gui.min.js'></script>
 <script src='js/threex.rendererstats.js'></script>
-<script src="js/microcache.js"></script>
+<!--<script src="js/microcache.js"></script>-->
 
 <script>
-      
+    var info = document.getElementById('info');
+
 	var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
 	var mouse = { x:0, y:0, move:true };
 	var camera, center, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight, renderLoop;
 	var clock = new THREE.Clock();
+	var fps=0, time, time_prev=0, fpsint = 0;
 
 	var Colors= [0x000000, 0x333333, 0x606060];
 	//--------- Bakground, Ambient, Specular
@@ -167,6 +170,7 @@
 	}
 
 	function init3D() {
+		//console.log(ua)
 		//initGame();
 		if(!renderer){
 			setTimeout(initScene3D, 100);
@@ -187,7 +191,7 @@
 		
 		//renderer.sortObjects = true;
 
-		renderer._microCache = new MicroCache();
+		//renderer._microCache = new MicroCache();
 
 		//renderer.shadowMapCascade = true;
 		//renderer.shadowMapType = THREE.PCFSoftShadowMap;
@@ -273,7 +277,7 @@
 	var nloop = 0;
 
 	function animate() {
-		requestAnimationFrame( animate );
+		if(isIntro)requestAnimationFrame( animate );
 
 		delta = clock.getDelta();
 
@@ -319,11 +323,26 @@
 
 		renderer.render( scene, camera );
 
+		displayInfo();
+
 		if(viewConfig.fullStats){
 			//stats.update();
 			rendererStats.update(renderer);
 		}
 		//tell(list);
+	}
+
+	function displayInfo(){
+	    time = Date.now();
+	    if (time - 1000 > time_prev) {
+	        time_prev = time; fpsint = fps; fps = 0;
+	    } fps++;
+
+	    var Tinfo =[
+	        "Three Render: " + fpsint +" fps<br>",
+	        "memory: " + renderer.info.memory.programs 
+	    ].join("\n");
+	    info.innerHTML = Tinfo;
 	}
 
 	var stats, rendererStats;
@@ -401,7 +420,7 @@
 	    materials[0] = makeMaterial({ map:"avatar1.jpg", skinning:true }); // player 0 / 1;
 		materials[1] = makeMaterial({ map:"avatar2.jpg", skinning:true }); // player 2 / 3;
 
-		materials[2] = makeMaterial({ map:"wall.jpg", bump:true, bumpScale:12, shininess:10 }); // wall bump
+		materials[2] = makeMaterial({ map:"wall.png", bump:true, bumpScale:12, shininess:10 }); // wall bump
 		//materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
 
 		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
@@ -433,8 +452,8 @@
 		var material = new THREE.MeshPhongMaterial( { ambient: Colors[1], specular: Colors[2], shininess: data.shininess || 50 } );
 
 		if(data.map) {
-			//map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
-			map = renderer._microCache.getSet( data.map , THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map ));
+			map = THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map );
+			//map = renderer._microCache.getSet( data.map , THREE.ImageUtils.loadTexture( 'res/textures/game/'+ data.map ));
 		    map.repeat.set( 1, -1 );
 		    map.wrapS = map.wrapT = THREE.RepeatWrapping;
 		    map.anisotropy = renderer.getMaxAnisotropy();
@@ -472,6 +491,7 @@
 	var monstersGeo, monstersMat;
 
 	var wallRef = [];
+	var dustRef = [];
 	var itemRef = [];
 
 	function initSea3DMesh() {
@@ -500,6 +520,11 @@
 			    else wallRef[i] = getSeaGeometry("wall0"+i);
 		    }
 		    wallRef[16] = getSeaGeometry("floor");
+
+		    for( i = 1; i < 8; i++) {
+				dustRef[i] = getSeaGeometry("dust00"+i);
+		    }
+		   
 
 		    // items geometry
 		    for( i = 0; i < 8; i++) {
@@ -604,8 +629,12 @@
 		stop:function(){
 			this.current.stop();
 		},
-		clear:function(){
+		clean:function(){
 			this.current.stop();
+			/*for(var i=0, l=this.animation.length; i<l; i++ ){
+				this.animation[i].reset();
+			}*/
+
 			this.animation.length = 0;
 			this.current = null;
 			this.mesh = null;
@@ -706,6 +735,8 @@
 		
 		isIntroStart = true;
 		isIntro=true;
+
+		animate();
 
 		//startRender();
 		setTimeout(introAnimEnd, 1000);
@@ -815,12 +846,14 @@
 		tell(list);
 	}
 
-	/*function entitiesTo3D( entities ) {
+	function entitiesTo3D( entities ) {
 		var n, max, entity;
-		for(n = 0, max = entities.length ; n < max ; n++) {
+		n = entities.length;
+		//for(n = 0, max = entities.length ; n < max ; n++) {
+		while(n--){
 			entity = entities[n];
 
-			if(entity.monster) monster3D(n, entity);
+			if(entity.monster)  monster3D(entity);//monster3D(n, entity);
 			if(entity.generator){ if(entity.type.sx>31) generator3D(n, entity); }
 
 			if(entity.treasure) Treasure3D(n, entity); 
@@ -830,11 +863,13 @@
 			if(entity.weapon) weapon3D(n, entity ); 
 			if(entity.fx) fx3D(n, entity );
 		}
-	}*/
 
-	function entities3D( entity ,n ) {
+		animate();
+	}
 
-		if(entity.monster) monster3D(n, entity);
+	/*function entities3D( entity ,n ) {
+
+		if(entity.monster) monster3D(entity);//monster3D(n, entity);
 		if(entity.generator){ if(entity.type.sx>31){ generator3D(n, entity); }}
 		// fixe and remove
 		if(entity.treasure) Treasure3D(n, entity);
@@ -845,7 +880,7 @@
 		if(entity.weapon) weapon3D(n, entity );
 		if(entity.fx) fx3D(n, entity );
 
-	}
+	}*/
 
 	//===========================================================================
 	// THE MAP ++
@@ -884,7 +919,6 @@
 		generator.length = 0;
 		treasure.length = 0;
 		monster.length = 0;
-		monstersAnim.length = 0;
 		weapon.length = 0;
 		exit.length = 0;
 		door.length = 0;
@@ -932,17 +966,27 @@
 
 	function add3DWall(x, y, sx, sy) {
 		var block = new THREE.Mesh( wallRef[sx] );
+
 		//block.position.set( x*32, 0, y*32 );
 		setPosition(block, x*32, 0, y*32 );
 		THREE.GeometryUtils.merge(levelGeometry, block);
 	}
 
 	function add3DFloor(x, y, sx, sy) {
-		if(sy!=0) return; //no need shadow cell
-		var block = new THREE.Mesh(  wallRef[16] );
+		var block = new THREE.Mesh( wallRef[16] );
+		//block.rotation.x = 180*ToRad;
 		//block.position.set( x*32, 0, y*32 );
-		setPosition(block, x*32, 0, y*32 );
+		setPosition(block, x*32, 0, y*32,180 );
 		THREE.GeometryUtils.merge(levelGeometry, block);
+		//console.log(sx, sy)
+		if(sy!==0) {
+			
+			var block0 = new THREE.Mesh(  dustRef[sy] );
+			setPosition(block0, x*32, 0, y*32 );
+			THREE.GeometryUtils.merge(levelGeometry, block0);
+
+		}//return; //no need shadow cell
+		
 	}
 
 	function add3DLevel(){
@@ -1086,60 +1130,137 @@
 	// 3D MONSTER
 	//===========================================================================
 
-	var monstersAnim = [];
+	//var monstersAnim = [];
+	//var tmpMonstersType=[];
+	//var tmpMonsters=[];
+	//var tmpMonstersAnim=[];
+	var tmpTimer=[];
 
-	function monster3D(n, ee) {
-		var h;
-		if(!monster[n]){
-			h=ee.type.sy-4;
+
+	function monster3D(ee) {
+		var n = ee.id;
+		//var h;
+		if(monster[n] === undefined){ monster[n] = { mesh:null, anim:null, type:null }; 
+			/*var h=ee.type.sy-4;
+			//tmpMonstersType[n] = h;
 			var block = new THREE.SkinnedMesh( monstersGeo[h], monstersMat[h], false);
 			block.scale.set(1,1,-1);
 			block.castShadow = block.receiveShadow = true;
-			
-			monstersAnim[n] = new THREE.Animator( block, monstersName[h] );
-			monstersAnim[n].add("idle", true);
-			monstersAnim[n].add("walk", true);
-			monstersAnim[n].add("death", false);
-			monstersAnim[n].add("none", false);
 
-			level.add( block );
-			monster[n] = block;
+			var anim = new THREE.Animator( block, monstersName[h] );
+			anim.add("idle", true);
+			anim.add("walk", true);
+			anim.add("death", false);
+			anim.add("none", false);
+
+			//level.add( block );
+			monster[n] = { mesh:block, anim:anim, type:h };//= block;
+			level.add( monster[n].mesh );*/
+
+		} else {
+			var m = monster[n];
+			if( ee.active ){
+				if(m.mesh==null && m.anim==null){
+					m.type = ee.type.sy-4;
+					m.mesh = new THREE.SkinnedMesh( monstersGeo[m.type], monstersMat[m.type], false);
+					m.mesh.castShadow = m.mesh.receiveShadow = true;
+					m.mesh.scale.set(1,1,-1);
+
+					m.anim = new THREE.Animator( m.mesh, monstersName[m.type] );
+					m.anim.add("idle", true);
+					m.anim.add("walk", true);
+					m.anim.add("death", false);
+
+					level.add( m.mesh );
+					//m.anim.add("none", false);
+				} else {
+			
+				    if(ee.type.sy == 6) setPosition( m.mesh, ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
+				    else setPosition( m.mesh, ee.x, 25, ee.y, ((-ee.dir*45)+180));
+
+			        if(ee.thinking == 0 ) m.anim.play('walk');
+				    else if( ee.thinking > 0) m.anim.play('idle');
+
+			    }
+			} else {
+				if ( ee.health == 0 && m.mesh !==null && m.anim !==null ){ 
+					m.anim.play('death'); 
+					tmpTimer[n] = setTimeout( function() {
+						//m.anim.clean();
+						level.remove( m.mesh );
+						//
+						m.anim = null;
+						m.mesh = null;
+						m.type = null;
+						clearTimeout(tmpTimer[n]);
+
+					}, 1000);
+				}
+			}
+		}
+	}
+
+	/*
+
+	function monster3D(ee) {
+		var n = ee.id;
+		//var h;
+		if(monster[n] === undefined){// monster[n] = { mesh:null, anim:null, type:null }; }
+			var h=ee.type.sy-4;
+			//tmpMonstersType[n] = h;
+			var block = new THREE.SkinnedMesh( monstersGeo[h], monstersMat[h], false);
+			block.scale.set(1,1,-1);
+			block.castShadow = block.receiveShadow = true;
+
+			var anim = new THREE.Animator( block, monstersName[h] );
+			anim.add("idle", true);
+			anim.add("walk", true);
+			anim.add("death", false);
+			anim.add("none", false);
+
+			//level.add( block );
+			monster[n] = { mesh:block, anim:anim, type:h };//= block;
+			level.add( monster[n].mesh );
 
 		} else {
 			if( ee.active ){
-				if(monstersAnim[n].current.name !== "none"){
+				//if(monstersAnim[n].current.name !== "none"){
 				    //monster[n].rotation.y = ((-ee.dir*45)+180) * ToRad;
 				   // if(ee.type.sy == 6) monster[n].position.set(ee.x, 5, ee.y); // dog
 				   // else monster[n].position.set(ee.x, 25, ee.y);
 
-				    if(ee.type.sy == 6) setPosition( monster[n], ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
-				    else setPosition( monster[n], ee.x, 25, ee.y, ((-ee.dir*45)+180));
-			    }
-				if(ee.thinking == 0 && monstersAnim[n].current.name == "idle") monstersAnim[n].play('walk');
-				else if( ee.thinking > 0 && monstersAnim[n].current.name == "walk") monstersAnim[n].play('idle');
+				    if(ee.type.sy == 6) setPosition( monster[n].mesh, ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
+				    else setPosition( monster[n].mesh, ee.x, 25, ee.y, ((-ee.dir*45)+180));
+			   // }
+			    if(ee.thinking == 0 ) monster[n].anim.play('walk');
+				else if( ee.thinking > 0) monster[n].anim.play('idle');
+
+				//if(ee.thinking == 0 ) monstersAnim[n].play('walk');
+				//else if( ee.thinking > 0) monstersAnim[n].play('idle');
+
+
+				//if(ee.thinking == 0 && monstersAnim[n].current.name == "idle") monstersAnim[n].play('walk');
+				//else if( ee.thinking > 0 && monstersAnim[n].current.name == "walk") monstersAnim[n].play('idle');
+			   // if (ee.health < 2) cloneMonster3D(n, ee);//monstersAnim[n].play('death');
 				//else if (ee.health < 1 && monstersAnim[n].current.name !== "death") monstersAnim[n].play('death');
 			} else {
-
 				if (ee.health === 0 ){ 
-					monstersAnim[n].play('death'); 
-					setTimeout( function() {
-						if(monster[n]){
-						monster[n].castShadow = monster[n].receiveShadow = false;
+					//monstersAnim[n].play('death'); 
+					monster[n].anim.play('death'); 
+					tmpTimer[n] = setTimeout( function() {
+						//if(monster[n]){
+						//monster[n].castShadow = monster[n].receiveShadow = false;
+						level.remove( monster[n].mesh );
+						clearTimeout(tmpTimer[n]);
 						//monstersAnim[n].clear();
-						level.remove( monster[n] );
-						//monster[n] = false;
-					}
+						//monster[n] = undefined;//null;
+					//}
 						//monster[n] = null;
 					}, 1000);
 				}
-			    //monstersAnim[n].play('none');
-			   /* monstersAnim[n].clear();
-			    monster[n].castShadow = monster[n].receiveShadow = false;
-			    level.remove( monster[n] );
-			    monster[n] = null;*/
 			}
 		}
-	}
+	}*/
 
 	//===========================================================================
 	// 3D FX
@@ -1153,11 +1274,17 @@
 		    fx[n].rotation.x = - Math.PI / 2 ;
 			level.add(fx[n]);
 		} else {
+			if( ee.active ){
+				setPosition( fx[n], ee.x,  19+(n*0.01), ee.y );
+		        fx[n].lookAt(camera.position);
+			} else {
+				level.remove(fx[n]);
+				fx[n] = null;
+			}
 			//if(ee.type.sx === 13) fx[n].material =  materials[27];
 		    //else if(ee.type.sx === 19) fx[n].material =  materials[29];
 		    //fx[n].position.set(ee.x, 19+(n*0.01), ee.y);
-		    setPosition( fx[n], ee.x,  19+(n*0.01), ee.y );
-		    fx[n].lookAt(camera.position)
+		    
 		}
 	}
 
@@ -1173,9 +1300,15 @@
 			//weapon[n].material = materials[0];  
 			level.add(weapon[n]);
 		} else {
+			if( ee.active ){
+				setPosition( weapon[n], ee.x,  20, ee.y, ((-ee.dir*45)+90) );
+			} else {
+				level.remove(weapon[n]);
+				weapon[n] = null;
+			}
 			//weapon[n].rotation.y = ((-ee.dir*45)+90) * ToRad;
 		    //weapon[n].position.set(ee.x, 20, ee.y);
-		    setPosition( weapon[n], ee.x,  20, ee.y, ((-ee.dir*45)+90) );
+		    
 		}
 	}
 

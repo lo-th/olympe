@@ -7,7 +7,6 @@ Gauntlet = function() {
   //===========================================================================
 
   var VERSION  = "1.0.0",
-      MONSTER_ID = 0,
       FPS      = 60,
       TILE     = 32,
       STILE    = 32,
@@ -264,9 +263,6 @@ Gauntlet = function() {
       { key: Game.Key.ESC,    mode: 'up',   state: 'help',    action: function()    { this.resume();                   } },
       { key: Game.Key.RETURN, mode: 'up',   state: 'help',    action: function()    { this.resume();                   } },
       { key: Game.Key.SPACE,  mode: 'up',   state: 'help',    action: function()    { this.resume();                   } }
-    ], 
-    mouse :[
-
     ]
 
   };
@@ -338,7 +334,6 @@ Gauntlet = function() {
   var game = {
     
     cfg: cfg,
-    //MONSTER_ID = 0,
 
     run: function(runner) {
 
@@ -353,7 +348,7 @@ Gauntlet = function() {
         this.player      = new Player();
         this.viewport    = new Viewport();
         this.scoreboard  = new Scoreboard(cfg.levels[this.loadLevel()], this.loadHighScore(), this.loadHighWho());
-        this.render      = null;//new Render(resources.images);
+        this.render      = new Render(resources.images);
         this.sounds      = new Sounds(resources.sounds);
         this.ready();
       }.bind(this));
@@ -397,7 +392,6 @@ Gauntlet = function() {
     },
 
     onstart: function(event, previous, current, type, nlevel) {
-
       this.player.join(type);
       this.load(to.number(nlevel, this.loadLevel()));
     },
@@ -424,13 +418,9 @@ Gauntlet = function() {
         this.help(map.level.help);
     },
 
-    onwin:  function(event, previous, current) { if(gameDraw2d)this.winlosefade(15000); else this.win3DEndinng(15000); this.saveLevel(8); },
-    onlose: function(event, previous, current) { if(gameDraw2d)this.winlosefade(10000); else this.win3DEndinng(10000);},
+    onwin:  function(event, previous, current) { this.winlosefade(15000); this.saveLevel(8); },
+    onlose: function(event, previous, current) { this.winlosefade(10000); },
 
-    win3DEndinng: function(duration) {
-      setTimeout( function() {game.finish();}, duration);
-
-    },
     winlosefade: function(duration) {
       var finish   = function()      { game.runner.canvas.fade(1);  game.finish(); },
           animate  = function(value) { game.runner.canvas.fade(1 - value);         },
@@ -451,14 +441,10 @@ Gauntlet = function() {
     onfinish: function(event, previous, current) {
       this.saveHighScore();
       this.player.leave();
-
-
       
       /////////////////////////////
       clear3DLevel(true);
       ////////////////////////////
-
-      MONSTER_ID = 0;
     },
 
     onenterhelp: function(event, previous, current, msg) { $('help').update(msg).show(); setTimeout(this.autoresume.bind(this), 4000); },
@@ -486,7 +472,7 @@ Gauntlet = function() {
         this.viewport.update( frame, this.player, this.map, this.viewport);
 
         ///////////////////////////////
-       //move3DPlayer(this.player);
+        //move3DPlayer(this.player);
         //entitiesTo3D(this.map.entities);
         //////////////////////////////
       }
@@ -498,15 +484,13 @@ Gauntlet = function() {
           this.render.map(     ctx, frame, this.viewport, this.map);
           this.render.entities(ctx, frame, this.viewport, this.map.entities);
           this.render.player(  ctx, frame, this.viewport, this.player);
-        } else {
-          ///////////////////////////////
-        move3DPlayer(this.player);
-        entitiesTo3D( this.map.entities);
-        //////////////////////////////
         }
         this.scoreboard.refreshPlayer(this.player);
 
-        
+        ///////////////////////////////
+        //move3DPlayer(this.player);
+        //entitiesTo3D( this.map.entities);
+        //////////////////////////////
       }
       this.debugHeap(frame);
     },
@@ -807,7 +791,7 @@ Gauntlet = function() {
       ///////////////////////////////
       //entities3DInfo(this.entities, frame);
       //entitiesTo3D(this.entities);
-      //move3DPlayer(player);
+      move3DPlayer(player);
       ///////////////////////////////
       //
 
@@ -815,7 +799,7 @@ Gauntlet = function() {
       for(n = 0, max = this.entities.length ; n < max ; n++) {
         entity = this.entities[n];
         ///////////////////////////
-        //entities3D(entity, n);
+        entities3D(entity, n);
         ///////////////////////////
         if (entity.active && entity.update){
           entity.update(frame, player, map, viewport);
@@ -975,7 +959,6 @@ Gauntlet = function() {
       this.dx         = Game.Math.randomInt(-2, 2);  // a little random offset to break up lines of monsters
       this.dy         = Game.Math.randomInt(-4, 0);  // (ditto)
       this.df         = Game.Math.randomInt(0, 100); // a little random frame offset to keep monster animations out-of-sync
-      this.id         = MONSTER_ID ++;
     },
 
     monster: true,
