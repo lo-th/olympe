@@ -499,10 +499,11 @@ Gauntlet = function() {
           this.render.entities(ctx, frame, this.viewport, this.map.entities);
           this.render.player(  ctx, frame, this.viewport, this.player);
         } else {
+
           ///////////////////////////////
-        move3DPlayer(this.player);
-        entitiesTo3D( this.map.entities);
-        //////////////////////////////
+          move3DPlayer(this.player);
+          entitiesTo3D( this.map.entities);
+          //////////////////////////////
         }
         this.scoreboard.refreshPlayer(this.player);
 

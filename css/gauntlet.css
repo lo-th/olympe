@@ -6,22 +6,23 @@
   user-select: none; 
 }
 
+/*******************************/
+/* global document body styles */
+/*******************************/
+
 body {
 	font-family:'Segoe UI';
 	margin: 0;
 	background-color: black;
 	overflow: hidden;
 }
-
 #myCanvas {
 	position: fixed;
 	display: block;
 }
-
 #cursor {
 	pointer-events: none;
 }
-
 #gui {
 	position: absolute;
 	top: 4px;
@@ -61,16 +62,6 @@ body {
 	font-size:12px;
 	font-weight:normal;
 }
-/*#intro {
-    position: fixed;
-    font-size:20px;
-	display: block;
-	top: 50%;
-	left: 50%;
-	width:400px;
-	height:30px;
-	text-align: center;
-}*/
 #debug {
 	color: #c2c2c2;
 	position: absolute;
@@ -81,72 +72,12 @@ body {
 	left: 0px;
 }
 
-/*#home {
-	position: fixed;
-	left: 200px;
-	margin: 0;
-    padding: 0;
-    cursor: pointer;
-}
-#buttonMenu {
-	position: fixed;
-	right: 0px;
-	top:31px;
-	margin: 0;
-    padding: 0;
-}
-#button {
-	position: block;
-	right: 0px;
-    background:#000000;
-    cursor: pointer;
-    border:solid;
-    border-color: #cccccc;
-    vertical-align:middle;
-    border-width:0px;
-    font-size:10px;
-}
-.mlogo {
-	height:16px;
-	margin-right:10px;
-	display:inline-block;
-
-	vertical-align:-20%;
-}
-#MiniMenu {
-	position: fixed;
-	left:20px;
-	top:50px;
-	margin: 0;
-    padding: 0;
-}
-#mbutton {
-	height:25px;
-	position: block;
-	right: 0px;
-    margin: 0px;
-    padding: 0;
-    cursor: pointer;
-    font-size:12px;
-}*/
-
 a { color: #ffcc66; text-decoration:none; cursor: pointer}
 a:visited { color: #996633; text-decoration:none}
 
 #stats #fps { background: transparent !important }
 #stats #fps #fpsText { color: #c2c2c2 !important }
 #stats #fps #fpsGraph { display: none }
-
-
-/*******************************/
-/* global document body styles */
-/*******************************/
-
-/*body {
-  background: black;
-  color:      #CCC;
-  user-select: none;
-}*/
 
 /**************************/
 /* unique id-based styles */

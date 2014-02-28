@@ -203,7 +203,8 @@
 
 		// SCENE
 		scene = new THREE.Scene();
-		scene.fog = new THREE.Fog(  Colors[0], 100, 400 );
+		//scene.fog = new THREE.Fog(  Colors[0], 100, 400 );
+		scene.fog = new THREE.FogExp2( Colors[0], 0.00025 );
 
 		projector = new THREE.Projector();
 		raycaster = new THREE.Raycaster();
@@ -217,7 +218,7 @@
 		target = new THREE.Object3D();
 		scene.add(target);
 		
-		var ambient = new THREE.AmbientLight( Colors[0] );
+		var ambient = new THREE.AmbientLight( Colors[1] );
 		scene.add( ambient );
 
 		//spotLight = new THREE.DirectionalLight(0x000, 1.5);
@@ -420,14 +421,14 @@
 	    materials[0] = makeMaterial({ map:"avatar1.jpg", skinning:true }); // player 0 / 1;
 		materials[1] = makeMaterial({ map:"avatar2.jpg", skinning:true }); // player 2 / 3;
 
-		materials[2] = makeMaterial({ map:"wall.png", bump:true, bumpScale:12, shininess:10 }); // wall bump
+		materials[2] = makeMaterial({ map:"wall.png", bump:true, bumpScale:10, shininess:10 }); // wall bump
 		//materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
 
 		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
 		materials[5] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 6 / 7
 		materials[6] = makeMaterial({ map:"avatar5.jpg", skinning:true }); // monster 8 
 
-		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, bumpScale:12, shininess:10 }); // exit and door bump
+		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, bumpScale:3, shininess:10 }); // exit and door bump
 		materials[8] = makeMaterial({ color:0xffff00 }); // treasure
 
 		materials[9] = makeMaterial({ map:"exp.png", transparent:true }); // fx
@@ -531,8 +532,7 @@
 				itemRef[i] = getSeaGeometry("Item00"+i, true);
 		    }
 		    itemRef[8] = getSeaGeometry("door001", true);
-		    itemRef[9] = getSeaGeometry("door002", true);
-		    itemRef[10] = getSeaGeometry("exit", true);
+		    itemRef[9] = getSeaGeometry("exit", true);
 
 		    // moster geometry
 		    monstersGeo = [];
@@ -1039,7 +1039,7 @@
 
 	function exit3D(n, ee) {
 		if(!exit[n]){
-			var block = new THREE.Mesh( itemRef[10], materials[7]);
+			var block = new THREE.Mesh( itemRef[9], materials[7]);
 			//block.position.set(ee.x, 0, ee.y);
 			setPosition(block, ee.x, 0, ee.y );
 			block.castShadow = block.receiveShadow = true;
@@ -1076,12 +1076,14 @@
 
 	function door3D(n, ee) {
 		if(!door[n]){
-			var block;
-			if(ee.type.sx === 10) { block = new THREE.Mesh( itemRef[8], materials[7]); }
-			else { block = new THREE.Mesh( itemRef[9], materials[7]); }
+			var block = new THREE.Mesh( itemRef[8], materials[7]);
+			var rot = 0;
+			//if(ee.type.sx === 10) { block = new THREE.Mesh( itemRef[8], materials[7]); }
+			//else { block = new THREE.Mesh( itemRef[9], materials[7]); }
+			if(ee.type.sx === 11) rot = 90;
 
 			//block.position.set(ee.x, 0, ee.y);
-			setPosition(block, ee.x, 0, ee.y );
+			setPosition(block, ee.x, 0, ee.y, rot );
 			block.castShadow = block.receiveShadow = true;
 			level.add(block);
 			door[n] = block;
