@@ -8,6 +8,7 @@ Gauntlet = function() {
 
   var VERSION  = "1.0.0",
       MONSTER_ID = 0,
+      FX_ID = 0,
       FPS      = 60,
       TILE     = 32,
       STILE    = 32,
@@ -20,11 +21,13 @@ Gauntlet = function() {
         ELF:      { sx: 0, sy: 3, frames: 3, fpf: FPS/10, health: 500, speed: 260/FPS, damage: 20/FPS, armor: 1, magic: 24, weapon: { speed: 660/FPS, reload: 0.25*FPS, damage: 6, rotate: false, sx: 24, sy: 3, fpf: FPS/10, player: true }, sex: "male",   name: "elf"      }  // Questor
       },
       MONSTER = {
-        GHOST:  { sx: 0, sy: 4, frames: 3, fpf: FPS/10, score:  10, health:  4, speed: 140/FPS, damage: 100/FPS, selfharm: 30/FPS, canbeshot: true,  canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health:  8, speed: 2.5*FPS, max: 40, score: 100, sx: 32, sy: 4 }, name: "ghost",  weapon: null                                                                                     },
+        GHOST:  { sx: 0, sy: 4, frames: 3, fpf: FPS/10, score:  10, health:  4, speed: 60/FPS, damage: 100/FPS, selfharm: 30/FPS, canbeshot: true,  canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health:  8, speed: 2.5*FPS, max: 40, score: 100, sx: 32, sy: 4 }, name: "ghost",  weapon: null                                                                                     },
         DEMON:  { sx: 0, sy: 5, frames: 3, fpf: FPS/10, score:  20, health:  4, speed:  80/FPS, damage:  60/FPS, selfharm: 0,      canbeshot: true,  canbehit: true,  invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health: 16, speed: 3.0*FPS, max: 40, score: 200, sx: 32, sy: 5 }, name: "demon",  weapon: { speed: 240/FPS, reload: 2*FPS, damage: 10, sx: 24, sy: 5, fpf: FPS/10, monster: true } },
         GRUNT:  { sx: 0, sy: 6, frames: 3, fpf: FPS/10, score:  30, health:  8, speed: 120/FPS, damage:  60/FPS, selfharm: 0,      canbeshot: true,  canbehit: true,  invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health: 16, speed: 3.5*FPS, max: 40, score: 300, sx: 32, sy: 6 }, name: "grunt",  weapon: null                                                                                     },
         WIZARD: { sx: 0, sy: 7, frames: 3, fpf: FPS/10, score:  30, health:  8, speed: 120/FPS, damage:  60/FPS, selfharm: 0,      canbeshot: true,  canbehit: true,  invisibility: { on: 3*FPS, off: 6*FPS }, travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health: 24, speed: 4.0*FPS, max: 20, score: 400, sx: 32, sy: 8 }, name: "wizard", weapon: null                                                                                     },
-        DEATH:  { sx: 0, sy: 8, frames: 3, fpf: FPS/10, score: 500, health: 12, speed: 180/FPS, damage: 120/FPS, selfharm: 6/FPS,  canbeshot: false, canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health: 16, speed: 5.0*FPS, max: 10, score: 500, sx: 32, sy: 9 }, name: "death",  weapon: null                                                                                     }
+        DEATH:  { sx: 0, sy: 8, frames: 3, fpf: FPS/10, score: 500, health: 12, speed: 180/FPS, damage: 120/FPS, selfharm: 6/FPS,  canbeshot: false, canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health: 16, speed: 5.0*FPS, max: 10, score: 500, sx: 32, sy: 9 }, name: "death",  weapon: null                                                                                     },
+        NURCE:  { sx: 0, sy: 9, frames: 3, fpf: FPS/10, score:  50, health: 10, speed: 120/FPS, damage: 100/FPS, selfharm: 30/FPS, canbeshot: true,  canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health:  8, speed: 2.5*FPS, max: 40, score: 100, sx: 32, sy: 4 }, name: "nurce",  weapon: null                                                                                     },
+        CHICKEN:  { sx: 0, sy: 10, frames: 3, fpf: FPS/10, score:  5, health: 2, speed: 10/FPS, damage: 100/FPS, selfharm: 30/FPS, canbeshot: true,  canbehit: false, invisibility: false,                     travelling: 0.5*FPS, thinking: 0.5*FPS, generator: { health:  8, speed: 2.5*FPS, max: 40, score: 100, sx: 32, sy: 4 }, name: "chiken",  weapon: null                                                                                     }
       },
       TREASURE = {
         HEALTH:  { sx: 0, sy: 9, frames: 1, fpf: FPS/10, score:  10, health:  50,   sound: 'potion' },
@@ -48,7 +51,7 @@ Gauntlet = function() {
         PLAYER_GLOW:     { frames: FPS/2, border: 5 }
       },
       PLAYERS   = [ PLAYER.WARRIOR, PLAYER.VALKYRIE, PLAYER.WIZARD, PLAYER.ELF ],
-      MONSTERS  = [ MONSTER.GHOST, MONSTER.DEMON, MONSTER.GRUNT, MONSTER.WIZARD, MONSTER.DEATH ],
+      MONSTERS  = [ MONSTER.GHOST, MONSTER.DEMON, MONSTER.GRUNT, MONSTER.WIZARD, MONSTER.DEATH, MONSTER.NURCE, MONSTER.CHICKEN ],
       TREASURES = [ TREASURE.HEALTH, TREASURE.POISON, TREASURE.FOOD1, TREASURE.FOOD2, TREASURE.FOOD3, TREASURE.KEY, TREASURE.POTION, TREASURE.GOLD ],
       CBOX = {
         FULL:    { x: 0,      y: 0,      w: TILE,   h: TILE          },
@@ -459,8 +462,9 @@ Gauntlet = function() {
       ////////////////////////////
 
       MONSTER_ID = 0;
+      FX_ID = 0;
     },
-
+//set_remove(FX_ID, entity)
     onenterhelp: function(event, previous, current, msg) { $('help').update(msg).show(); setTimeout(this.autoresume.bind(this), 4000); },
     onleavehelp: function(event, previous, current)      { $('help').hide();                                                           },
 
@@ -518,7 +522,7 @@ Gauntlet = function() {
 
     onPlayerDeath:  function()       { this.lose(); },
     onPlayerNuke:   function(player) { this.map.nuke(this.viewport, player); },
-    onFxFinished:   function(fx)     { this.map.remove(fx); },
+    onFxFinished:   function(fx)     { this.map.remove(fx); FX_ID--; },
 
     onPlayerFire: function(player) {
       this.map.addWeapon(player.x, player.y, player.type.weapon, player.dir, player);
@@ -1266,6 +1270,7 @@ Gauntlet = function() {
       this.type  = type;
       this.start = null;
       this.delay = delay || 0;
+      this.id    = FX_ID ++;
     },
 
     fx:       true,

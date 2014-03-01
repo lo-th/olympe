@@ -431,7 +431,10 @@
 		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, bumpScale:3, shininess:10 }); // exit and door bump
 		materials[8] = makeMaterial({ map:"item.jpg", bump:true, bumpScale:3, shininess:60 }); // treasure
 
-		materials[9] = makeMaterial({ map:"exp.png", transparent:true }); // fx
+		//materials[9] = makeMaterial({ map:"exp.png", transparent:true }); // fx
+
+		materials[9] = new THREE.SpriteMaterial( { map: THREE.ImageUtils.loadTexture( 'res/textures/game/exp.png') } );// makeMaterial({ map:"exp.png", transparent:true }); // fx
+
 		materials[10] = makeMaterial({ color:0x0000ff }); // weapon
 		materials[11] = makeMaterial({ color:0x00ffff }); // generator
 
@@ -488,7 +491,7 @@
 	// IMPORT SEA3D ASSETS
 	//===========================================================================
 
-	var monstersName = ["monster_4_b5", "monster_3_b6", "monster_2_b7", "monster_1_b8", "monster_5_b9"];
+	var monstersName = ["monster_4_b5", "monster_3_b6", "monster_2_b7", "monster_1_b8", "monster_5_b9", "monster_6_b10", "monster_7_b11"];
 	var monstersGeo, monstersMat;
 
 	var wallRef = [];
@@ -539,7 +542,7 @@
 		    for( i = 0; i < monstersName.length; i++) {
 		    	monstersGeo.push(getMeshByName(monstersName[i]).geometry);
 		    }
-		    monstersMat = [ materials[4],  materials[4],  materials[5],  materials[5],  materials[6]];
+		    monstersMat = [ materials[4],  materials[4],  materials[5],  materials[5],  materials[6], materials[4], materials[4]];
 
 			definePlayer();
 
@@ -1177,7 +1180,8 @@
 					//m.anim.add("none", false);
 				} else {
 			
-				    if(ee.type.sy == 6) setPosition( m.mesh, ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
+				    if(ee.type.sy == 6 ) setPosition( m.mesh, ee.x, 5, ee.y, ((-ee.dir*45)+180) ); // dog
+				    else if(ee.type.sy == 10) setPosition( m.mesh, ee.x, 6, ee.y, ((-ee.dir*45)+180) ); // chicken
 				    else setPosition( m.mesh, ee.x, 25, ee.y, ((-ee.dir*45)+180));
 
 			        if(ee.thinking == 0 ) m.anim.play('walk');
@@ -1271,17 +1275,23 @@
 	var fxGeo = new THREE.PlaneGeometry( 30, 30 );
 
 	function fx3D(n, ee) {
-		if(!fx[n]){
-		    fx[n] = new THREE.Mesh( fxGeo, materials[9]);
-		    fx[n].rotation.x = - Math.PI / 2 ;
+		var n = ee.id;
+		if( fx[n] === undefined && ee.x !== null && ee.y!== null){
+		    //fx[n] = new THREE.Mesh( fxGeo, materials[9]);
+		    fx[n] = new THREE.Sprite( materials[9] );
+		    fx[n].scale.set( 30, 30, 1 );
+		    //fx[n].rotation.x = - Math.PI / 2 ;
 			level.add(fx[n]);
 		} else {
-			if( ee.active ){
+			//if( ee.active ){
+				console.log(ee.x, ee.y, ee.id)
+			if( ee.x !== null && ee.y!== null ){
 				setPosition( fx[n], ee.x,  19+(n*0.01), ee.y );
-		        fx[n].lookAt(camera.position);
+		        //fx[n].lookAt(camera.position);
 			} else {
 				level.remove(fx[n]);
-				fx[n] = null;
+				//fx[n].geometry.dispose();
+				fx[n] = undefined;
 			}
 			//if(ee.type.sx === 13) fx[n].material =  materials[27];
 		    //else if(ee.type.sx === 19) fx[n].material =  materials[29];
@@ -1299,6 +1309,7 @@
 	function weapon3D(n, ee) {
 		if(!weapon[n]){
 			weapon[n] = new THREE.Mesh(WaponGeo, materials[10]);
+
 			//weapon[n].material = materials[0];  
 			level.add(weapon[n]);
 		} else {
@@ -1306,6 +1317,7 @@
 				setPosition( weapon[n], ee.x,  20, ee.y, ((-ee.dir*45)+90) );
 			} else {
 				level.remove(weapon[n]);
+				//weapon[n].geometry.dispose();
 				weapon[n] = null;
 			}
 			//weapon[n].rotation.y = ((-ee.dir*45)+90) * ToRad;
