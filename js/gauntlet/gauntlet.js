@@ -8,6 +8,7 @@ Gauntlet = function() {
 
   var VERSION  = "1.0.0",
       MONSTER_ID = 0,
+      WEAPON_ID = 0,
       FX_ID = 0,
       FPS      = 60,
       TILE     = 32,
@@ -152,7 +153,13 @@ Gauntlet = function() {
     runner: {
       fps:   FPS,
       stats: true,
-      render2d : false
+      render2d : false,
+    },
+
+    infos:{
+      update: 0,
+      draw:0,
+      heapSize:0
     },
 
     state: {
@@ -371,6 +378,8 @@ Gauntlet = function() {
 
     getLevel: function(){ return this.storage[STORAGE.NLEVEL]; },
 
+    //getStat: function(){ return this.getStat(); },
+
     playPlayer: function(n, l){ 
       var ll = this.storage[STORAGE.NLEVEL];
       if(l) ll = l;
@@ -462,8 +471,24 @@ Gauntlet = function() {
       ////////////////////////////
 
       MONSTER_ID = 0;
+      WEAPON_ID = 0;
       FX_ID = 0;
     },
+    getInfos:function(){
+      var t = "game update: " + cfg.infos.update +"ms<br>";
+      t += "game draw: " + cfg.infos.draw +"ms<br>";
+      if(cfg.infos.heapSize!==0)t += "heapSize: " +cfg.infos.heapSize+"mb<br>";
+
+      if(this.map)t+= "-ID- M:" + MONSTER_ID +" FX:" + FX_ID+" W:" + WEAPON_ID+"<br>";
+      if(this.map)t+= "POOL M:" + this.map.pool.monsters.length +" FX:" + this.map.pool.fx.length+" W:" + this.map.pool.weapons.length;
+
+       
+
+
+      return t;
+
+    },
+
 //set_remove(FX_ID, entity)
     onenterhelp: function(event, previous, current, msg) { $('help').update(msg).show(); setTimeout(this.autoresume.bind(this), 4000); },
     onleavehelp: function(event, previous, current)      { $('help').hide();                                                           },
@@ -496,6 +521,18 @@ Gauntlet = function() {
       }
     },
 
+    draw3D: function(frame) {
+      if (this.canDraw ) {
+        ///////////////////////////////
+        move3DPlayer( this.player );
+        entitiesTo3D( this.map.entities );
+        //////////////////////////////
+        
+        this.scoreboard.refreshPlayer(this.player);
+      }
+      this.debugHeap(frame);
+    },
+
     draw: function(ctx, frame) {
       if (this.canDraw ) {
         if(gameDraw2d){
@@ -505,8 +542,8 @@ Gauntlet = function() {
         } else {
 
           ///////////////////////////////
-          move3DPlayer(this.player);
-          entitiesTo3D( this.map.entities);
+          move3DPlayer( this.player );
+          entitiesTo3D( this.map.entities );
           //////////////////////////////
         }
         this.scoreboard.refreshPlayer(this.player);
@@ -576,6 +613,7 @@ Gauntlet = function() {
 
       this.map.addFx(x, y, FX.WEAPON_HIT);
       this.map.remove(weapon);
+      WEAPON_ID--;
     },
 
     onPlayerCollide: function(player, entity) {
@@ -602,6 +640,7 @@ Gauntlet = function() {
         by.addscore(monster.type.score);
       this.map.addMultipleFx(3, monster, FX.MONSTER_DEATH, TILE/2, nuke ? FPS/2 : FPS/6);
       this.map.remove(monster);
+      //MONSTER_ID--;
     },
 
     onGeneratorDeath: function(generator, by) {
@@ -830,6 +869,7 @@ Gauntlet = function() {
 
     //-------------------------------------------------------------------------
 
+
     setupLevel: function(nlevel) {
 
       var level  = cfg.levels[nlevel],
@@ -917,6 +957,11 @@ Gauntlet = function() {
     addTreasure:  function(x, y, type)             { return DEBUG.NOTREASURE   ? null : this.add(x, y, Treasure,  null,               type);             },
     addDoor:      function(x, y, type)             { return DEBUG.NODOORS      ? null : this.add(x, y, Door,      null,               type);             },
     addExit:      function(x, y, type)             { return DEBUG.NOEXITS      ? null : this.add(x, y, Exit,      null,               type);             },
+
+    /*addWeapon:    function(x, y, type, dir, owner) { return DEBUG.NOWEAPONS    ? null : this.add(x, y, Weapon,    null,  type, dir, owner); },
+    addMonster:   function(x, y, type, generator)  { return DEBUG.NOMONSTERS   ? null : this.add(x, y, Monster,   null, type, generator);  },
+    addFx:        function(x, y, type, delay)      { return DEBUG.NOFX         ? null : this.add(x, y, Fx,        null,       type, delay);      },
+*/
     addWeapon:    function(x, y, type, dir, owner) { return DEBUG.NOWEAPONS    ? null : this.add(x, y, Weapon,    this.pool.weapons,  type, dir, owner); },
     addMonster:   function(x, y, type, generator)  { return DEBUG.NOMONSTERS   ? null : this.add(x, y, Monster,   this.pool.monsters, type, generator);  },
     addFx:        function(x, y, type, delay)      { return DEBUG.NOFX         ? null : this.add(x, y, Fx,        this.pool.fx,       type, delay);      },
@@ -942,8 +987,7 @@ Gauntlet = function() {
     remove: function(obj) {
       obj.active = false;
       this.occupy(null, null, obj);
-      if (obj.pool)
-        obj.pool.push(obj);
+      if (obj.pool) obj.pool.push(obj);
     },
 
     addMultipleFx: function(count, target, type, d, dt) {
@@ -1173,6 +1217,7 @@ Gauntlet = function() {
       this.type  = type;
       this.dir   = dir;
       this.owner = owner;
+      this.id = WEAPON_ID++;
     },
 
     weapon:   true,

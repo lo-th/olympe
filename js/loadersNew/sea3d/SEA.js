@@ -1,7 +1,9 @@
 var SEA = {};
 
-SEA.Pool = function(){
+SEA.Pool = function(url, endFunction){
 	this.models = [];
+    this.endFunction = endFunction ||  function() {};
+    this.load(url);
 }
 
 SEA.Pool.prototype = {
@@ -9,44 +11,49 @@ SEA.Pool.prototype = {
 
     load : function(url){
     	var SeaLoader = new THREE.SEA3D( true );
+        var parent = this;
     	SeaLoader.onComplete = function( e ) {
-            var i, j, m, anim = [], morph = [];
-    		for ( i=0; i < SeaLoader.meshes.length; i++){
-    		    m = SeaLoader.meshes[i];
-                if(m.animations){
-                    for ( j=0; j !== m.animations.length; j++){
-                        anim[j] = m.animations[j].name;
-                    }
-                }
-                if(m.geometry.morphTargets){
-                    for ( j=0; j < m.geometry.morphTargets.length; j++){
-                        morph[i] = m.geometry.morphTargets[j].name;
-                    }
-                }
-                this.models[i] = { name:m.name, geo:this.getSeaGeometry(m), anim:anim, morph:morph }
-    	    }
+            setTimeout( parent.detectMesh, 100, SeaLoader, parent);
     	}
     	SeaLoader.load( url );
     },
 
-    getSeaGeometry : function (name, scale, axe){
-        var a = axe || "z";
-        var s = scale || 1;
-        var g = this.getMeshByName(name).geometry;
-        this.scaleSea3DGeometry(g, s, a);
+    detectMesh : function(SeaLoader, parent){
+        var j, m, anim, morph;
+        for ( var i=0, l= SeaLoader.meshes.length; i < l; i++){
+            m = SeaLoader.meshes[i];
+            anim = [];
+            morph = [];
+            if(m.animations){
+                for ( j=0; j !== m.animations.length; j++){
+                    anim[j] = m.animations[j].name;
+                }
+            }
+            if(m.geometry.morphTargets){
+                for ( j=0; j < m.geometry.morphTargets.length; j++){
+                    morph[i] = m.geometry.morphTargets[j].name;
+                }
+            }
+
+            parent.models[i] = { name:m.name, geo:m.geometry, anim:anim, morph:morph };
+        }
+        parent.endFunction();
+    },
+
+    getGeometry : function (name, AutoScale, Scale, Axe){
+        var autoScale = AutoScale || false;
+        var g;
+        for (var i=0, l=this.models.length; i < l; i++){
+            if(this.models[i].name === name){
+                g = this.models[i].geo;
+            }
+        }
+        if(autoScale)this.scaleGeometry(g, Scale, Axe);
         return g;
     },
 
-    getMeshByName : function (name){
-        for (var i=0; i !== meshs.length; i++){
-            if(meshs[i].name === name){
-                return meshs[i];
-            } 
-        } 
-    },
-
-    scaleSea3DGeometry : function (geometry, scale, Axe) {
-        var s = 1;
+    scaleGeometry : function (geometry, Scale, Axe) {
+        var s = Scale || 1;
         var axe = Axe || 'z';
 
         for( var i = 0; i < geometry.vertices.length; i++) {
@@ -63,8 +70,6 @@ SEA.Pool.prototype = {
         geometry.computeVertexNormals();
         geometry.verticesNeedUpdate = true;
     }
-
-
 }
 
 
@@ -72,7 +77,8 @@ SEA.Pool.prototype = {
 SEA.Animator = function(mesh, name){
     this.mesh = mesh;
     this.name = name;
-    this.current = null;
+    this.current = {};
+    this.current.name = "";
     this.animation = [];
 }
 
@@ -83,11 +89,10 @@ SEA.Animator.prototype = {
         a.loop = loop || false;
         a.name = name;
         this.animation.push(a);
-        if(name === "idle") this.current = a;
     },
     play:function(name){
         if(name!==this.current.name || this.current === null){
-            this.current.stop();
+            if(this.current.name!=="")this.current.stop();
             for(var i=0, l=this.animation.length; i<l; i++ ){
                 if(this.animation[i].name === name){
                     this.animation[i].play();

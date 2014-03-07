@@ -71,9 +71,10 @@ if (isset($_POST['txt']) )
 	    }
 
 		//file_put_contents($filename,$soundfile);
-		//chmod($filename, 01777);
+		//chmod($filename, 01777);/*<audio autoplay="autoplay"><source src="'.$filename.'" type="audio/mp3" rel="noreferrer"/></audio><br />*/
 		echo ('
-			<audio autoplay="autoplay"><source src="'.$filename.'" type="audio/mp3" rel="noreferrer"/></audio><br />
+			
+			<audio autoplay="autoplay"><source src="'.$filename.'" type="audio/mpeg" rel="noreferrer"/></audio><br />
 			current text :'.$text.'<br />
 			file: '.$filename.'
 			'

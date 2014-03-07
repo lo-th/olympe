@@ -165,6 +165,7 @@ Game = {
       this.canvas.width  = this.width;
       this.canvas.height = this.height;
       this.ctx           = this.canvas.getContext('2d');
+      this.infos = {update:0, draw:0, heapSize:0};
       game.run(this);
       if (to.bool(this.cfg.start))
         this.start();
@@ -177,8 +178,8 @@ Game = {
 
     start: function() {
 
-      this.addEvents();
-      this.resetStats();
+     // this.addEvents();
+     // this.resetStats();
 
       if (this.cfg.manual)
         return this.draw();
@@ -213,7 +214,7 @@ Game = {
     update: function(dt) {
       while (dt >= this.dstep) {
         this.game.update(this.frame);
-        this.frame = this.frame + 1;
+        this.frame ++; //= this.frame + 1;
         dt = dt - this.dstep;
       }
       return dt;
@@ -229,19 +230,18 @@ Game = {
     },
 
     draw: function() {
-      this.ctx.save();
+      this.game.draw3D(this.frame);
+
+     /* this.ctx.save();
       this.game.draw(this.ctx, this.frame);
-      this.ctx.restore();
-      this.drawStats();
+      this.ctx.restore();*/
+     // this.drawStats();
     },
 
-    resetStats: function() {
+   /* resetStats: function() {
       if (this.cfg.stats) {
         this.stats = new Stats();
-        this.stats.extra = {
-          update: 0,
-          draw:   0
-        };
+        this.stats.extra = { update: 0, draw: 0 };
         this.stats.domElement.id = 'stats';
         this.canvas.parentNode.appendChild(this.stats.domElement);
         this.stats.domElement.appendChild($({
@@ -253,24 +253,42 @@ Game = {
         this.stats.updateCounter = $(this.stats.domElement).down('div.extra span.update');
         this.stats.drawCounter   = $(this.stats.domElement).down('div.extra span.draw');
       }
-    },
+    },*/
 
     updateStats: function(update, draw) {
-      if (this.cfg.stats) {
+      this.infos.update = update ? Math.max(1, update) : this.infos.update;
+      this.infos.draw = draw ? Math.max(1, draw) : this.infos.draw;
+      game.cfg.infos.update = Math.round( this.infos.update);
+      game.cfg.infos.draw = Math.round(this.infos.draw);
+      if(ua.is.chrome)
+        this.infos.heapSize = window.performance.memory.usedJSHeapSize * 9.54E-7;
+
+      game.cfg.infos.heapSize = Math.round(this.infos.heapSize);
+    /*  if (this.cfg.stats) {
         this.stats.update();
         this.stats.extra.update = update ? Math.max(1, update) : this.stats.extra.update;
         this.stats.extra.draw   = draw   ? Math.max(1, draw)   : this.stats.extra.draw;
-      }
+      }*/
     },
 
-    drawStats: function() {
+   /* drawStats: function() {
       if (this.cfg.stats) {
-        this.stats.updateCounter.update("update: " + Math.round(this.stats.extra.update) + "ms");
-        this.stats.drawCounter.update(  "draw: " + Math.round(this.stats.extra.draw) + "ms");
+        game.cfg.infos.update = Math.round(this.stats.extra.update);
+        game.cfg.infos.draw = Math.round(this.stats.extra.draw);
+        
+       // this.stats.updateCounter.update("update: " + Math.round(this.stats.extra.update) + "ms");
+       // this.stats.drawCounter.update(  "draw: " + Math.round(this.stats.extra.draw) + "ms");
       }
-    },
+    },*/
 
-    addEvents: function() {
+   /* getStat:function(){
+      if (this.cfg.stats){
+        var st ="game update: " + Math.round(this.stats.extra.update) + "ms" + "<br>game draw: " + Math.round(this.stats.extra.draw) + "ms";
+        return st
+      }
+    },*/
+
+    /*addEvents: function() {
       var game = this.game;
 
       if (game.onfocus) {
@@ -286,7 +304,7 @@ Game = {
         this.canvas.on(ua.is.firefox ? "DOMMouseScroll" : "mousewheel", function(ev) { game.onwheel(Game.Event.mouseWheelDelta(ev), ev); });
       }
 
-    },
+    },*/
 
     setSize: function(width, height) {
       this.width  = this.canvas.width  = width;
@@ -638,9 +656,9 @@ Game.Event = {
     //ev.returnValue = false;
     //ev.preventDefault();
     return false;
-  },
+  }//,
 
-  canvasPos: function(ev, canvas) {
+  /*canvasPos: function(ev, canvas) {
     var bbox = canvas.getBoundingClientRect(),
            x = (ev.clientX - bbox.left) * (canvas.width / bbox.width),
            y = (ev.clientY - bbox.top)  * (canvas.height / bbox.height);
@@ -654,7 +672,7 @@ Game.Event = {
       return -ev.detail/3;
     else
       return 0;
-  }
+  }*/
 
 }
 

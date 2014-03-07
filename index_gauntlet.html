@@ -113,7 +113,8 @@
 
 	var vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight };
 	var mouse = { x:0, y:0, move:true };
-	var camera, center, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight, renderLoop;
+	var camera, center, controls, target, scene, renderer, composer, renderPass, delta, pointLight, pointLight2, spotLight;
+	var intro, introPlayer;
 	var clock = new THREE.Clock();
 	var fps=0, time, time_prev=0, fpsint = 0;
 
@@ -138,7 +139,7 @@
 
 	var tEntities = [];
 
-	var level, player, intro;
+	var level, player;
 	var meshs=[];
 
 	var list ="";
@@ -291,6 +292,64 @@
 		camera.position.copy( Orbit( target.position, camConfig.horizontal, camConfig.vertical, camConfig.distance ) );
 		camera.lookAt( target.position );
 
+		testMouse();
+
+		renderer.render( scene, camera );
+
+		displayInfo();
+
+		if(viewConfig.fullStats){
+			//stats.update();
+			rendererStats.update(renderer);
+		}
+		//tell(list);
+	}
+
+	function displayInfo(){
+	    time = Date.now();
+	    if (time - 1000 > time_prev) {
+	        time_prev = time; fpsint = fps; fps = 0;
+	    } fps++;
+
+	    var Tinfo =[
+	        "Three Render: " + fpsint +" fps<br>",
+	        "memory: " + renderer.info.memory.programs +"<br>",
+	        //"animatrion"+THREE.AnimationHandler.playing.length+"<br>",
+	        window.game.getInfos()
+	    ].join("\n");
+	    info.innerHTML = Tinfo;
+	}
+
+	var stats, rendererStats;
+
+	function fullStats(){
+		if(viewConfig.fullStats){
+			/*stats = new Stats();
+			stats.domElement.style.position	= 'absolute'
+			stats.domElement.style.right	= '10px'
+			stats.domElement.style.bottom	= '161px'
+			document.body.appendChild( stats.domElement );*/
+
+
+			rendererStats = new THREEx.RendererStats();
+			rendererStats.domElement.style.position	= 'absolute'
+			rendererStats.domElement.style.right	= '10px'
+			rendererStats.domElement.style.bottom	= '10px'
+			document.body.appendChild( rendererStats.domElement );
+		} else {
+			if (rendererStats.domElement )document.body.removeChild(rendererStats.domElement);
+			//if (stats.domElement )document.body.removeChild(stats.domElement);
+		}
+
+		//isFullStats = true;
+
+	}
+
+	//===========================================================================
+	// MOUSE DETECT
+	//===========================================================================
+
+	function testMouse() {
 		// find intersections if intro
 		if(isIntro){
 			var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
@@ -322,54 +381,9 @@
 			}
 		}
 
-		renderer.render( scene, camera );
-
-		displayInfo();
-
-		if(viewConfig.fullStats){
-			//stats.update();
-			rendererStats.update(renderer);
-		}
-		//tell(list);
-	}
-
-	function displayInfo(){
-	    time = Date.now();
-	    if (time - 1000 > time_prev) {
-	        time_prev = time; fpsint = fps; fps = 0;
-	    } fps++;
-
-	    var Tinfo =[
-	        "Three Render: " + fpsint +" fps<br>",
-	        "memory: " + renderer.info.memory.programs 
-	    ].join("\n");
-	    info.innerHTML = Tinfo;
-	}
-
-	var stats, rendererStats;
-
-	function fullStats(){
-		if(viewConfig.fullStats){
-			/*stats = new Stats();
-			stats.domElement.style.position	= 'absolute'
-			stats.domElement.style.right	= '10px'
-			stats.domElement.style.bottom	= '161px'
-			document.body.appendChild( stats.domElement );*/
-
-
-			rendererStats = new THREEx.RendererStats();
-			rendererStats.domElement.style.position	= 'absolute'
-			rendererStats.domElement.style.right	= '10px'
-			rendererStats.domElement.style.bottom	= '10px'
-			document.body.appendChild( rendererStats.domElement );
-		} else {
-			if (rendererStats.domElement )document.body.removeChild(rendererStats.domElement);
-			//if (stats.domElement )document.body.removeChild(stats.domElement);
-		}
-
-		//isFullStats = true;
 
 	}
+
 
 	//===========================================================================
 	// LISTENERS
@@ -423,10 +437,10 @@
 
 		materials[2] = makeMaterial({ map:"wall.png", bump:true, bumpScale:10, shininess:10 }); // wall bump
 		//materials[3] = makeMaterial({ map:"floor.jpg", bump:true, bumpScale:1, shininess:16 }); // floor bump
-
-		materials[4] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 4 / 5
-		materials[5] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 6 / 7
-		materials[6] = makeMaterial({ map:"avatar5.jpg", skinning:true }); // monster 8 
+		materials[3] = makeMaterial({ map:"avatar3.jpg", skinning:true }); // monster 8 
+		materials[4] = makeMaterial({ map:"avatar4.jpg", skinning:true }); // monster 4 / 5
+		materials[5] = makeMaterial({ map:"avatar5.jpg", skinning:true }); // monster 6 / 7
+		materials[6] = makeMaterial({ map:"avatar6.jpg", skinning:true }); // monster 8 
 
 		materials[7] = makeMaterial({ map:"stairs.jpg", bump:true, bumpScale:3, shininess:10 }); // exit and door bump
 		materials[8] = makeMaterial({ map:"item.jpg", bump:true, bumpScale:3, shininess:60 }); // treasure
@@ -491,7 +505,7 @@
 	// IMPORT SEA3D ASSETS
 	//===========================================================================
 
-	var monstersName = ["monster_4_b5", "monster_3_b6", "monster_2_b7", "monster_1_b8", "monster_5_b9", "monster_6_b10", "monster_7_b11"];
+	var monstersName = ["monster_zombi", "monster_demon", "monster_dog", "monster_wizard", "monster_death", "monster_nurce", "monster_chicken"];
 	var monstersGeo, monstersMat;
 
 	var wallRef = [];
@@ -542,7 +556,7 @@
 		    for( i = 0; i < monstersName.length; i++) {
 		    	monstersGeo.push(getMeshByName(monstersName[i]).geometry);
 		    }
-		    monstersMat = [ materials[4],  materials[4],  materials[5],  materials[5],  materials[6], materials[4], materials[4]];
+		    monstersMat = [ materials[3],  materials[4],  materials[6],  materials[4],  materials[5], materials[3], materials[6]];
 
 			definePlayer();
 
@@ -550,7 +564,7 @@
 
 			document.getElementById("scoreboard").style.visibility = "visible";
 		};
-		SeaLoader.load( 'res/models/g2.sea' );
+		SeaLoader.load( 'res/models/g3.sea' );
 	}
 
 	//===========================================================================
@@ -605,7 +619,8 @@
 	THREE.Animator = function(mesh, name){
 		this.mesh = mesh;
 		this.name = name;
-		this.current = null;
+		this.current = {};
+		this.current.name = "";
 		this.animation = [];
 	}
 
@@ -616,11 +631,10 @@
 			a.loop = loop || false;
 			a.name = name;
 			this.animation.push(a);
-			if(name === "idle") this.current = a;
 		},
 		play:function(name){
 			if(name!==this.current.name || this.current === null){
-				this.current.stop();
+				if(this.current.name!=="")this.current.stop();
 				for(var i=0, l=this.animation.length; i<l; i++ ){
 					if(this.animation[i].name === name){
 						this.animation[i].play();
@@ -691,14 +705,16 @@
 	function intro3D(){
 		
 		intro = new THREE.Object3D();
+		introPlayer = new THREE.Object3D();
 		scene.add(intro);
+		scene.add(introPlayer);
 		target.position.set(0,22.5,0);
 
 		for (var i = 0; i<4; i++){
 
 			heroesAnim[i].play("jump");
 
-			intro.add(players[i]);
+			introPlayer.add(players[i]);
 			
 			players[i].position.set((i*60)-90, 22.5, 0);
 			players[i].rotation.y = 0;
@@ -732,6 +748,7 @@
 
 		// get the current game level
 		currentLevel = window.game.getLevel();
+
 		createLabel("Level "+ currentLevel);
 		createLabel(">",60,"#ff8080",25);
 		createLabel("<",60,"#ff8080",26);
@@ -741,7 +758,7 @@
 
 		animate();
 
-		//startRender();
+		// start Render
 		setTimeout(introAnimEnd, 1000);
 	}
 
@@ -769,18 +786,23 @@
 		for ( i = intro.children.length - 1; i >= 0 ; i -- ) {
 			obj = intro.children[ i ];
 			intro.remove(obj);
-			//if(obj.animations) obj.stop();
-			//obj.geometry.dispose();
+			obj.geometry.dispose();
+		}
+
+		for ( i = introPlayer.children.length - 1; i >= 0 ; i -- ) {
+			obj = introPlayer.children[ i ];
+			introPlayer.remove(obj);
+			heroesAnim[i].stop();
 		}
 
 		scene.remove(intro);
+		scene.remove(introPlayer);
 		levels.length = 0;
 		grounds.length = 0;
-		//players.length = 0;
+
 		isIntro = false;
 		intro = null;
-
-		//stopRender();
+		introPlayer = null;
 	}
 
 	function createLabel(text, size, color, n) {
@@ -1193,6 +1215,7 @@
 					m.anim.play('death'); 
 					tmpTimer[n] = setTimeout( function() {
 						//m.anim.clean();
+						//m.anim.stop();
 						level.remove( m.mesh );
 						//
 						m.anim = null;
@@ -1284,7 +1307,7 @@
 			level.add(fx[n]);
 		} else {
 			//if( ee.active ){
-				console.log(ee.x, ee.y, ee.id)
+				//console.log(ee.x, ee.y, ee.id)
 			if( ee.x !== null && ee.y!== null ){
 				setPosition( fx[n], ee.x,  19+(n*0.01), ee.y );
 		        //fx[n].lookAt(camera.position);
