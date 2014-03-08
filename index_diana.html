@@ -104,7 +104,9 @@
 		};
 
 		var viewConfig = {
-			withEffect:false
+			withEffect:false,
+			withNormal:false,
+			withBump:true
 		};
 
 		var postprocessing = { enabled  : false };
@@ -716,12 +718,13 @@
 			suit.setWeightByName("bobs", value);
 		}
 
+		var normalTest;
 
 		function initMaterial(){
-			var normal = new THREE.ImageUtils.loadTexture( 'res/textures/diana/normal.jpg' );
-			normal.repeat.set( 1, -1 );
-			normal.wrapS = THREE.RepeatWrapping;
-			normal.minFilter = normal.magFilter = THREE.LinearFilter;
+			normalTest = new THREE.ImageUtils.loadTexture( 'res/textures/diana/normal.jpg' );
+			normalTest.repeat.set( 1, -1 );
+			normalTest.wrapS = THREE.RepeatWrapping;
+			normalTest.minFilter = normalTest.magFilter = THREE.LinearFilter;
 
 			var textureEnvRefl_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_refl_v01.jpg' );
 			var textureEnvDiff_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_diff_v01.jpg' );
@@ -767,8 +770,8 @@
 			materials[0].map.format = THREE.RGBFormat;
 			//materials[0].skinning = false;
 
-			//materials[0].bumpMap = materials[0].map;
-			//materials[0].bumpScale = 0.01;
+			materials[0].bumpMap = materials[0].map;
+			materials[0].bumpScale = 0.05;
 
 			//materials[0].normalMap = normal;
 			//materials[0].normalScale={x:0,y:0};
@@ -857,6 +860,55 @@
 			materials[9].bumpScale = 0.05;
 			materials[9].reflectivity=0//0.05;
 			materials[9].shininess = 14;
+		}
+
+		function switchMaterialMethod(){
+			if(viewConfig.withBump){
+				viewConfig.withBump = false;
+				viewConfig.withNormal = true;
+
+				materials[0].bumpMap = null;
+			    materials[0].bumpScale = 0;
+
+			    materials[1].bumpMap = null;
+			    materials[1].bumpScale = 0;
+
+			    materials[9].bumpMap = null;
+			    materials[9].bumpScale = 0;
+
+			    materials[0].normalMap = normalTest;
+			    materials[0].normalScale={x:1,y:1};
+			    materials[1].normalMap = normalTest;
+			    materials[1].normalScale={x:1,y:1};
+			    materials[9].normalMap = normalTest;
+			    materials[9].normalScale={x:1,y:1};
+
+			} else {
+				viewConfig.withBump = true;
+				viewConfig.withNormal = false;
+
+				materials[0].normalMap = null;
+			    materials[0].normalScale={x:0,y:0};
+			    materials[1].normalMap = null;
+			    materials[1].normalScale={x:0,y:0};
+			    materials[9].normalMap = null;
+			    materials[9].normalScale={x:0,y:0};
+
+				materials[0].bumpMap = materials[0].map;
+			    materials[0].bumpScale = 0.05;
+
+			    materials[1].bumpMap = materials[1].map;
+			    materials[1].bumpScale = 0.05;
+
+			    materials[9].bumpMap = materials[9].map;
+			    materials[9].bumpScale = 0.05;
+
+
+
+			}
+			materials[0].needsUpdate = true;
+			materials[1].needsUpdate = true;
+			materials[9].needsUpdate = true;
 		}
 
 
@@ -1101,7 +1153,10 @@
 
 		function addGUIView() {
 			var f4 = gui.addFolder('View Option');
-			f4.add( viewConfig, 'withEffect' ).onChange( function() {initComposer();});
+			f4.add( viewConfig, 'withEffect' ).onChange( function() {//initComposer();
+			});
+			f4.add( viewConfig, 'withBump' ).listen().onChange( function() {switchMaterialMethod();});
+			f4.add( viewConfig, 'withNormal' ).listen().onChange( function() {switchMaterialMethod();});
 		}
 
 		function addGUIAnimation() {	
