@@ -89,6 +89,10 @@
 			speed:0.8
 		}
 
+		var bobsAnim = {
+			low:0
+		}
+
 		var morphConfig = {
 			naked:false,
 			bobs:50,
@@ -606,6 +610,8 @@
 
 		}
 
+		var currentAnim;
+
 
 		function importBody(){
 			var loader = new THREE.SEA3D( false );
@@ -666,10 +672,14 @@
 				bodyAnim.play("walk");
 				shadAnim.play("walk");
 
+				currentAnim = "walk";
 
-				bobsMorph(0.5);
+
+				bobsMorph(0.3);
 
 				scene.add( head );
+
+				bobsWalk();
 
 				// bones TEST 
 				/*var nBone  
@@ -708,13 +718,30 @@
 		}
 
 		function naked(){
-			if(suit.visible)suit.visible = false;
+			if(suit.visible) suit.visible = false;
 			else suit.visible = true;
+		}
+
+		var tweenSequencyBobs = [];
+
+		function bobsWalk(){
+			if(currentAnim === "walk"){
+				time = 0.5;
+				tweenSequencyBobs[0] = TweenLite.to(bobsAnim, 0, { low: 0, onUpdate: bobslow });	
+			    tweenSequencyBobs[1] = TweenLite.to(bobsAnim, time*0.6, { low: 1, onUpdate: bobslow });
+			    tweenSequencyBobs[2] = TweenLite.to(bobsAnim, time*0.4, { low: 0, delay:time*0.4, onUpdate: bobslow, onComplete:bobsWalk });
+
+			}
 		}
 
 		function bobsMorph(value){
 			body.setWeightByName("bobs", value);
 			suit.setWeightByName("bobs", value);
+		}
+
+		function bobslow(){
+			body.setWeightByName("low", bobsAnim.low);
+			suit.setWeightByName("low", bobsAnim.low);
 		}
 
 		var normalTest;
