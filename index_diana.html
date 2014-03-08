@@ -770,7 +770,7 @@
 			//materials[0].skinning = false;
 
 			materials[0].bumpMap = materials[0].map;
-			materials[0].bumpScale = 0.05;
+			materials[0].bumpScale = 0.15;
 
 			//materials[0].normalMap = normal;
 			//materials[0].normalScale={x:0,y:0};
@@ -790,7 +790,7 @@
 			materials[1].map.wrapS = materials[1].map.wrapT = THREE.RepeatWrapping;
 			materials[1].map.format = THREE.RGBFormat;
 			materials[1].bumpMap = materials[1].map;
-			materials[1].bumpScale = 0.02;
+			materials[1].bumpScale = 1;
 			materials[1].metal = true;
 
 
@@ -842,7 +842,7 @@
 			materials[8].skinning = false;
 			materials[8].map.wrapS = materials[8].map.wrapT = THREE.RepeatWrapping;
 			materials[8].bumpMap = materials[8].map;
-			materials[8].bumpScale = 0.05;
+			materials[8].bumpScale = 1;
 			materials[8].transparent = true;
 
 			var tx = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_2048.jpg' );
@@ -856,7 +856,7 @@
 			materials[9].map = tx;
 			materials[9].bumpMap = tx;
 			materials[9].roughness = 0.145;
-			materials[9].bumpScale = 0.05;
+			materials[9].bumpScale = 0.15;
 			materials[9].reflectivity=0//0.05;
 			materials[9].shininess = 14;
 
@@ -897,13 +897,13 @@
 			    materials[9].normalScale={x:0,y:0};
 
 				materials[0].bumpMap = materials[0].map;
-			    materials[0].bumpScale = 0.05;
+			    materials[0].bumpScale = 0.15;
 
 			    materials[1].bumpMap = materials[1].map;
-			    materials[1].bumpScale = 0.05;
+			    materials[1].bumpScale = 1;
 
 			    materials[9].bumpMap = materials[9].map;
-			    materials[9].bumpScale = 0.05;
+			    materials[9].bumpScale = 0.15;
 
 
 
