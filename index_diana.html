@@ -614,7 +614,6 @@
 				var geoSuit = loader.getMesh("Suit").geometry;
 				var geoBody = loader.getMesh("Body").geometry;
 
-				suit = new THREE.MorphAnimMesh (geoSuit, materials[1]);
 				//suit.parseAnimations();	 
 				suit = new THREE.SkinnedMesh ( geoSuit, materials[1] , false );
 				//suit.material = materials[1];
@@ -635,7 +634,7 @@
 				//bodyShadow.visible = false;
 
 				bodyNeck = new THREE.Object3D();
-	            var bone = body.bones[8];
+	            var bone = body.bones[13];
 	            bodyNeck.matrix = bone.skinMatrix;
 	            bodyNeck.matrixAutoUpdate = false;
 	            body.add( bodyNeck );
@@ -668,7 +667,7 @@
 				shadAnim.play("walk");
 
 
-				bobsMorph(0.5);
+				//bobsMorph(0.5);
 
 				scene.add( head );
 
@@ -681,7 +680,7 @@
 
 				for (var i=0; i!== body.bones.length; i++){
 					nBone = new THREE.Mesh(geoBone, matBone);
-					if(i===8)nBone.material = matBone2;
+					if(i===13)nBone.material = matBone2;
 					bone = body.bones[i];
 					nBone.matrix = bone.skinMatrix;
 					nBone.matrixAutoUpdate = false;
@@ -860,6 +859,9 @@
 			materials[9].bumpScale = 0.05;
 			materials[9].reflectivity=0//0.05;
 			materials[9].shininess = 14;
+
+			materials[9].morphTargets=false;
+			materials[1].morphTargets=false;
 		}
 
 		function switchMaterialMethod(){
