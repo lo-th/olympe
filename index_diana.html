@@ -112,6 +112,32 @@
 			withBump:true
 		};
 
+		var eyeController  = {
+			pupil_size: 0.2,
+			iris_tex_start: 0.009,
+			iris_tex_end: 0.13,
+			iris_border: 0.001,
+			iris_size: 0.52,
+			iris_edge_fade: 0.04,
+			iris_inset_depth: 0.03,
+			sclera_tex_scale: -0.14,
+			sclera_tex_offset: 0.04,
+			ior: 1.3,
+			refract_edge_softness: 0.1,
+
+			iris_texture_curvature: 0.51,
+			arg_iris_shading_curvature: 0.51,
+
+			tex_U_offset: 0.25,
+			cornea_bump_amount: 0.1,
+			cornea_bump_radius_mult: 0.9,
+			iris_normal_offset: 0.001,
+			cornea_density: 0.001,
+			bump_texture: 0.3,
+			catshape: false,
+			col_texture: true
+		};
+
 		var postprocessing = { enabled  : false };
 
 		var skyCube;
@@ -558,6 +584,8 @@
 				eyeL.add(eyeGeoL);
 				eyeGeoR = new THREE.Mesh(geometry, eyeMaterial );
 				eyeR.add(eyeGeoR);
+				eyeGeoR.rotation.z = 90*ToRad;
+				eyeGeoL.rotation.z = 90*ToRad;
 
 				eyeTop = loader.getMesh("eye_top");
 				eyeTop.material = materials[5];
@@ -748,6 +776,12 @@
 		var normalHead
 		var normalBody;
 
+		//-----------------------------------------------------
+		//
+		//  MATERIAL
+		//
+		//-----------------------------------------------------
+
 		function initMaterial(){
 
 			normalSuit = new THREE.ImageUtils.loadTexture( 'res/textures/diana/suit_n.jpg' );
@@ -787,6 +821,8 @@
 				vertexShader: eyeShader.vertexShader,
 				fragmentShader: eyeShader.fragmentShader
 			});
+
+			eyeMaterial.needsUpdate = true;
 
 			for(var i=0; i< 12; i++){
 				materials[i] = new THREE.MeshPhongMaterial({ ambient: 0x202020, specular: 0x909090, shininess: 30, skinning: true, morphTargets: true, morphNormals: false, wrapping:THREE.ClampToEdgeWrapping,
@@ -1279,6 +1315,42 @@
 
 			//f2.open();
 			//f1.open();
+			addGUIEye();
+		}
+
+		function addGUIEye() {
+
+		    var guiEyeProp = gui.addFolder('Eye properties');
+			
+			guiEyeProp.add( eyeController, "pupil_size", 			0.0, 1.0 ).name('Pupil size').onChange( matChanger );
+	//		guiEyeProp.add( eyeController, "iris_tex_start",		0.0, 1.0 ).name('Iris V start').onChange( matChanger );
+	//		guiEyeProp.add( eyeController, "iris_tex_end", 			0.0, 1.0 ).name('Iris V end').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_size", 			0.0, 1.0 ).name('Iris size').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_edge_fade", 		0.0, 1.0 ).name('Iris edge fade').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_inset_depth", 		0.0, 1.0 ).name('Iris edge inset').onChange( matChanger );
+			guiEyeProp.add( eyeController, "sclera_tex_scale", 		-1.0, 1.0 ).name('Sclera texture size').onChange( matChanger );
+			guiEyeProp.add( eyeController, "sclera_tex_offset", 	0.0, 1.0 ).name('Sclera texture offset').onChange( matChanger );
+			guiEyeProp.add( eyeController, "ior", 					1.01, 2.0 ).name('Cornea IOR').onChange( matChanger );
+	//		guiEyeProp.add( eyeController, "refract_edge_softness", 0.0, 1.0 ).name('Refract edge softness').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_texture_curvature", 		0.001, 1.0 ).name('Iris texture curvature').onChange( matChanger );
+			guiEyeProp.add( eyeController, "arg_iris_shading_curvature", 	0.001, 1.0 ).name('Iris shading curvature').onChange( matChanger );
+			guiEyeProp.add( eyeController, "tex_U_offset", 			0.0, 1.0 ).name('Texture U offset').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_border", 			0.0, 1.0 ).name('Texture V offset').onChange( matChanger );
+			guiEyeProp.add( eyeController, "cornea_bump_amount", 	0.0, 0.2 ).name('Cornea bulging').onChange( matChanger );
+			guiEyeProp.add( eyeController, "cornea_bump_radius_mult",0.0, 2.0 ).name('Cornea radius scale').onChange( matChanger );
+			guiEyeProp.add( eyeController, "iris_normal_offset", 	0.0, 1.0 ).name('Iris shading offset').onChange( matChanger );
+			guiEyeProp.add( eyeController, "cornea_density", 		0.0, 1.0 ).name('Cornea clouding').onChange( matChanger );
+			guiEyeProp.add( eyeController, "bump_texture", 			-1.0, 1.0 ).name('Bump texture').onChange( matChanger );
+			guiEyeProp.add( eyeController, "catshape" ).name('Cat eye shape').onChange( matChanger );
+			guiEyeProp.close();
+			
+		}
+
+		var matChanger = function( ) {
+			for (var e in eyeController) {
+				if (e in eyeMaterial.uniforms)
+				eyeMaterial.uniforms[ e ].value = eyeController[ e ];
+			}
 		}
 
 		function addGUIVoise() {
