@@ -21,7 +21,7 @@
 
 </head>
 
-	<script src="js/three.min.66.js"></script>
+	<script src="js/three.min.67.js"></script>
 	<script src="js/BufferGeometryUtils.66.js"></script>
 
 	<script src="js/loadersNew/sea3d/SEA.js"></script>
@@ -744,13 +744,26 @@
 			suit.setWeightByName("low", bobsAnim.low);
 		}
 
-		var normalTest;
+		var normalSuit;
+		var normalHead
+		var normalBody;
 
 		function initMaterial(){
-			normalTest = new THREE.ImageUtils.loadTexture( 'res/textures/diana/normal.jpg' );
-			normalTest.repeat.set( 1, -1 );
-			normalTest.wrapS = THREE.RepeatWrapping;
-			normalTest.minFilter = normalTest.magFilter = THREE.LinearFilter;
+			
+			normalSuit = new THREE.ImageUtils.loadTexture( 'res/textures/diana/suit_n.jpg' );
+			normalSuit.repeat.set( 1, -1 );
+			normalSuit.wrapS = normalSuit.wrapT = THREE.RepeatWrapping;
+			normalSuit.minFilter = normalSuit.magFilter = THREE.LinearFilter;
+
+			normalHead = new THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_n.jpg' );
+			normalHead.repeat.set( 1, -1 );
+			normalHead.wrapS = normalHead.wrapT = THREE.RepeatWrapping;
+			normalHead.minFilter = normalHead.magFilter = THREE.LinearFilter;
+
+			normalBody = new THREE.ImageUtils.loadTexture( 'res/textures/diana/body_n.jpg' );
+			normalBody.repeat.set( 1, -1 );
+			normalBody.wrapS = normalBody.wrapT = THREE.RepeatWrapping;
+			normalBody.minFilter = normalBody.magFilter = THREE.LinearFilter;
 
 			var textureEnvRefl_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_refl_v01.jpg' );
 			var textureEnvDiff_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_diff_v01.jpg' );
@@ -872,7 +885,7 @@
 			materials[8].bumpScale = 1;
 			materials[8].transparent = true;
 
-			var tx = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_2048.jpg' );
+			var tx = THREE.ImageUtils.loadTexture( 'res/textures/diana/body.jpg' );
 			tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
 			//tx.repeat.set( 1, -1 );
 			tx.repeat.set( 0.998, -0.998 );
@@ -905,11 +918,11 @@
 			    materials[9].bumpMap = null;
 			    materials[9].bumpScale = 0;
 
-			    materials[0].normalMap = normalTest;
+			    materials[0].normalMap = normalHead;
 			    materials[0].normalScale={x:1,y:1};
-			    materials[1].normalMap = normalTest;
+			    materials[1].normalMap = normalSuit;
 			    materials[1].normalScale={x:1,y:1};
-			    materials[9].normalMap = normalTest;
+			    materials[9].normalMap = normalBody;
 			    materials[9].normalScale={x:1,y:1};
 
 			} else {
