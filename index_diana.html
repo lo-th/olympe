@@ -7,16 +7,15 @@
 	<meta content="utf-8" http-equiv="encoding">
 	<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<meta property="og:image" content="http://loth.olympe.in/res/img/logo.png"/>
+	<meta property="og:image" content="http://lo-th.github.io/olympe/res/img/logo.png"/>
 	<meta property="og:title" content="Advanced Morphing"/>
-	<meta property="og:url" content="http://loth.olympe.in/"/>
+	<meta property="og:url" content="http://lo-th.github.io/olympe/"/>
 	<meta property="og:site_name" content="LOTH"/>
 	<meta property="og:type" content="website"/>
 	<meta property="og:description" content="Experiment full morphing in webGl"/>
 	<meta name="language" content="en-us" />
 	<link rel="shortcut icon" href="res/img/favicon.ico" type="image/x-icon" />
-	<link rel="stylesheet" type="text/css" href="css/loth.css" />
-	<link href="css/app.css" rel="stylesheet" type="text/css">
+	<link href="css/dianna.css" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" type="text/css" href="history/history.css" />
 
 </head>
@@ -207,7 +206,7 @@
 
 			initMaterial();
 
-			importHead();
+			importBody();
 
 			var body = document.body;
 			window.addEventListener( 'resize', resize, false );
@@ -428,12 +427,12 @@
 			shader.uniforms[ "tCube" ].value = skyCube;
 
 			var material = new THREE.ShaderMaterial( {
-			fragmentShader: shader.fragmentShader,
-			vertexShader: shader.vertexShader,
-			uniforms: shader.uniforms,
-			depthWrite: false,
-			side: THREE.BackSide
-			} );
+				fragmentShader: shader.fragmentShader,
+				vertexShader: shader.vertexShader,
+				uniforms: shader.uniforms,
+				depthWrite: false,
+				side: THREE.BackSide
+			});
 
 			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
 			sky.castShadow = false;
@@ -529,27 +528,17 @@
 				head = loader.getMesh("skin_hi");
 				head.material = materials[0];
 				head.scale.set( size, size, -size );
-				
 				head.castShadow = head.receiveShadow = true;
-
 				head.setWeightByName("neck", 1);
-
-				head.play("front");
-
-				head.position.set(0,-10,0);
-				
 
 				neck = loader.getMesh("Neck");
 				neck.material = materials[7];
 				neck.castShadow = false;
 				neck.visible = false;
 
-
 				hair = loader.getMesh("Hair");
 				hair.material = materials[7];
 				hair.castShadow = hair.receiveShadow = true;
-
-				var geometry = new THREE.IcosahedronGeometry( 18.5, 4 );
 
 				eyeR = loader.getMesh("Eye_R");
 				eyeR.material = materials[4];
@@ -557,20 +546,18 @@
 				eyeR.scale.set(1,1,-1);
 				eyeR.visible = false;
 
-				eyeGeoR = new THREE.Mesh(geometry, eyeMaterial );
-				eyeR.add(eyeGeoR);
-
 				eyeL = loader.getMesh("Eye_L");
 				eyeL.material = materials[4];
 				eyeL.castShadow = false;
 				eyeL.scale.set(1,1,-1);
 				eyeL.visible = false;
 
+				// new eye
+				var geometry = new THREE.IcosahedronGeometry( 18.5, 4 );
 				eyeGeoL = new THREE.Mesh(geometry, eyeMaterial );
 				eyeL.add(eyeGeoL);
-
-				eyeL.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
-				eyeR.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( toRad(90) ) );
+				eyeGeoR = new THREE.Mesh(geometry, eyeMaterial );
+				eyeR.add(eyeGeoR);
 
 				eyeTop = loader.getMesh("eye_top");
 				eyeTop.material = materials[5];
@@ -600,10 +587,28 @@
 				var mName;
 				for (var j=0; j < head.geometry.morphTargets.length; j++){
 					mName = head.geometry.morphTargets[j].name;
-					morphsTables[mName] = { tup:testMorph(teethUp, mName), tdown:testMorph(teethDown, mName), eye: testMorph(eyeTop, mName), tongue: testMorph(tongue, mName),  troat:testMorph(troat, mName) };
+					morphsTables[mName] = { 
+						tup:testMorph(teethUp, mName), 
+						tdown:testMorph(teethDown, mName), 
+						eye:testMorph(eyeTop, mName), 
+						tongue:testMorph(tongue, mName), 
+						troat:testMorph(troat, mName)
+					};
 				}
 
-				importBody();
+				scene.add( head );
+				head.play("front");
+
+
+				document.addEventListener( 'mousemove', onMouseMove, false );
+				document.getElementById('loading').style.visibility = 'hidden';			
+				
+				addGUIAnimation();
+				addGUIMroph();
+
+				// eye open close
+				myEyeTimer = setInterval(function(){eyeActive()},5000);
+
 			};
 			
 			loader.load( 'res/models/diana_head.sea' );
@@ -677,7 +682,7 @@
 
 				bobsMorph(0.3);
 
-				scene.add( head );
+
 
 				bobsWalk();
 
@@ -702,15 +707,10 @@
 				body.visible = false;
 				suit.visible = false;*/
 
+				importHead();
 
-				document.addEventListener( 'mousemove', onMouseMove, false );
-				document.getElementById('loading').style.visibility = 'hidden';			
+
 				
-				addGUIAnimation();
-				addGUIMroph();
-
-				// eye open close
-				myEyeTimer = setInterval(function(){eyeActive()},5000);
 			};
 			
 			loader.load( 'res/models/diana_body.sea' );
@@ -749,7 +749,7 @@
 		var normalBody;
 
 		function initMaterial(){
-			
+
 			normalSuit = new THREE.ImageUtils.loadTexture( 'res/textures/diana/suit_n.jpg' );
 			normalSuit.repeat.set( 1, -1 );
 			normalSuit.wrapS = normalSuit.wrapT = THREE.RepeatWrapping;
@@ -1276,6 +1276,9 @@
 			f2.add( morphConfig, 'w', 0, 100 ).listen().onChange( function() { fullMorph("w", morphConfig.w/100);});
 			f2.add( morphConfig, 'eh', 0, 100 ).listen().onChange( function() { fullMorph("eh", morphConfig.eh/100);});
 			f2.add( morphConfig, 'ooh_q', 0, 100 ).listen().onChange( function() {fullMorph("ooh.q", morphConfig.ooh_q/100);});
+
+			//f2.open();
+			//f1.open();
 		}
 
 		function addGUIVoise() {
@@ -1289,7 +1292,7 @@
 			f3.add( voiceConfig, 'pitch', 0, 400 ).onChange( function() {});
 			f3.add( voiceConfig, 'speed', 0, 400 ).onChange( function() {});*/
 
-			f3.open();
+			//f3.open();
 
 			
 		}
@@ -1457,13 +1460,14 @@
 		<div id="viewport"></div>
 		<div id="hubs">
 			<div id="debug"></div>
-			<div id="gui"></div>
-			<div id="info">
-				DIANA 0.2 <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2014</a>
+			<div id="guiContener"><div id="gui"></div></div>
+			<div id="copy">
+				DIANA 0.2 <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2014 </a>
 				 | <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d format</a> 
-				. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
+				. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js 67</a> 
 				. <a href="https://github.com/kripken/speak.js/" target="_blank"> speak.js</a> 
 				. <a href="https://github.com/dzucconi/phoneme-client" target="_blank"> phoneme-client</a>
+				. <a href="http://vill.ee/eye/" target="_blank"> eye shader</a>
 			</div>
 			<div id="loading"><img src="res/img/loader.gif" alt="Loading SEA3D File."></div>
 		</div>

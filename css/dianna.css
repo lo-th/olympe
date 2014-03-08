@@ -1,0 +1,169 @@
+*{
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: -moz-none;
+  -o-user-select: none;
+  user-select: none; 
+}
+
+html {
+  font-family:'Segoe UI';
+  color: #fff;
+  background-color: #161616;
+  height: 100%;
+}
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #161616;
+  overflow: hidden;
+}
+#guiContener {
+  position: absolute;
+  overflow-x:auto;
+  height:100%;
+  width:215px;
+  top: 0px;
+  left: 0px;
+}
+#gui {
+  position: absolute;
+  height:100%;
+  top: 0px;
+  left: -4px;
+}
+#info {
+  position: absolute;
+  top: 6px;
+  left:275px;
+  color: #a2a2a2;
+  text-align: left;
+  font-size:11px;
+  font-weight:normal;
+}
+
+#copy {
+  position: absolute;
+  bottom:5px;
+  right:10px;
+  color: #a2a2a2;
+  text-align: right;
+  font-size:12px;
+  font-weight:normal;
+  text-shadow: 1px 1px 0px #000;
+}
+
+a { color: #e0e0ef; text-decoration:none; cursor: pointer}
+a:visited { color: #e0e0ef; text-decoration:none}
+
+#loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-left: -24px;
+  margin-top: -24px;
+}
+
+.loading-indicator {
+  position: fixed;
+  top: 36px;
+  right: 16px;
+  visibility: hidden;
+}
+
+.l-cell {
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+.buttonPlay {
+  position: fixed;
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    top: 225px;
+    right:55px;
+}
+.bulle {
+   position: absolute;
+   top: 60px;
+   right: 31px;
+ } 
+.cell-editor {
+ z-index: 20;
+  width: 200px;
+  height: 100px;
+  position: fixed;
+  top: 87px;
+  right: 80px;
+  display: inline-block;
+  -moz-user-select:none;
+  -webkit-user-select:none;
+}
+
+.cell-stage {
+  width: 200px;
+  height: 100px;
+  bottom: 20px;
+  right: 60px;
+  margin: 0;
+  padding: 10px;
+  font-family: 'Segoe UI';
+  font-size: 8pt;
+  line-height: 10pt;
+  position: fixed;
+  display: inline-block;
+  -moz-user-select:none;
+  -webkit-user-select:none;
+}
+
+.word {
+  padding: 0 0.25em;
+  margin-right: 0.25em;
+  background-color:rgba(2,2,2,0.1);
+  -moz-user-select:none;
+  -webkit-user-select:none;
+}
+
+textarea {
+  margin: 0;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  vertical-align: top;
+  font-weight:bold;
+  border:0px solid #222222;
+  font-size: 12pt;
+  font-family: monospace;
+  color:#222222;
+ 
+  background-color: transparent;
+  -moz-user-select:text;
+  -webkit-user-select:text;
+}
+textarea:focus {
+    outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 16px;
+  height: 0px;
+}
+::-webkit-scrollbar-track-piece {
+  background:transparent none;
+  border: solid 2px transparent;
+  margin: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #161616;
+}
+::-webkit-scrollbar-thumb:vertical:hover {
+  border:4px solid #161616;
+  background-color: #2fa1d6;
+}
+::-webkit-scrollbar-thumb:vertical { 
+  border:4px solid #161616;
+  background-color: #303030;
+}
