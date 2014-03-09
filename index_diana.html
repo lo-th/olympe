@@ -23,6 +23,8 @@
 	<script src="js/three.min.67.js"></script>
 	<script src="js/BufferGeometryUtils.66.js"></script>
 
+	<script src="js/Bvh.js"></script>
+
 	<script src="js/loadersNew/sea3d/SEA.js"></script>
 	<script src="js/loadersNew/sea3d/SEA3D.js"></script>
 	<script src="js/loadersNew/sea3d/SEA3DLoader.js"></script>
@@ -107,6 +109,7 @@
 		};
 
 		var viewConfig = {
+			antialias:false,
 			withEffect:false,
 			withNormal:false,
 			withBump:true
@@ -167,6 +170,8 @@
 		var seq = { phoneme:0, control:0 };
 		var tweenSequencyStart;
 
+		var bvhReader;
+
 
 
 		function init() {
@@ -186,6 +191,9 @@
 			addGUI(); 
 			addGUIVoise();
 			addGUIView();
+
+			//bvhReader = new BVH.Reader();
+			//bvhReader.load("res/bvh/test.bvh");
 
 			
 		}
@@ -430,7 +438,6 @@
 			ground.rotation.x = - Math.PI / 2;
 			ground.receiveShadow = true;
 			scene.add( ground );
-
 		}
 
 		function addSkyBox() {
@@ -460,7 +467,7 @@
 				side: THREE.BackSide
 			});
 
-			var sky = new THREE.Mesh( new THREE.CubeGeometry( FAR, FAR, FAR ), material );
+			var sky = new THREE.Mesh( new THREE.BoxGeometry( FAR, FAR, FAR ), material );
 			sky.castShadow = false;
 			sky.receiveShadow = false;
 			scene.add( sky );
@@ -625,7 +632,8 @@
 				}
 
 				scene.add( head );
-				head.play("front");
+				head.play("full");
+				//head.play("front");
 
 
 				document.addEventListener( 'mousemove', onMouseMove, false );
@@ -636,6 +644,8 @@
 
 				// eye open close
 				myEyeTimer = setInterval(function(){eyeActive()},5000);
+
+				setTimeout(function(){head.play("front");},800);
 
 			};
 			
@@ -1231,6 +1241,7 @@
 
 		function addGUIView() {
 			var f4 = gui.addFolder('View Option');
+			f4.add( viewConfig, 'antialias' ).onChange( function() { renderer.antialias = viewConfig.antialias});
 			f4.add( viewConfig, 'withEffect' ).onChange( function() {//initComposer();
 			});
 			f4.add( viewConfig, 'withBump' ).listen().onChange( function() {switchMaterialMethod();});
@@ -1286,7 +1297,7 @@
 				} 
 			});
 			f1.add( morphConfig, 'naked' ).onChange( function() { naked(); });
-			f1.add( morphConfig, 'bobs', -200, 200 ).onChange( function() { bobsMorph( morphConfig.bobs/100); });
+			f1.add( morphConfig, 'bobs', 0, 100 ).onChange( function() { bobsMorph( morphConfig.bobs/100); });
 
 			f1.add( morphConfig, 'sadness', 0, 100 ).onChange( function() { fullMorph("sad", morphConfig.sadness/100); });
 			f1.add( morphConfig, 'anger', 0, 100 ).onChange( function() { fullMorph("anger", morphConfig.anger/100); });
