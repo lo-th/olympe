@@ -20,7 +20,7 @@
 
 </head>
 
-	<script src="js/three.min.67.js"></script>
+	<script src="js/three.min.66.js"></script>
 	<script src="js/BufferGeometryUtils.66.js"></script>
 
 	<script src="js/Bvh.js"></script>
@@ -34,6 +34,7 @@
 	<script src="js/postprocessing/EffectComposer.js"></script>
 	<script src="js/postprocessing/RenderPass.js"></script>
 	<script src="js/postprocessing/ShaderPass.js"></script>
+	<script src="js/postprocessing/BloomPass.js"></script>
 	<script src="js/postprocessing/MaskPass.js"></script>
 	<script src="js/postprocessing/BokehPass.js"></script>
 
@@ -58,6 +59,7 @@
 	<!--<script src="js/libs/tween.min.js"></script>-->
 	<script src="js/tweenLite.min.js"></script>
 
+
 	<script src="js/libs/jquery-1.9.1.min.js"></script>
 	<script src="js/vendor/underscore.min.js"></script>
 	<script src="js/vendor/app.js"></script>
@@ -75,7 +77,7 @@
 
 		var camera, container, scene, renderer, composer, renderPass, delta, center;
 		var ambient, hemiLight, pointLight, light;
-		var body, suit, bodyNeck, head, neck, hair, eyeR, eyeL, teethUp, teethDown, eyeTop, tongue, troat, headBase, fakeNeck, eyesTarget, camPos, mouse;;
+		var body, suit, bodyNeck, bodyHead, head, neck, hair, eyeR, eyeL, teethUp, teethDown, eyeTop, tongue, troat, headBase, fakeNeck, eyesTarget, camPos, mouse;;
 		var eyeGeoL, eyeGeoR;
 		var eyeMaterial;
 		var materials = []; 
@@ -84,8 +86,10 @@
 
 		var gui;
 		var animConfig = {
-			neckmove:false, 
-			walk:false,
+			current:"none",
+			//neckmove:false, 
+			idle:false,
+			walk:true,
 			salut:false,
 			speed:0.8
 		}
@@ -109,6 +113,7 @@
 		};
 
 		var viewConfig = {
+			squeleton:false,
 			antialias:false,
 			withEffect:false,
 			withNormal:false,
@@ -141,8 +146,17 @@
 			col_texture: true
 		};
 
+		var effectController  = {
+			DOF: false,
+			exposure: 	1.0,
+			focus: 		1.0,
+			aperture:	0.025,
+			maxblur:	1.0
+		};
+
 		var postprocessing = { enabled  : false };
 
+		var sky;
 		var skyCube;
 
 		var imput, output, oldOutput;
@@ -170,15 +184,24 @@
 		var seq = { phoneme:0, control:0 };
 		var tweenSequencyStart;
 
-		var bvhReader;
+		var debug;
 
+		var bvhReader = null;
+
+		var displayModel = true;
+		var squeleton;
 
 
 		function init() {
+
 			if(ua.is.chrome)voiceConfig.googleVoise = true;
 
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight;
+			vsize.z = vsize.x / vsize.y;
+
 			camPos = { horizontal: 90, vertical: 80, distance: 100, automove: false };
-            mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, down:false, over:false, moving:true };
+            mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, down:false, over:false, moving:true, dx:0, dy:0 };
 
 			imput = document.getElementById("editor");
 			output = document.getElementById("output");
@@ -186,23 +209,20 @@
 			playButton = document.getElementById('play');
 			playButton.style.visibility = 'hidden';
 
-			setTimeout( initScene3D, 0);
+			debug = document.getElementById("debug");
 
 			addGUI(); 
 			addGUIVoise();
 			addGUIView();
 
-			//bvhReader = new BVH.Reader();
-			//bvhReader.load("res/bvh/test.bvh");
+			initScene3D();
+		}
 
-			
+		function debugTell(s) {
+			debug.innerHTML = s;
 		}
 
 		function initScene3D() {
-			
-			vsize.x = window.innerWidth;
-			vsize.y = window.innerHeight;
-			vsize.z = vsize.x / vsize.y;
 			
 			// RENDERER
 			renderer = new THREE.WebGLRenderer({  antialias: false });
@@ -213,11 +233,10 @@
 			renderer.gammaOutput = true;
 			renderer.shadowMapEnabled = true;
 			renderer.shadowMapCullFace = THREE.CullFaceBack;
-			//renderer.autoClear = false;
-			//renderer.shadowMapType = THREE.PCFSoftShadowMap;
+			renderer.shadowMapType = THREE.PCFSoftShadowMap;
+
 			container = document.getElementById("viewport");
             container.appendChild( renderer.domElement );
-			//document.getElementById( 'viewport' ).appendChild( renderer.domElement );
 			renderer.domElement.style.top = 0 + "px";
 			renderer.domElement.style.left = 0 + "px";
 			renderer.domElement.style.position = "absolute";
@@ -234,40 +253,29 @@
 
 			initPostprocessing();
 
-			initLightAndSky();
+			addBasicObject();
 
-			addGround();
+			initLightAndSky();
 
 			initMaterial();
 
 			importBody();
 
-			var body = document.body;
 			window.addEventListener( 'resize', resize, false );
 			container.addEventListener( 'mousemove', onMouseMove, false );
 		    container.addEventListener( 'mousedown', onMouseDown, false );
 		    container.addEventListener( 'mouseout', onMouseUp, false );
 		    container.addEventListener( 'mouseup', onMouseUp, false );
+
+		    var body = document.body;
 		    if( body.addEventListener ){
 		        body.addEventListener( 'mousewheel', onMouseWheel, false ); //chrome
 		        body.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
 		    }else if( body.attachEvent ){
 		        body.attachEvent("onmousewheel" , onMouseWheel); // ie
 		    }
-
 		    animate();
-
 		}
-
-		var effectController  = {
-
-					DOF: false,
-					exposure: 	1.0,
-					focus: 		1.0,
-					aperture:	0.025,
-					maxblur:	1.0
-
-				};
 
 		function postChanger( ) {	
 			postprocessing.enabled = effectController.DOF;
@@ -291,6 +299,9 @@
 
 		function render() {
 			delta = clock.getDelta();
+
+			updateBVH();
+
 			THREE.AnimationHandler.update( delta*animConfig.speed );
 
 			var time = Date.now() * 0.001;
@@ -307,11 +318,25 @@
 			if(head && bodyNeck){
 				var mtx = bodyNeck.matrixWorld;
                 head.position.setFromMatrixPosition( mtx );
-                head.rotation.setFromRotationMatrix( mtx );
-                head.rotation.z +=toRad(90)
                 head.position.y +=0.2;
                 head.position.x +=0.1;
                 head.position.z -=0.6;
+
+                //var ref = bodyNeck.position;
+                //head.position.set(ref.x,ref.y,ref.z)
+
+                var ref0 = body.bones[17].rotation;
+                var ref1 = body.bones[20].rotation;
+                
+
+                //head.bones[0].rotation.set(ref0.x+((-10+mouse.dx)*ToRad), ref0.y+(12*ToRad), ref0.z+(90*ToRad));
+                //head.bones[1].rotation.set(ref1.x, ref1.y, ref1.z);
+
+                head.bones[0].rotation.set(ref0.x, ref0.y, ref0.z+(90*ToRad));
+                head.bones[1].rotation.set(ref1.x+((12-(mouse.dx*0.5))*ToRad), ref1.y+((10-(mouse.dy*0.5))*ToRad), ref1.z);
+                //head.bones[0].matrixAutoUpdate = true;
+                //head.bones[1].matrixAutoUpdate = true;
+
 			}
 
 			renderer.clear();
@@ -331,7 +356,9 @@
 
 			// eye look
 			if(eyesTarget){
-				eyesTarget.position.set((mouse.ox - window.innerWidth*0.5)*0.1,-(mouse.oy - window.innerHeight*0.5)*0.1,50);
+				mouse.dx = (mouse.ox - window.innerWidth*0.5)*0.1;
+				mouse.dy = -(mouse.oy - window.innerHeight*0.5)*0.1
+				eyesTarget.position.set( mouse.dx, mouse.dy, 50 );
 				var pos = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x+0.2, eyesTarget.position.z);
 				var pos2 = new THREE.Vector3( - eyesTarget.position.y +100, eyesTarget.position.x-0.2, eyesTarget.position.z);
 				eyeR.lookAt(pos);
@@ -369,7 +396,7 @@
 			ambient = new THREE.AmbientLight( 0x202020 );
 			scene.add( ambient );
 
-			hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+			hemiLight = new THREE.HemisphereLight( 0x202020, 0xffffff, 1 );
 			hemiLight.position.set( 0, -10, 0 );
 			scene.add( hemiLight );
 
@@ -377,10 +404,10 @@
 			pointLight.position.set( -200, 0, -100 );
 			scene.add( pointLight );
 
-			//light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
-			light = new THREE.DirectionalLight(0xFFFFFF, 1.5);
+			light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
+			//light = new THREE.DirectionalLight(0xFFFFFF, 1.5);
 			light.position.set( 50, 200, 100 );
-			light.target.position.set(0, 0, 0);
+			light.target.position.set(0, -36.6, 0);
 			light.castShadow = true;
 			light.onlyShadow = false;
 			light.shadowCameraNear = 50;
@@ -390,10 +417,10 @@
 			light.shadowMapWidth = light.shadowMapHeight = 1024;
 			light.shadowDarkness = 0.35;
 
-			light.shadowCameraLeft = -60;
+			/*light.shadowCameraLeft = -60;
 			light.shadowCameraRight = 60;
 			light.shadowCameraTop = 60;
-			light.shadowCameraBottom = -60;
+			light.shadowCameraBottom = -60;*/
 			
 			//light.shadowCameraVisible = true; 
 
@@ -429,11 +456,15 @@
 			currentColors = cc;
 		}
 
-		function addGround() {
-			var groundMaterial = new THREE.MeshBasicMaterial( { shininess: 10, ambient: 0xFFFFFF, color: 0xFFFFFF, specular: 0xffffff, transparent: true } );
+		function addBasicObject() {
+			var skyMaterial = new THREE.MeshBasicMaterial( { color: 0x262626, side: THREE.BackSide, depthWrite: false } );
+		    sky = new THREE.Mesh( new THREE.BoxGeometry( FAR, FAR, FAR ), skyMaterial );
+			scene.add( sky );
+
+			var groundMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, transparent: true } );
 			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
 			groundMaterial.blending = THREE[ blendings[ 4 ] ];
-			ground = new THREE.Mesh(new THREE.PlaneGeometry( 100, 100, 4, 4 ), groundMaterial);
+			ground = new THREE.Mesh(new THREE.PlaneGeometry( 1000, 1000, 4, 4 ), groundMaterial);
 			ground.position.set( 0, -36.6, 0 );
 			ground.rotation.x = - Math.PI / 2;
 			ground.receiveShadow = true;
@@ -442,9 +473,12 @@
 
 		function addSkyBox() {
 			var cubes = [2, 14, 26, 30,31,32,33];
-			var cubesColors = [  [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], [0x102540, 0xcc8cea2, 0x6b7d7f, 0xf8f8f8], [0x6d6c7a,0x9b8379, 0x6f7488, 0xffffd9],
-							  [0x5f5e6e,0xeec87f, 0x7390ba,0xfdfeec ], [0xd7ccb0, 0xcecfc9,0x77819a, 0xffffff  ] , [0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
-							  ];
+			var cubesColors = [  
+			    [ 0x7683ad, 0xc6cfde, 0x5868bd, 0xfafafa ], [ 0x45473c, 0xa1a4a9, 0x757a80, 0xffffff ], 
+			    [ 0x102540, 0xcc8cea, 0x6b7d7f, 0xf8f8f8 ], [ 0x6d6c7a, 0x9b8379, 0x6f7488, 0xffffd9 ],
+				[ 0x5f5e6e, 0xeec87f, 0x7390ba, 0xfdfeec ], [ 0xd7ccb0, 0xcecfc9, 0x77819a, 0xffffff ], 
+				[ 0x908c81, 0xd5c298, 0x718095, 0xfffffb] 
+			];
 			var n = Math.floor(Math.random()*cubes.length);
 			lightColors( cubesColors[n] );
 
@@ -467,10 +501,7 @@
 				side: THREE.BackSide
 			});
 
-			var sky = new THREE.Mesh( new THREE.BoxGeometry( FAR, FAR, FAR ), material );
-			sky.castShadow = false;
-			sky.receiveShadow = false;
-			scene.add( sky );
+			sky.material = material;
 		}
 
 		//-----------------------------------------------------
@@ -550,6 +581,390 @@
 		//
 		//-----------------------------------------------------
 
+		function importBody(){
+			var loader = new THREE.SEA3D( false );
+			loader.onComplete = function( e ) {
+
+				var geoSuit = loader.getMesh("Suit").geometry;
+				var geoBody = loader.getMesh("Body").geometry;
+
+				// base mesh
+				body = new THREE.SkinnedMesh ( geoBody, materials[9] , false );
+				body.scale.set( 1, 1, -1 );
+				scene.add( body );
+
+				suit = new THREE.SkinnedMesh ( geoSuit, materials[1] , false );
+				suit.scale.set( 1, 1,- 1 );
+				scene.add( suit );
+
+				// for shadow
+				var mat  = new THREE.MeshBasicMaterial({skinning: true, transparent:true, opacity:0 });
+				bodyShadow = new THREE.SkinnedMesh ( geoBody, mat , false );
+				bodyShadow.scale.set( 1, 1, -1 );
+				scene.add( bodyShadow );
+
+				// bone reference for head
+				bodyNeck = new THREE.Object3D();
+	            var bone = body.bones[17];
+	            bodyNeck.matrix = bone.skinMatrix;
+	            bodyNeck.matrixAutoUpdate = false;
+	            body.add( bodyNeck );
+
+	            bodyHead = new THREE.Object3D();
+	            bone = body.bones[20];
+	            bodyHead.matrix = bone.skinMatrix;
+	            bodyHead.matrixAutoUpdate = false;
+	            body.add( bodyHead );
+
+
+				suit.castShadow = false;
+				body.castShadow = false;
+				bodyShadow.castShadow = true;
+				suit.receiveShadow = true;
+				body.receiveShadow = true;
+				bodyShadow.receiveShadow = false;
+
+				// animation
+				bodyAnim = new SEA.Animator(body, "Body");
+				bodyAnim.add("idle", true);
+				bodyAnim.add("walk", true);
+				bodyAnim.add("tell", true);
+				bodyAnim.add("calibration", true);
+
+				suitAnim = new SEA.Animator(suit, "Body");
+				suitAnim.add("idle", true);
+				suitAnim.add("walk", true);
+				suitAnim.add("tell", true);
+				suitAnim.add("calibration", true);
+
+				shadAnim = new SEA.Animator(bodyShadow, "Body");
+				shadAnim.add("idle", true);
+				shadAnim.add("walk", true);
+				shadAnim.add("tell", true);
+				shadAnim.add("calibration", true);
+
+				//playAnimation( "calibration" );
+				//stopAnimation( );
+				playAnimation( "walk" );
+
+				// low breasts size
+				bobsMorph(0.3);
+
+				// bones TEST
+				squeleton = new THREE.Object3D();
+				squeleton.scale.set( 1, 1, -1 );
+				scene.add( squeleton );
+
+				var nBone  
+				var geoBone = new THREE.BoxGeometry( 1, 1, 1 );
+				var geoBone2 = new THREE.BoxGeometry( 6, 3, 3 );
+				geoBone2.applyMatrix( new THREE.Matrix4().makeTranslation( 3, 0, 0 ) );
+
+				var matBone;
+				var matBoneX = new THREE.MeshBasicMaterial( {color:0xff0000} );
+				var matBone0 = new THREE.MeshBasicMaterial( {color:0xffff00} );
+				var matBone2 = new THREE.MeshBasicMaterial( {color:0xff0000} );
+				var matBone1 = new THREE.MeshBasicMaterial( {color:0x808080} );
+
+				var matBoneR = new THREE.MeshBasicMaterial( {color:0x00ff00} );
+				var matBoneR0 = new THREE.MeshBasicMaterial( {color:0x30ff30} );
+				var matBoneR1 = new THREE.MeshBasicMaterial( {color:0x60ff60} );
+				var matBoneR2 = new THREE.MeshBasicMaterial( {color:0x90ff90} );
+
+				var matBoneL = new THREE.MeshBasicMaterial( {color:0x0000ff} );
+				var matBoneL0 = new THREE.MeshBasicMaterial( {color:0x3030ff} );
+				var matBoneL1 = new THREE.MeshBasicMaterial( {color:0x6060ff} );
+				var matBoneL2 = new THREE.MeshBasicMaterial( {color:0x9090ff} );
+
+				bonesNames = [
+				    "Hips", "Spine1", "RightUpLeg", "LeftUpLeg", "RightLowLeg",
+				    "Spine2", "LeftLowLeg", "Chest", "LeftFoot", "RightFoot",
+				    "RightToe", "LeftCollar", "Spine3", "LeftToe", "RightCollar", 
+				    "LeftUpArm", "RightUpArm", "Neck", "RightLowArm", "LeftLowArm" ,
+				    "Head", "LeftLowArm2", "RightLowArm2", "RightHand", "LeftHand",
+
+				    "FL00", "FR20", "FR00", "FL10", "FL40",
+				    "FR40", "FL20", "FR10", "FR30", "FL30",
+
+				    "FL31", "FR31", "FL11", "FL41", "FR21",
+				    "FR41", "FR01", "FL01", "FL21", "FR11",
+
+				    "FR12", "FR02", "FL42", "FR22", "FL32",
+				    "FL22", "FR32", "FL12", "FL02", "FR42"
+				];
+
+				var bone;
+
+				
+				//suit.matrixWorldNeedsUpdate = false;
+
+				for (var i=0, l=body.bones.length; i !== l; i++){
+
+					bone = body.bones[i];
+					bone.name = bonesNames[i];
+					//suit.bones[i].name = bonesNames[i];
+
+					//bone.rotation.order = 'ZXY';
+
+					var axis = new THREE.AxisHelper(1);
+					var addAxis;
+		
+	
+
+					//if(!displayModel){
+						addAxis = true;
+						matBone = matBone1;
+						var bn = bone.name.substring(0,2);
+						var n = bone.name.substring(3,4);
+						if(bn === "Le" || bn === "FL"){
+							if(n==="0"){matBone = matBoneL0;addAxis=false;}
+							else if(n==="1"){matBone = matBoneL1; addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+							else if(n==="2"){matBone = matBoneL2;  addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+						    else matBone = matBoneL;
+						}
+						else if(bn === "Ri" || bn === "FR"){ 
+							if(n==="0"){matBone = matBoneR0;addAxis=false;}
+							else if(n==="1"){matBone = matBoneR1; addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+							else if(n==="2"){matBone = matBoneR2;  addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+						    else matBone = matBoneR;
+						}
+						else{ matBone = matBone0; }
+
+						// bone test
+						if(i === 20){ nBone = new THREE.Mesh( geoBone2, matBone ); }
+						else if(i === 0){ nBone = new THREE.Mesh( geoBone, matBoneX ); }
+						else { nBone = new THREE.Mesh( geoBone, matBone ); }
+						nBone.matrix = bone.skinMatrix;
+						nBone.matrixAutoUpdate = false;
+						//body.add( nBone );
+						squeleton.add( nBone );
+						if( addAxis ) nBone.add(axis)
+					//}
+
+					// update bone
+					//bone.matrixAutoUpdate = true;
+			        //bone.matrixWorldNeedsUpdate = true;
+				}
+
+				modelOrBones();
+
+				importHead();
+
+					
+				//body.visible = false;
+				//suit.visible = false;
+				//document.getElementById('loading').style.visibility = 'hidden';	
+				
+				addGUIAnimation();
+
+				// BVH test
+				//initBVH();
+		
+			};
+			
+			loader.load( 'res/models/diana_body.sea' );
+
+		}
+
+		function modelOrBones() {
+			var i;
+			if(viewConfig.squeleton){
+				if(head){
+					head.visible = false;
+					hair.visible = false;
+					/*i = head.children.length;
+					while (i--) {
+						if(head.children[ i ].children.length !== 0) head.children[ i ].children[ 0 ].visible = false;
+						head.children[ i ].visible = false;
+					};*/
+				}
+				body.visible = false;
+				suit.visible = false;
+				bodyShadow.visible = false;
+				i = squeleton.children.length;
+				while (i--) {
+					if(squeleton.children[ i ].children.length !== 0) squeleton.children[ i ].children[ 0 ].visible = true;
+					squeleton.children[ i ].visible = true;
+				};
+				squeleton.visible = true;
+			} else {
+				if(head){
+					head.visible = true;
+					hair.visible = true;
+				}
+				body.visible = true;
+				suit.visible = true;
+				bodyShadow.visible = true;
+				i = squeleton.children.length;
+				while (i--) {
+					if(squeleton.children[ i ].children.length !== 0) squeleton.children[ i ].children[ 0 ].visible = false;
+					squeleton.children[ i ].visible = false;
+				};
+				squeleton.visible = false;
+			}
+		}
+
+		//-----------------------------------------------------
+		//  STANDARD ANIMATION
+		//-----------------------------------------------------
+
+		function playAnimation(name) {
+			bodyAnim.play(name);
+			suitAnim.play(name);
+			shadAnim.play(name);
+			animConfig.current = name;
+			if(name ==="walk") bobsWalk();
+		}
+
+		function stopAnimation() {
+			suitAnim.stop();
+			bodyAnim.stop();
+			shadAnim.stop();
+		}
+
+		//-----------------------------------------------------
+		//  BVH TEST
+		//-----------------------------------------------------
+
+		var BVHset = {ax:"y", ay:"x", az:"z", dx:1, dy:1, dz:1, rx:0, ry:180, rz:-90};
+
+		function initBVH() {
+			bvhReader = new BVH.Reader();
+			bvhReader.load("res/bvh/calibration.bvh");
+			//bvhReader.load("res/bvh/jog.bip");
+
+			initBVHGui();
+		}
+
+		function initBVHGui() {
+			var f5 = gui.addFolder('BVH');
+
+			//f5.add( voiceConfig, 'googleVoise' ).onChange( function() {});
+
+			f5.add( BVHset, 'ax', [ 'x', 'y', 'z' ] );
+			f5.add( BVHset, 'ay', [ 'x', 'y', 'z' ] );
+			f5.add( BVHset, 'az', [ 'x', 'y', 'z' ] );
+
+			f5.add( BVHset, 'dx', [ 1, -1, 0 ] );
+			f5.add( BVHset, 'dy', [ 1, -1, 0 ] );
+			f5.add( BVHset, 'dz', [ 1, -1, 0 ] );
+
+			f5.add( BVHset, 'rx' ).step(90);
+			f5.add( BVHset, 'ry' ).step(90);
+			f5.add( BVHset, 'rz' ).step(90);
+
+
+			//.onChange( function() { synthesis.rate = voiceConfig.rate/100 });
+			/*f3.add( voiceConfig, 'wordgap', 0, 100 ).onChange( function() {});
+			f3.add( voiceConfig, 'pitch', 0, 400 ).onChange( function() {});
+			f3.add( voiceConfig, 'speed', 0, 400 ).onChange( function() {});*/
+
+			f5.open();
+
+		}
+
+		function updateBVH() {
+			
+
+			if(bvhReader !== null && bvhReader.play){
+				var tt="" 
+
+				if(animConfig.current !== "custom" ){
+					stopAnimation();
+					animConfig.current = "custom";
+				}
+
+
+				//parseLine( count );
+				//if ( ++count >= bvhReader.lines.length ) { count = 0; }	
+				//} else { parseLine( count ); }
+
+				bvhReader.update();
+				var maxNode = bvhReader.channels.length;
+				var maxBone = body.bones.length;
+				var bone, node, i, j;
+				var bone1, bone2
+
+				
+
+				for ( i=0; i < maxBone; i++){
+
+					bone = body.bones[i];
+					bone1 = suit.bones[i];
+					bone2 = bodyShadow.bones[i];
+					for (j=0; j<maxNode; j++){
+
+						node = bvhReader.channels[j].node;
+						if(j===0 && i===0){ // root position
+							bone.position.copy( node.position );
+							bone1.position.copy( node.position );
+							bone2.position.copy( node.position );
+
+							bone.rotation.set((node.rotation["y"]+(0*ToRad)) , (node.rotation["x"]+(180*ToRad)) , (node.rotation["z"]+(-90*ToRad)) );
+							bone1.rotation.copy(bone.rotation);
+							bone2.rotation.copy(bone.rotation);
+
+							tt += "base: " + bone.rotation.x.toFixed(2) + ", " +bone.rotation.y.toFixed(2)+ ", " +bone.rotation.z.toFixed(2)+"<br>";
+							tt += "bvhs: " + node.rotation.x.toFixed(2) + ", " +node.rotation.y.toFixed(2)+ ", " +node.rotation.z.toFixed(2);
+						}
+						if(node.name === bone.name ){
+							if(node.name==="LeftUpLeg"){
+								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+
+							}
+							if(node.name==="RightUpLeg"){
+								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+
+							}
+
+							/*if(node.name==="LeftUpArm" || node.name==="LeftLowArm" || node.name==="LeftCollar"){
+								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(-BVHset.rz*ToRad))*BVHset.dz );
+								bone1.rotation.copy(bone.rotation);
+								bone2.rotation.copy(bone.rotation);
+								
+							}
+							if(node.name==="RightUpArm" || node.name==="RightLowArm" || node.name==="RightCollar"){
+								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+								bone1.rotation.copy(bone.rotation);
+								bone2.rotation.copy(bone.rotation);
+								//bone.rotation.set(node.rotation.x+(90*ToRad), node.rotation.y+(-90*ToRad), node.rotation.z+(0*ToRad));
+							}*/
+							if(node.name==="Hips"){
+								
+							//bone.position.copy(node.position);
+							//bone.rotation.copy(node.rotation);
+							//bone.position.set(node.position.x, node.position.y, node.position.z);
+							//bone.rotation.set(node.rotation.x, node.rotation.y, node.rotation.z);
+							//bone.rotation.set(node.rotation.x+(0*ToRad), node.rotation.y+(0*ToRad), node.rotation.z+(90*ToRad));
+
+							//var mtx = node.matrixWorld
+
+							//bone.position.setFromMatrixPosition( mtx );
+							//bone.rotation.setFromRotationMatrix( mtx );
+
+							//bone.rotation.set(node.rotation.x, node.rotation.y+180*ToRad, node.rotation.z+90*ToRad);
+							/*bone1.position.copy(node.position);
+							bone1.rotation.copy(node.rotation);
+							bone2.position.copy(node.position);
+							bone2.rotation.copy(node.rotation);*/
+						     }
+						}
+					}
+					
+					// update bone
+					bone.matrixAutoUpdate = true;
+			        bone.matrixWorldNeedsUpdate = true;
+				}
+
+				debugTell(tt);
+
+			}
+		}
+
 		function importHead(){
 
 			var loader = new THREE.SEA3D( false );
@@ -587,9 +1002,9 @@
 
 				// new eye
 				var geometry = new THREE.IcosahedronGeometry( 18.5, 4 );
-				eyeGeoL = new THREE.Mesh(geometry, eyeMaterial );
+				eyeGeoL = new THREE.Mesh( geometry, materials[10] );
 				eyeL.add(eyeGeoL);
-				eyeGeoR = new THREE.Mesh(geometry, eyeMaterial );
+				eyeGeoR = new THREE.Mesh( geometry, materials[10] );
 				eyeR.add(eyeGeoR);
 				eyeGeoR.rotation.z = 90*ToRad;
 				eyeGeoL.rotation.z = 90*ToRad;
@@ -632,20 +1047,21 @@
 				}
 
 				scene.add( head );
-				head.play("full");
+				//head.play("full");
 				//head.play("front");
+				head.stop();
 
 
-				document.addEventListener( 'mousemove', onMouseMove, false );
+				//document.addEventListener( 'mousemove', onMouseMove, false );
 				document.getElementById('loading').style.visibility = 'hidden';			
 				
-				addGUIAnimation();
+				//addGUIAnimation();
 				addGUIMroph();
 
 				// eye open close
 				myEyeTimer = setInterval(function(){eyeActive()},5000);
 
-				setTimeout(function(){head.play("front");},800);
+				//setTimeout(function(){head.play("front");},800);
 
 			};
 			
@@ -653,107 +1069,10 @@
 
 		}
 
-		var currentAnim;
+	
 
 
-		function importBody(){
-			var loader = new THREE.SEA3D( false );
-			loader.onComplete = function( e ) {
-
-				var geoSuit = loader.getMesh("Suit").geometry;
-				var geoBody = loader.getMesh("Body").geometry;
-
-				//suit.parseAnimations();	 
-				suit = new THREE.SkinnedMesh ( geoSuit, materials[1] , false );
-				//suit.material = materials[1];
-				suit.scale.set( 1, 1,- 1 );
-				scene.add( suit );
-
-				body = new THREE.SkinnedMesh ( geoBody, materials[9] , false );// loader.getMesh("Body");
-				//body.material = materials[9];
-				body.scale.set( 1, 1, -1 );
-				scene.add( body );
-
-				var mat  = new THREE.MeshBasicMaterial({skinning: true, transparent:true, opacity:0 });
-//transparent=true; 
-			//materials[1].opacity = 0.9;
-				bodyShadow = new THREE.SkinnedMesh ( geoBody, mat , false );
-				bodyShadow.scale.set( 1, 1, -1 );
-				scene.add( bodyShadow );
-				//bodyShadow.visible = false;
-
-				bodyNeck = new THREE.Object3D();
-	            var bone = body.bones[13];
-	            bodyNeck.matrix = bone.skinMatrix;
-	            bodyNeck.matrixAutoUpdate = false;
-	            body.add( bodyNeck );
-
-				suit.castShadow = false;
-				body.castShadow = false;
-				bodyShadow.castShadow = true;
-				suit.receiveShadow = true;
-				body.receiveShadow = true;
-				bodyShadow.receiveShadow = false;
-
-				suitAnim = new SEA.Animator(suit, "Body");
-				suitAnim.add("idle", true);
-				suitAnim.add("walk", true);
-				suitAnim.add("tell", true);
-
-				bodyAnim = new SEA.Animator(body, "Body");
-				bodyAnim.add("idle", true);
-				bodyAnim.add("walk", true);
-				bodyAnim.add("tell", true);
-
-				// for shadow
-				shadAnim = new SEA.Animator(bodyShadow, "Body");
-				shadAnim.add("idle", true);
-				shadAnim.add("walk", true);
-				shadAnim.add("tell", true);
-
-				suitAnim.play("walk");
-				bodyAnim.play("walk");
-				shadAnim.play("walk");
-
-				currentAnim = "walk";
-
-
-				bobsMorph(0.3);
-
-
-
-				bobsWalk();
-
-				// bones TEST 
-				/*var nBone  
-				var geoBone = new THREE.CubeGeometry( 1, 1, 1 );
-				var matBone = new THREE.MeshBasicMaterial( {color:0xff0000} );
-				var matBone2 = new THREE.MeshBasicMaterial( {color:0x00ff00} );
-
-
-				for (var i=0; i!== body.bones.length; i++){
-					nBone = new THREE.Mesh(geoBone, matBone);
-					if(i===13)nBone.material = matBone2;
-					bone = body.bones[i];
-					nBone.matrix = bone.skinMatrix;
-					nBone.matrixAutoUpdate = false;
-					body.add( nBone );
-					// 8 __ neck
-					// 13 __ head
-				}
-
-				body.visible = false;
-				suit.visible = false;*/
-
-				importHead();
-
-
-				
-			};
-			
-			loader.load( 'res/models/diana_body.sea' );
-
-		}
+		
 
 		function naked(){
 			if(suit.visible) suit.visible = false;
@@ -763,7 +1082,7 @@
 		var tweenSequencyBobs = [];
 
 		function bobsWalk(){
-			if(currentAnim === "walk"){
+			if(animConfig.current === "walk"){
 				time = 0.5;
 				tweenSequencyBobs[0] = TweenLite.to(bobsAnim, 0, { low: 0, onUpdate: bobslow });	
 			    tweenSequencyBobs[1] = TweenLite.to(bobsAnim, time*0.6, { low: 1, onUpdate: bobslow });
@@ -786,168 +1105,177 @@
 		var normalHead
 		var normalBody;
 
+		var textures = [];
+		var texturesFiles = [
+		    "body.jpg", "body_n.jpg", "head.jpg", "head_n.jpg", "suit.jpg",
+		    "suit_n.jpg", "eye.jpg", "eye_n.png","hair.png", "hair_n.jpg", "eye_cont.png",
+		    "sock.jpg", "teethUp.png", "teethLow.png", "tongue.jpg"
+
+
+		     ]
+
 		//-----------------------------------------------------
 		//
 		//  MATERIAL
 		//
 		//-----------------------------------------------------
 
+		function initTextures(){
+			for (var i=0, l=texturesFiles.length; i<l; i++){
+				textures[i] = new THREE.ImageUtils.loadTexture( 'res/textures/diana/'+ texturesFiles[i] );
+				textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+				textures[i].minFilter = textures[i].magFilter = THREE.LinearFilter;
+				textures[i].format = THREE.RGBFormat;
+				textures[i].anisotropy = renderer.getMaxAnisotropy();
+				if(i!==6 || i!==7){
+					textures[i].repeat.set( 1, -1 );
+					textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+				} else {
+					textures[i].wrapS = THREE.RepeatWrapping;
+				}
+			}
+		}
+
 		function initMaterial(){
-
-			normalSuit = new THREE.ImageUtils.loadTexture( 'res/textures/diana/suit_n.jpg' );
-			normalSuit.repeat.set( 1, -1 );
-			normalSuit.wrapS = normalSuit.wrapT = THREE.RepeatWrapping;
-			normalSuit.minFilter = normalSuit.magFilter = THREE.LinearFilter;
-
-			normalHead = new THREE.ImageUtils.loadTexture( 'res/textures/diana/skin_n.jpg' );
-			normalHead.repeat.set( 1, -1 );
-			normalHead.wrapS = normalHead.wrapT = THREE.RepeatWrapping;
-			normalHead.minFilter = normalHead.magFilter = THREE.LinearFilter;
-
-			normalBody = new THREE.ImageUtils.loadTexture( 'res/textures/diana/body_n.jpg' );
-			normalBody.repeat.set( 1, -1 );
-			normalBody.wrapS = normalBody.wrapT = THREE.RepeatWrapping;
-			normalBody.minFilter = normalBody.magFilter = THREE.LinearFilter;
+			initTextures();
 
 			var textureEnvRefl_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_refl_v01.jpg' );
 			var textureEnvDiff_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_diff_v01.jpg' );
 			var textureEnvBack_A = new THREE.ImageUtils.loadTexture( 'res/textures/env/valley_bg_v01.jpg' );
 
-			var textureEyeColor = new THREE.ImageUtils.loadTexture( 'res/textures/diana/eye2.jpg' );
-				textureEyeColor.wrapS = THREE.RepeatWrapping;
-				textureEyeColor.minFilter = textureEyeColor.magFilter = THREE.LinearFilter;
-			var textureEyeNormal = new THREE.ImageUtils.loadTexture( 'res/textures/diana/eye2_n.png' );
-				textureEyeNormal.wrapS = THREE.RepeatWrapping;
-				textureEyeNormal.minFilter = textureEyeNormal.magFilter = THREE.LinearFilter;
+			
 
+			for(var i=0; i < 10; i++){
+				materials[i] = new THREE.MeshPhongMaterial({ ambient: 0x202020, specular: 0x909090, shininess: 30,
+					skinning: true, morphTargets: true, morphNormals: false, 
+					wrapping:THREE.ClampToEdgeWrapping, shading:THREE.SmoothShading, wrapAround:true
+				});
+				//materials[i] = new THREE.MeshLambertMaterial({ ambient: 0x202020, specular: 0x303030, shininess: 30, skinning: true, morphTargets: true });
+				if(skyCube){
+					if (i!= 2 && i!= 3 && i!= 6 && i!= 8){
+						materials[i].envMap = skyCube; 
+						materials[i].combine= THREE.MixOperation;
+						materials[i].reflectivity=1;
+					}
+				}
+			}
+
+			// 0 _ head
+			materials[0].map = textures[2];
+			materials[0].bumpMap = textures[2];
+			materials[0].bumpScale = 0.15;
+			materials[0].reflectivity=0.05;
+			materials[0].shininess = 14;
+
+			// 1 _ suit
+			materials[1].reflectivity=0.3;
+			materials[1].shininess = 60;
+			materials[1].map = textures[4];
+			materials[1].bumpMap = textures[4];
+			materials[1].bumpScale = 1;
+			materials[1].metal = true;
+
+			// 2 _ teeth Up
+			materials[2].map = textures[12];
+			materials[2].skinning = false;
+			materials[2].bumpMap = textures[12];
+			materials[2].bumpScale = 0.05;
+			materials[2].transparent = true;
+
+			// 3 _ tongue
+			materials[3].map = textures[14];
+			materials[3].skinning = false;
+			materials[3].bumpMap = materials[3].map;
+			materials[3].bumpScale = 0.05;
+
+			// 4 _ null
+			materials[4].morphTargets = false;
+			materials[4].skinning = false;
+
+			// 5_ eye border
+			materials[5].map = textures[10];
+			materials[5].skinning = false;
+			materials[5].transparent = true;
+			materials[5].opacity = 0.2;
+			materials[5].envMap = null;
+			materials[5].reflectivity=0;
+			materials[5].blending = THREE[ "AdditiveAlphaBlending" ];
+
+			// 6 _ sock
+			materials[6].map = textures[11];
+			materials[6].skinning = false;
+
+			// 7 _ hair
+			materials[7].map =  textures[8];
+			materials[7].morphTargets = false;
+			materials[7].skinning = false;
+			materials[7].bumpMap =  textures[8];
+			materials[7].bumpScale = 0.05;
+			materials[7].transparent = true;
+			materials[7].reflectivity=0.4;
+			materials[7].side = THREE.DoubleSide;
+
+			// 8 _ teeth low
+			materials[8].map = textures[13];
+			materials[8].skinning = false;
+			materials[8].bumpMap = textures[12];
+			materials[8].bumpScale = 1;
+			materials[8].transparent = true;
+
+			// 9 _ body
+			materials[9].map =  textures[0];
+			materials[9].bumpMap =  textures[0];
+			materials[9].roughness = 0.145;
+			materials[9].bumpScale = 0.15;
+			materials[9].reflectivity=0.05;
+			materials[9].shininess = 14;
+
+			// 10 _ eye shader
 			var eyeShader = THREE.EyeShader[ "eye" ];
-			eyeShader.uniforms["texEyeCol"].value = textureEyeColor;
-			eyeShader.uniforms["texEyeNrm"].value = textureEyeNormal;
+			eyeShader.uniforms["texEyeCol"].value = textures[6];
+			eyeShader.uniforms["texEyeNrm"].value = textures[7];
 			eyeShader.uniforms["texEnvRfl"].value = textureEnvRefl_A;
 			eyeShader.uniforms["texEnvDif"].value = textureEnvDiff_A;
 
-			eyeMaterial = new THREE.ShaderMaterial({ 
+			materials[10] = new THREE.ShaderMaterial({ 
 				uniforms: eyeShader.uniforms,
 				vertexShader: eyeShader.vertexShader,
 				fragmentShader: eyeShader.fragmentShader
 			});
 
-			eyeMaterial.needsUpdate = true;
+			// 11 _ skin shader
+			var skinShader = THREE.ShaderSkin[ "skin" ];
+			var uniformsUV = THREE.UniformsUtils.clone( skinShader.uniforms );
+			uniformsUV[ "tNormal" ].value = textures[1];//THREE.ImageUtils.loadTexture( "obj/leeperrysmith/Infinite-Level_02_Tangent_SmoothUV.jpg" );
+			uniformsUV[ "uNormalScale" ].value = 0.75;
+			uniformsUV[ "tDiffuse" ].value = textures[0];//THREE.ImageUtils.loadTexture( "obj/leeperrysmith/Map-COL.jpg" );
+			uniformsUV[ "passID" ].value = 0;
+			uniformsUV[ "diffuse" ].value.setHex( 0xbbbbbb );
+			uniformsUV[ "specular" ].value.setHex( 0x070707 );
+			uniformsUV[ "ambient" ].value.setHex( 0x111111 );
+			uniformsUV[ "uRoughness" ].value = 0.185;
+			uniformsUV[ "uSpecularBrightness" ].value = 0.8;
 
-			for(var i=0; i< 12; i++){
-				materials[i] = new THREE.MeshPhongMaterial({ ambient: 0x202020, specular: 0x909090, shininess: 30, skinning: true, morphTargets: true, morphNormals: false, wrapping:THREE.ClampToEdgeWrapping,
-		shading:THREE.SmoothShading,});
-				//materials[i] = new THREE.MeshLambertMaterial({ ambient: 0x202020, specular: 0x303030, shininess: 30, skinning: true, morphTargets: true });
-				if (i!= 2 && i!= 3 && i!= 6 && i!= 8){
-					materials[i].envMap = skyCube; 
-					materials[i].combine= THREE.MixOperation;
-					materials[i].reflectivity=1;
-					if(i==7) materials[i].side = THREE.DoubleSide;// hair doublesize
-					materials[i].wrapAround = true;
-				}
+			var uniforms = THREE.UniformsUtils.clone( uniformsUV );
+			uniforms[ "tDiffuse" ].value = uniformsUV[ "tDiffuse" ].value;
+			uniforms[ "tNormal" ].value = uniformsUV[ "tNormal" ].value;
+			uniforms[ "passID" ].value = 1;
+
+			var parameters = { fragmentShader: skinShader.fragmentShader, vertexShader: skinShader.vertexShader, uniforms: uniforms, lights: true, skinning: true, morphTargets: true };
+			var parametersUV = { fragmentShader: skinShader.fragmentShader, vertexShader: skinShader.vertexShaderUV, uniforms: uniformsUV, lights: true };
+
+
+			materials[11] = new THREE.ShaderMaterial( parameters );
+			materials[12] = new THREE.ShaderMaterial( parametersUV );
+
+
+
+
+
+			for(var i=0, l = materials.length; i < l; i++){
+				materials[i].needsUpdate = true;
 			}
 
-
-
-			materials[0].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/skin.jpg'  );
-			materials[0].map.repeat.set( 1, -1 );
-			materials[0].map.wrapS = materials[0].map.wrapT = THREE.RepeatWrapping;
-			materials[0].map.format = THREE.RGBFormat;
-			//materials[0].skinning = false;
-
-			materials[0].bumpMap = materials[0].map;
-			materials[0].bumpScale = 0.15;
-
-			//materials[0].normalMap = normal;
-			//materials[0].normalScale={x:0,y:0};
-			//materials[0].normalScale.y=0.1;
-
-
-			materials[0].reflectivity=0.05;
-			materials[0].shininess = 14;
-
-			//materials[1] = new THREE.MeshPhongMaterial({ color: 0x202020, ambient: 0x202020, specular: 0xFFFFFF, shininess: 60, skinning: true, morphTargets: true });
-			materials[1].reflectivity=0.3///0.4;
-			materials[1].shininess = 60;
-			//materials[1].specular = 0xFFFFFF;
-			//materials[1].color.setHex(0x333333);
-			materials[1].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/suit.jpg'  );
-			materials[1].map.repeat.set( 1, -1 );
-			materials[1].map.wrapS = materials[1].map.wrapT = THREE.RepeatWrapping;
-			materials[1].map.format = THREE.RGBFormat;
-			materials[1].bumpMap = materials[1].map;
-			materials[1].bumpScale = 1;
-			materials[1].metal = true;
-
-
-			materials[2].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/teethUp.png' );
-			materials[2].map.repeat.set( 1, -1 );
-			materials[2].skinning = false;
-			materials[2].map.wrapS = materials[2].map.wrapT = THREE.RepeatWrapping;
-			materials[2].bumpMap = materials[2].map;
-			materials[2].bumpScale = 0.05;
-			materials[2].transparent = true;
-
-			materials[3].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/tongue.jpg' );
-			materials[3].map.repeat.set( 1, -1 );
-			materials[3].skinning = false;
-			materials[3].map.wrapS = materials[3].map.wrapT = THREE.RepeatWrapping;
-			materials[3].bumpMap = materials[3].map;
-			materials[3].bumpScale = 0.05;
-
-			materials[4].morphTargets = false;
-			materials[4].skinning = false;
-
-			materials[5].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/eye_cont.png' );
-			materials[5].map.repeat.set( 1, -1 );
-			materials[5].skinning = false;
-			materials[5].map.wrapS = materials[5].map.wrapT = THREE.RepeatWrapping;
-			materials[5].transparent = true;
-			materials[5].opacity = 0.6;
-			materials[5].envMap = null;
-			materials[5].reflectivity=0;
-			materials[5].blending = THREE[ "AdditiveAlphaBlending" ];
-
-			materials[6].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/sock.jpg' );
-			materials[6].map.repeat.set( 1, -1 );
-			materials[6].skinning = false;
-			materials[6].map.wrapS = materials[6].map.wrapT = THREE.RepeatWrapping;
-
-			materials[7].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/Hair_512.png' );
-			materials[7].morphTargets = false;
-			materials[7].skinning = false;
-			materials[7].map.repeat.set( 1, -1 );
-			materials[7].map.wrapS = materials[7].map.wrapT = THREE.RepeatWrapping;
-			materials[7].bumpMap = materials[7].map;
-			materials[7].bumpScale = 0.05;
-			materials[7].transparent = true;
-			materials[7].reflectivity=0.4;
-
-			materials[8].map = THREE.ImageUtils.loadTexture( 'res/textures/diana/teethLow.png' );
-			materials[8].map.repeat.set( 1, -1 );
-			materials[8].skinning = false;
-			materials[8].map.wrapS = materials[8].map.wrapT = THREE.RepeatWrapping;
-			materials[8].bumpMap = materials[8].map;
-			materials[8].bumpScale = 1;
-			materials[8].transparent = true;
-
-			var tx = THREE.ImageUtils.loadTexture( 'res/textures/diana/body.jpg' );
-			tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
-			//tx.repeat.set( 1, -1 );
-			tx.repeat.set( 0.998, -0.998 );
-			tx.offset.set( 0.001, -0.001 )
-			tx.format = THREE.RGBFormat;
-			tx.anisotropy = 4;
-
-			materials[9].map = tx;
-			materials[9].bumpMap = tx;
-			materials[9].roughness = 0.145;
-			materials[9].bumpScale = 0.15;
-			materials[9].reflectivity=0//0.05;
-			materials[9].shininess = 14;
-
-			//materials[9].morphTargets=false;
-			//materials[1].morphTargets=false;
 		}
 
 		function switchMaterialMethod(){
@@ -964,11 +1292,11 @@
 			    materials[9].bumpMap = null;
 			    materials[9].bumpScale = 0;
 
-			    materials[0].normalMap = normalHead;
+			    materials[0].normalMap = textures[3];
 			    materials[0].normalScale={x:1,y:1};
-			    materials[1].normalMap = normalSuit;
+			    materials[1].normalMap = textures[5];
 			    materials[1].normalScale={x:1,y:1};
-			    materials[9].normalMap = normalBody;
+			    materials[9].normalMap = textures[1];
 			    materials[9].normalScale={x:1,y:1};
 
 			} else {
@@ -982,23 +1310,21 @@
 			    materials[9].normalMap = null;
 			    materials[9].normalScale={x:0,y:0};
 
-				materials[0].bumpMap = materials[0].map;
+				materials[0].bumpMap = textures[2];
 			    materials[0].bumpScale = 0.15;
 
-			    materials[1].bumpMap = materials[1].map;
+			    materials[1].bumpMap = textures[4];
 			    materials[1].bumpScale = 1;
 
-			    materials[9].bumpMap = materials[9].map;
+			    materials[9].bumpMap = textures[0];
 			    materials[9].bumpScale = 0.15;
-
-
-
 			}
 			materials[0].needsUpdate = true;
 			materials[1].needsUpdate = true;
 			materials[9].needsUpdate = true;
 		}
 
+		
 
 		//-----------------------------------------------------
 		//  MULTY MORPH
@@ -1236,7 +1562,7 @@
 		function addGUI() {
 			gui = new dat.GUI({autoPlace:false, width:204});
 			document.getElementById('gui').appendChild(gui.domElement);
-			gui.close();
+			//gui.close();
 		}
 
 		function addGUIView() {
@@ -1246,45 +1572,26 @@
 			});
 			f4.add( viewConfig, 'withBump' ).listen().onChange( function() {switchMaterialMethod();});
 			f4.add( viewConfig, 'withNormal' ).listen().onChange( function() {switchMaterialMethod();});
+
+			
 		}
 
 		function addGUIAnimation() {	
 			var f0 = gui.addFolder('Animation');
-			f0.add( animConfig, 'neckmove' ).onChange( function() {
-				if(!animConfig.neckmove){
-					 head.play("front");
-				} else {
-					head.play("full");
-				}
-			});
 
-			f0.add( animConfig, 'walk' ).onChange( function() {
-				if(!animConfig.walk){
-					suitAnim.play("idle");
-				    bodyAnim.play("idle");
-				    shadAnim.play("idle");
-				} else {
-					suitAnim.play("walk");
-				    bodyAnim.play("walk");
-				    shadAnim.play("walk");
-				}
-			});
+			f0.add( viewConfig, 'squeleton' ).listen().onChange( function() {modelOrBones();});
 
+           animConfig.idle = function() { playAnimation("idle"); };
+           animConfig.walk = function() { playAnimation("walk"); };
+           animConfig.salut = function() { playAnimation("tell"); };
 
-			f0.add( animConfig, 'salut' ).onChange( function() {
-				if(!animConfig.salut){
-					suitAnim.play("idle");
-				    bodyAnim.play("idle");
-				    shadAnim.play("idle");
-				} else {
-					suitAnim.play("tell");
-				    bodyAnim.play("tell");
-				    shadAnim.play("tell");
-				}
-			});
+            f0.add( animConfig, 'idle' );
+			f0.add( animConfig, 'walk' );
+			f0.add( animConfig, 'salut' );
 
-			f0.add( animConfig, 'speed', 0.1, 1 ).onChange( function() {
-			  });
+			f0.add( animConfig, 'speed', 0.1, 1 );
+
+			f0.open();
 		}
 
 		function addGUIMroph() {
@@ -1359,8 +1666,8 @@
 
 		var matChanger = function( ) {
 			for (var e in eyeController) {
-				if (e in eyeMaterial.uniforms)
-				eyeMaterial.uniforms[ e ].value = eyeController[ e ];
+				if (e in materials[10].uniforms)
+				materials[10].uniforms[ e ].value = eyeController[ e ];
 			}
 		}
 
@@ -1545,9 +1852,9 @@
 			<div id="debug"></div>
 			<div id="guiContener"><div id="gui"></div></div>
 			<div id="copy">
-				DIANA 0.2 <a href="http://3dflashlo.wordpress.com/" target="_blank">®loth 2014 </a>
-				 | <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d format</a> 
-				. <a href="http://github.com/mrdoob/three.js" target="_blank">three.js 67</a> 
+				Diana v0.2.5 <a href="http://3dflashlo.wordpress.com/" target="_blank">&nbsp;&nbsp;&nbsp;®loth 2014&nbsp;&nbsp;&nbsp;</a>
+				<a href="http://github.com/mrdoob/three.js" target="_blank">three.js</a> 
+				. <a href="https://code.google.com/p/sea3d/" target="_blank">sea3d</a> 
 				. <a href="https://github.com/kripken/speak.js/" target="_blank"> speak.js</a> 
 				. <a href="https://github.com/dzucconi/phoneme-client" target="_blank"> phoneme-client</a>
 				. <a href="http://vill.ee/eye/" target="_blank"> eye shader</a>
@@ -1570,6 +1877,7 @@
 
 		</div>
 		<div id="play"> <img class="buttonPlay" src="res/img/soundw.png" alt="play sound" onclick="say();" /></div>
-		<div id="audio"></div>
+		
+
 	</body>
 </html>

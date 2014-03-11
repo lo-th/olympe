@@ -530,7 +530,7 @@ THREE.SEA3D.prototype.readGeometry = function(sea) {
 		var jointPerVertex = sea.jointPerVertex;
 		
 		if (jointPerVertex > 4) {
-			console.warn( "WebGLRenderer: Joint Per Vertex can not be greater than 4 (currently " + sea.jointPerVertex + "). Using compression for joints." );
+			//console.warn( "WebGLRenderer: Joint Per Vertex can not be greater than 4 (currently " + sea.jointPerVertex + "). Using compression for joints." );
 			for (k = 0; k < sea.joint.length; k+=jointPerVertex) {
 				
 				var jointIndex = [0];

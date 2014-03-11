@@ -102,7 +102,7 @@ SEA.Animator.prototype = {
         }
     },
     stop:function(){
-        this.current.stop();
+        if(this.current.name!=="") this.current.stop();
     },
     clear:function(){
         this.current.stop();
