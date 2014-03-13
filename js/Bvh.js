@@ -4,7 +4,7 @@ BVH.TO_RAD = Math.PI / 180;
 window.URL = window.URL || window.webkitURL;
 
 BVH.Reader = function(){
-	this.debug = false;
+	this.debug = true;
 	this.type = "";
 	this.data = null;
 	this.root = null;
