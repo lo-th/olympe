@@ -29,9 +29,9 @@ input{ margin:10px; padding:10px; }
 #ytxt{ position: absolute; left:400px; top:30px; margin-left:-8px; width: 20px; }
 
 #inputtxt{ position: absolute; left:10px; top:60px; width:200px; height:20px; }
-#outputtxt{ position: absolute; right:10px; top:60px; width:200px; height:20px; text-align:right; }
+#outputtxt{ position: absolute; right:10px; top:60px; width:200px; height:20px; text-align:right; display:none; }
 #input{ position: absolute; left:10px; top:80px; width:calc(50% - 40px); height:180px; }
-#output{ position: absolute; right:10px; top:80px; width:calc(50% - 40px); height:180px; }
+#output{ position: absolute; right:10px; top:80px; width:calc(50% - 40px); height:180px; display:none; }
 #images{ position: absolute; left:10px; top:290px; border:1px solid red;}
 
 #link{ position: absolute; left:880px; top:10px; width:200px;}
@@ -46,12 +46,8 @@ a{color:#ff8800;text-decoration:none;}
     <input type="submit" onClick=update(0) value="Update Fixe" id="but01">
     <input type="submit" onClick=update(1) value="Update Fixe X" id="but02">
     <input type="submit" onClick=update(2) value="Update AutoSize" id="but03">
-    <div id="inputtxt">INPUT</div><textarea name="input" id="input">
-        Your code here for exemple var OIMO = {}... 
-        and simply save image with red border
-        you can use photoshop to convert 8bit grayscale png
-        Ascii character range need for javascript is from 32 to 127
-        </textarea>
+    <div id="inputtxt">INPUT</div><textarea name="input" id="input">Open .bvh in text editor and past text here.
+save red border png image drag to png compression app</textarea>
     <div id="outputtxt">OUTPUT</div><textarea name="output" id="output" disabled></textarea>
     <div id="link">You can use this tools<br><a href="http://css-ig.net/scriptpng" target="_blank">PNG compression</a><br>setting [7] High</div>
 </div>
