@@ -678,8 +678,8 @@
 
 				bonesNames = [
 				    "Hips", "Spine1", "RightUpLeg", "LeftUpLeg", "RightLowLeg",
-				    "Spine2", "LeftLowLeg", "Chest", "LeftFoot", "RightFoot",
-				    "RightToe", "LeftCollar", "Spine3", "LeftToe", "RightCollar", 
+				    "Chest", "LeftLowLeg", "Spine3", "LeftFoot", "RightFoot",
+				    "RightToe", "LeftCollar", "Spine4", "LeftToe", "RightCollar", 
 				    "LeftUpArm", "RightUpArm", "Neck", "RightLowArm", "LeftLowArm" ,
 				    "Head", "LeftLowArm2", "RightLowArm2", "RightHand", "LeftHand",
 
@@ -762,7 +762,7 @@
 				addGUIAnimation();
 
 				// BVH test
-				//initBVH();
+				initBVH();
 		
 			};
 			
@@ -813,6 +813,10 @@
 		//-----------------------------------------------------
 
 		function playAnimation(name) {
+			if(bvhReader){
+				if(bvhReader.play)bvhReader.stop();
+				bvhReader.clearNode();
+			}
 			bodyAnim.play(name);
 			suitAnim.play(name);
 			shadAnim.play(name);
@@ -830,18 +834,37 @@
 		//  BVH TEST
 		//-----------------------------------------------------
 
-		var BVHset = {ax:"y", ay:"x", az:"z", dx:1, dy:1, dz:1, rx:0, ry:180, rz:-90};
+		var BVHset = {ax:"y", ay:"x", az:"z", dx:1, dy:1, dz:1, rx:0, ry:0, rz:0};
+		var BVHanimConfig = {
+			debug:true
+		}
 
 		function initBVH() {
 			bvhReader = new BVH.Reader();
-			bvhReader.load("res/bvh/calibration.bvh");
+			//bvhReader.load("res/bvh/calibration.bvh");
+			//bvhReader.load("res/bvh/calibration.png");
+			//bvhReader.load("res/bvh/ballet11.png");
 			//bvhReader.load("res/bvh/jog.bip");
 
 			initBVHGui();
 		}
 
+		function loadBVH(name, NoCompress) {
+			var noCompress = NoCompress || false;
+			if(noCompress) bvhReader.load("res/bvh/"+name+".bvh");
+			else bvhReader.load("res/bvh/"+name+".png");
+		}
+
 		function initBVHGui() {
-			var f5 = gui.addFolder('BVH');
+			var f5 = gui.addFolder('BVH Animation');
+			
+			f5.add( BVHanimConfig, 'debug' ).listen().onChange( function() {bvhReader.debug = this});
+
+			BVHanimConfig.calibration = function() { loadBVH("calibration"); };
+            BVHanimConfig.ballet = function() { loadBVH("ballet"); };
+
+            f5.add( BVHanimConfig, 'calibration' );
+            f5.add( BVHanimConfig, 'ballet' );
 
 			//f5.add( voiceConfig, 'googleVoise' ).onChange( function() {});
 
@@ -853,9 +876,9 @@
 			f5.add( BVHset, 'dy', [ 1, -1, 0 ] );
 			f5.add( BVHset, 'dz', [ 1, -1, 0 ] );
 
-			f5.add( BVHset, 'rx' ).step(90);
-			f5.add( BVHset, 'ry' ).step(90);
-			f5.add( BVHset, 'rz' ).step(90);
+			f5.add( BVHset, 'rx', [ -270, -180, -90, 0, 90, 180, 270 ] );
+			f5.add( BVHset, 'ry', [ -270, -180, -90, 0, 90, 180, 270 ] );
+			f5.add( BVHset, 'rz', [ -270, -180, -90, 0, 90, 180, 270 ] );
 
 
 			//.onChange( function() { synthesis.rate = voiceConfig.rate/100 });
@@ -863,7 +886,7 @@
 			f3.add( voiceConfig, 'pitch', 0, 400 ).onChange( function() {});
 			f3.add( voiceConfig, 'speed', 0, 400 ).onChange( function() {});*/
 
-			f5.open();
+			f5.close();
 
 		}
 
@@ -884,83 +907,70 @@
 				//} else { parseLine( count ); }
 
 				bvhReader.update();
-				var maxNode = bvhReader.channels.length;
+				//var maxNode = bvhReader.channels.length;
+				var maxNode = bvhReader.dataInfo.length;
 				var maxBone = body.bones.length;
 				var bone, node, i, j;
 				var bone1, bone2
 
-				
+				for (j=0; j<maxNode; j++){
+					node = bvhReader.dataInfo[j];
 
-				for ( i=0; i < maxBone; i++){
+					for ( i=0; i < maxBone; i++){
+						bone = body.bones[i];
+						bone1 = suit.bones[i];
+					    bone2 = bodyShadow.bones[i];
+						if(bone.name === node.name){
+							//if(bone.name == "Hips")bone.position.set( node.pos.x, node.pos.y, node.pos.z );
+							//
+							//else 
+							if(bone.name==="Hips" || bone.name==="Chest" || bone.name==="Neck" || bone.name==="Head"){
+								bone.rotation.set( node.rot.x, node.rot.y, node.rot.z );
+								bone1.rotation.set( node.rot.x, node.rot.y, node.rot.z );
+								bone2.rotation.set( node.rot.x, node.rot.y, node.rot.z );
+								//bone.rotation.set( node.rot[BVHset.ax]+(BVHset.rx*ToRad), node.rot[BVHset.ay]+(BVHset.ry*ToRad), node.rot[BVHset.az]+(BVHset.rz*ToRad) );
+							}else if(bone.name==="RightUpLeg" || bone.name==="RightLowLeg" || bone.name==="RightFoot" || bone.name==="LeftUpLeg" || bone.name==="LeftLowLeg" || bone.name==="LeftFoot"){
+								bone.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+								bone1.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+								bone2.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
 
-					bone = body.bones[i];
-					bone1 = suit.bones[i];
-					bone2 = bodyShadow.bones[i];
-					for (j=0; j<maxNode; j++){
 
-						node = bvhReader.channels[j].node;
-						if(j===0 && i===0){ // root position
-							bone.position.copy( node.position );
-							bone1.position.copy( node.position );
-							bone2.position.copy( node.position );
+							}else{
+								bone.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+								bone1.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+								bone2.rotation.set( (node.rot[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx,( node.rot[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (node.rot[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
 
-							bone.rotation.set((node.rotation["y"]+(0*ToRad)) , (node.rotation["x"]+(180*ToRad)) , (node.rotation["z"]+(-90*ToRad)) );
-							bone1.rotation.copy(bone.rotation);
-							bone2.rotation.copy(bone.rotation);
 
-							tt += "base: " + bone.rotation.x.toFixed(2) + ", " +bone.rotation.y.toFixed(2)+ ", " +bone.rotation.z.toFixed(2)+"<br>";
-							tt += "bvhs: " + node.rotation.x.toFixed(2) + ", " +node.rotation.y.toFixed(2)+ ", " +node.rotation.z.toFixed(2);
+							}
+
+
+
+							
 						}
-						if(node.name === bone.name ){
-							if(node.name==="LeftUpLeg"){
-								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
 
-							}
-							if(node.name==="RightUpLeg"){
-								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
+						bone.matrixAutoUpdate = true;
+						bone.matrixWorldNeedsUpdate = true;
 
-							}
 
-							/*if(node.name==="LeftUpArm" || node.name==="LeftLowArm" || node.name==="LeftCollar"){
-								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(-BVHset.rz*ToRad))*BVHset.dz );
-								bone1.rotation.copy(bone.rotation);
-								bone2.rotation.copy(bone.rotation);
-								
-							}
-							if(node.name==="RightUpArm" || node.name==="RightLowArm" || node.name==="RightCollar"){
-								bone.rotation.set((node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx , (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy , (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz );
-								bone1.rotation.copy(bone.rotation);
-								bone2.rotation.copy(bone.rotation);
-								//bone.rotation.set(node.rotation.x+(90*ToRad), node.rotation.y+(-90*ToRad), node.rotation.z+(0*ToRad));
-							}*/
-							if(node.name==="Hips"){
-								
-							//bone.position.copy(node.position);
-							//bone.rotation.copy(node.rotation);
-							//bone.position.set(node.position.x, node.position.y, node.position.z);
-							//bone.rotation.set(node.rotation.x, node.rotation.y, node.rotation.z);
-							//bone.rotation.set(node.rotation.x+(0*ToRad), node.rotation.y+(0*ToRad), node.rotation.z+(90*ToRad));
 
-							//var mtx = node.matrixWorld
 
-							//bone.position.setFromMatrixPosition( mtx );
-							//bone.rotation.setFromRotationMatrix( mtx );
 
-							//bone.rotation.set(node.rotation.x, node.rotation.y+180*ToRad, node.rotation.z+90*ToRad);
-							/*bone1.position.copy(node.position);
-							bone1.rotation.copy(node.rotation);
-							bone2.position.copy(node.position);
-							bone2.rotation.copy(node.rotation);*/
-						     }
-						}
+						
+
 					}
-					
-					// update bone
-					bone.matrixAutoUpdate = true;
-			        bone.matrixWorldNeedsUpdate = true;
+					//if(node.name == "Hips"){
+					//	body.bones[0].position.set( node.pos.x, node.pos.y, node.pos.z );
+					//	body.bones[0].matrixAutoUpdate = true;
+			        //bone.matrixWorldNeedsUpdate = true;
+
+					//}
 				}
 
-				debugTell(tt);
+				 body.bones[0].rotation.z += 90*ToRad
+				  suit.bones[0].rotation.z += 90*ToRad
+				   bodyShadow.bones[0].rotation.z += 90*ToRad
+
+			
 
 			}
 		}

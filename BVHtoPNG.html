@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>BVH to PNG</title>
+<style>
+body {
+    background-color:#000000;
+    color: #fff;
+    font-family: monospace;
+}
+textarea {
+  background-color: #202020;
+  border: 0;
+  padding: 10px 10px;
+  color: #fff;
+  resize: none;
+  width: 100%;
+}
+input{ margin:10px; padding:10px; }
+
+#interface{ position: absolute; left:0; top:0; width:100%; height:260px; }
+#title{ position: absolute; left:10px; top:20px; width:300px; height:30px; font-size: 200%;}
+#imageSizeX{ position: absolute; left:300px; top:10px; width: 50px;}
+#imageSizeY{ position: absolute; left:400px; top:10px; width: 50px;}
+#but01{ position: absolute; left:500px; top:10px;  }
+#but02{ position: absolute; left:600px; top:10px; }
+#but03{ position: absolute; left:710px; top:10px; }
+#xtxt{ position: absolute; left:300px; top:30px; margin-left:-8px; width: 20px; }
+#ytxt{ position: absolute; left:400px; top:30px; margin-left:-8px; width: 20px; }
+
+#inputtxt{ position: absolute; left:10px; top:60px; width:200px; height:20px; }
+#outputtxt{ position: absolute; right:10px; top:60px; width:200px; height:20px; text-align:right; }
+#input{ position: absolute; left:10px; top:80px; width:calc(50% - 40px); height:180px; }
+#output{ position: absolute; right:10px; top:80px; width:calc(50% - 40px); height:180px; }
+#images{ position: absolute; left:10px; top:290px; border:1px solid red;}
+
+#link{ position: absolute; left:880px; top:10px; width:200px;}
+a{color:#ff8800;text-decoration:none;}
+
+
+</style>
+<div id='interface'>
+    <div id="title"> BVH to PNG </div>
+    <div id="xtxt">X</div> <input type="number" name="quantity" min="32" max="2048" value="1024"  id='imageSizeX'>
+    <div id="ytxt">Y</div> <input type="number" name="quantity" min="32" max="2048" value="1024"  id='imageSizeY'>
+    <input type="submit" onClick=update(0) value="Update Fixe" id="but01">
+    <input type="submit" onClick=update(1) value="Update Fixe X" id="but02">
+    <input type="submit" onClick=update(2) value="Update AutoSize" id="but03">
+    <div id="inputtxt">INPUT</div><textarea name="input" id="input">
+        Your code here for exemple var OIMO = {}... 
+        and simply save image with red border
+        you can use photoshop to convert 8bit grayscale png
+        Ascii character range need for javascript is from 32 to 127
+        </textarea>
+    <div id="outputtxt">OUTPUT</div><textarea name="output" id="output" disabled></textarea>
+    <div id="link">You can use this tools<br><a href="http://sundgaard.dk/javascript-minify.aspx" target="_blank">JavaScript Minifier</a><br><a href="http://css-ig.net/scriptpng" target="_blank">PNG compression</a> </div>
+</div>
+
+<img id="images"></img>
+    
+
+<script type="text/javascript">
+var size = [1024, 1024];
+
+function update(n) {
+	var s
+    var str = (input.value.split(/\s+/g)).toString();
+
+    if(n===0){ 
+  	    size = [document.getElementById('imageSizeX').value, document.getElementById('imageSizeY').value];
+  	} else if(n===1){ 
+         s = Math.ceil(str.length/document.getElementById('imageSizeX').value);
+         size = [document.getElementById('imageSizeX').value, s]; }
+    else {
+         s = Math.ceil(Math.sqrt(str.length));
+         size = [s, s];
+    }
+
+    createDemo(str);
+    output.value = canvas.toDataURL();
+    IM.src = output.value;
+}
+
+function createDemo(str) {
+    canvas.width = size[0];
+    canvas.height = size[1];
+    var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    var img = image.data;
+    var n = 0;
+    var c;
+    
+    for(i = 0, l= image.data.length; i < l; i+=4) {
+        c = str.charCodeAt(i-n) || 31;
+        img[i+0] = c;
+        img[i+1] = c;
+        img[i+2] = c;
+        img[i+3] = 255;
+        n+=3;
+    }
+    ctx.fillRect(0,0, canvas.width, canvas.height);
+    ctx.putImageData(image, 0, 0);
+}
+
+var IM = document.getElementById('images');
+var canvas = document.createElement("canvas");
+var ctx = canvas.getContext('2d');
+
+var input = document.getElementById('input');
+var output = document.getElementById('output');
+
+update(2);
+</script>
