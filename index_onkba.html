@@ -812,7 +812,7 @@
 
 					
 				//bodyShadow.visible = false;
-				//suit.visible = false;
+				suit.visible = false;
 				//body.visible = false;
 				//document.getElementById('loading').style.visibility = 'hidden';	
 				
@@ -1072,9 +1072,10 @@
 
 				bvhReader.update();
 				//var maxNode = bvhReader.channels.length;
-				var maxNode = bvhReader.nodes.length;
+				//var maxNode = bvhReader.nodes.length;
+				var maxNode = bvhReader.bones.length;
 				var maxBone = 25;//body.bones.length;
-				var bone, node, ref, i, j;
+				var bone, node, nodeBase, ref, i, j;
 				var inf;
 				var bone1, bone2
 
@@ -1086,7 +1087,10 @@
 					bone2 = bodyShadow.bones[i];
 
 				    for (j=0; j<maxNode; j++){
-					    node = bvhReader.nodes[j];
+				    	if(bvhReader.bones[j]){
+					   // node = bvhReader.nodes[j];
+					     nodeBase = bvhReader.nodes[j];
+					     node = bvhReader.bones[j];
 					   // inf = bvhReader.dataInfo[j];
 
 					
@@ -1186,12 +1190,40 @@
 								/*rotateAroundWorldAxis(bone, new THREE.Vector3( 1, 0, 0 ), (node.rotation.x));
 								rotateAroundWorldAxis(bone, new THREE.Vector3( 0, 1, 0 ), (node.rotation.y));
 								rotateAroundWorldAxis(bone, new THREE.Vector3( 0, 0, 1 ), (node.rotation.z));*/
+								var mtx = new THREE.Matrix4() //bone.skinMatrix.clone();
+								var m1 = new THREE.Matrix4()
+								
+								//mtx.multiplyMatrices(bone.skinMatrix, m1.getInverse(node.matrix) )
+								//mtx.multiplyMatrices(bone.matrix, m1.getInverse(node.matrix) )
+							//	mtx.multiplyMatrices(m1.getInverse(bone.matrix), node.matrix )
+
+								//mtx.multiplyMatrices(bone.matrix, m1.getInverse(node.matrixWorld) )
+
+									//bone.matrixAutoUpdate = false;
+								mtx.makeRotationFromEuler(nodeBase.rotation);
+								//mtx.makeRotationFromQuaternion(node.quaternion)
+
+								//bone.rotation.setFromRotationMatrix(mtx);
+								bone.setRotationFromMatrix(mtx)
+
+								bone.rotation.x+=ref.x*ToRad;
+								bone.rotation.y+=ref.y*ToRad;
+								bone.rotation.z+=ref.z*ToRad
+
+								//
+								//bone.setRotationFromMatrix(mtx)
+								//bone.updateMatrix()
 
 							//	var t = toAngles(node, ref);
 								//bone.rotation.set( t[BVHset.ax], t[BVHset.ay], t[BVHset.az])
 							//	bone.rotation.set((ref.x*ToRad)+ t[BVHset.ax], (ref.y*ToRad)+ t[BVHset.ay], (ref.z*ToRad)+ t[BVHset.az])
 
-								bone.rotation.set((ref.x*ToRad)+ node.rotation[BVHset.ax], (ref.y*ToRad)+ node.rotation[BVHset.ay], (ref.z*ToRad)+ node.rotation[BVHset.az])
+								//bone.rotation.set((ref.x*ToRad)+ (node.rotation[BVHset.ax]+(BVHset.rx*ToRad))*BVHset.dx, (ref.y*ToRad)+ (node.rotation[BVHset.ay]+(BVHset.ry*ToRad))*BVHset.dy, (ref.z*ToRad)+ (node.rotation[BVHset.az]+(BVHset.rz*ToRad))*BVHset.dz)
+								//bone.rotation.set( node.rotation[BVHset.ax], node.rotation[BVHset.ay], node.rotation[BVHset.az])
+
+
+								//bone.rotation.setFromRotationMatrix( node.matrix );//set((ref.x*ToRad)+ node.rotation[BVHset.ax], (ref.y*ToRad)+ node.rotation[BVHset.ay], (ref.z*ToRad)+ node.rotation[BVHset.az])
+
 
 
 
@@ -1372,9 +1404,9 @@
 
 
 
-							bone.matrixAutoUpdate = true;
-						bone.matrixWorldNeedsUpdate = true;
-						}
+						//	bone.matrixAutoUpdate = true;
+						//bone.matrixWorldNeedsUpdate = true;
+						}}
 
 						//
 						//

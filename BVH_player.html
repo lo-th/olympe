@@ -324,6 +324,8 @@
             BVHanimConfig.story = function() { loadBVH("story.png"); };
             BVHanimConfig.action = function() { loadBVH("action.png"); };
 
+            BVHanimConfig.dance = function() { loadBVH("dance.png"); };
+
             BVHanimConfig.stop = function() {  bvhReader.play = false; };
             BVHanimConfig.play = function() { bvhReader.oldFrame = bvhReader.frame; bvhReader.startTime = Date.now(); bvhReader.play = true; };
             BVHanimConfig.next = function() { bvhReader.next(); };
@@ -343,6 +345,8 @@
 
             f5.add( BVHanimConfig, 'story' );
             f5.add( BVHanimConfig, 'action' );
+
+             f5.add( BVHanimConfig, 'dance' );
 
             f5.add( BVHanimConfig, 'speed', 0.1, 1 ).onChange( function() { bvhReader.speed = BVHanimConfig.speed; });;
 

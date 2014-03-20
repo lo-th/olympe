@@ -140,6 +140,7 @@ BVH.Reader.prototype = {
     		if ( node.name !== 'Site' ){
     			bone = new THREE.Mesh(geo, this.material);
     			bone.castShadow = true;
+    			bone.rotation.order = 'XYZ';
 	    		bone.name = node.name;
 	    		this.skeleton.add(bone);
 	    		this.bones[i] = bone;
@@ -254,20 +255,23 @@ BVH.Reader.prototype = {
     clearNode:function(){
     	var i;
 
-    	for (i=0; i<this.nodes.length; i++){
-			this.nodes[i] = null;
-		}
-		this.nodes.length = 0;
+    	if(this.nodes){
 
-		if(this.bones.length > 0){
-	    	for ( i=0; i<this.bones.length; i++){
-				if(this.bones[i]){
-					this.bones[i].geometry.dispose();
-				}
+	    	for (i=0; i<this.nodes.length; i++){
+				this.nodes[i] = null;
 			}
-			this.bones.length = 0;
-	        scene.remove( this.skeleton );
-	   }
+			this.nodes.length = 0;
+
+			if(this.bones.length > 0){
+		    	for ( i=0; i<this.bones.length; i++){
+					if(this.bones[i]){
+						this.bones[i].geometry.dispose();
+					}
+				}
+				this.bones.length = 0;
+		        scene.remove( this.skeleton );
+		   }
+		}
     },
     animate:function(){
     	//debugTell("frame" +  this.frame);
