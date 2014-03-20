@@ -207,8 +207,6 @@
 			renderer.setSize( vsize.x, vsize.y );
 		}
 
-
-
 		//-----------------------------------------------------
 		//  LIGHT & SKY
 		//-----------------------------------------------------
@@ -294,41 +292,34 @@
 			bvhReader = new BVH.Reader();
 			bvhReader.speed = BVHanimConfig.speed;
 
-			loadBVH("action", 'XYZ');
+			loadBVH("action.png");
 
 			initBVHGui();
 
 		}
 
-		function loadBVH(name, Order, NoCompress) {
-			var noCompress = NoCompress || false;
-			var order = Order || "ZXY";
-			if(noCompress) bvhReader.load("res/bvh/"+name+".bvh", order);
-			else bvhReader.load("res/bvh/"+name+".png", order);
+		function loadBVH(name) {
+			 bvhReader.load("res/bvh/"+name);
 		}
 
 		function initBVHGui() {
 			
 
 			var f5 = gui.addFolder('BVH Animation BETA');
-			
-			//f5.add( BVHanimConfig, 'debug' ).listen().onChange( function() {bvhReader.debug = this});
 
-			//f5.add( BVHset, 'order', [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ] );
+			BVHanimConfig.calibration = function() { loadBVH("calibration.png"); };
+            BVHanimConfig.ballet = function() { loadBVH("ballet.png"); };
+            BVHanimConfig.shoot = function() { loadBVH("shoot.png"); };
+            BVHanimConfig.sprint = function() { loadBVH("sprint.png"); };
+            BVHanimConfig.exsize = function() { loadBVH("exsize.png"); };
+            BVHanimConfig.test = function() { loadBVH("test.png"); };
+            BVHanimConfig.big = function() { loadBVH("big.png"); };
 
-			BVHanimConfig.calibration = function() { loadBVH("calibration", 'ZXY'); };
-            BVHanimConfig.ballet = function() { loadBVH("ballet", 'ZXY'); };
-            BVHanimConfig.shoot = function() { loadBVH("shoot", 'ZXY'); };
-            BVHanimConfig.sprint = function() { loadBVH("sprint", 'ZXY'); };
-            BVHanimConfig.exsize = function() { loadBVH("exsize", 'ZXY'); };
-            BVHanimConfig.test = function() { loadBVH("test", 'ZYX'); };
-            BVHanimConfig.big = function() { loadBVH("big", 'ZYX'); };
+            BVHanimConfig.c11A = function() { loadBVH("c11A.png"); };
+            BVHanimConfig.c11B = function() { loadBVH("c11B.png"); };
 
-            BVHanimConfig.c11A = function() { loadBVH("c11A", 'ZXY'); };
-            BVHanimConfig.c11B = function() { loadBVH("c11B", 'ZXY'); };
-
-            BVHanimConfig.story = function() { loadBVH("story", 'YXZ'); };
-            BVHanimConfig.action = function() { loadBVH("action", 'XYZ'); };
+            BVHanimConfig.story = function() { loadBVH("story.png"); };
+            BVHanimConfig.action = function() { loadBVH("action.png"); };
 
             BVHanimConfig.stop = function() {  bvhReader.play = false; };
             BVHanimConfig.play = function() { bvhReader.oldFrame = bvhReader.frame; bvhReader.startTime = Date.now(); bvhReader.play = true; };
@@ -509,6 +500,7 @@
 				BVH player <a href="http://3dflashlo.wordpress.com/" target="_blank">&nbsp;&nbsp;&nbsp;loth 2014&nbsp;&nbsp;&nbsp;</a>
 			</div>
 			<input type="file" id="files" />
+		    <output id="list"></output>
 		</div>
 		<div id="BVHhubs">
 

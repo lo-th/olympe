@@ -14,7 +14,6 @@ BVH.Reader = function(){
 	this.channels = null;
 	this.lines = "";
 	this.bones = [];
-	this.order = "XYZ";
 	this.speed = 1;
 
 	this.nodes = null;
@@ -36,8 +35,7 @@ BVH.Reader = function(){
 BVH.Reader.prototype = {
     constructor: BVH.Reader,
 
-    load:function(fname, Order){
-    	//this.order = Order || "ZXY";
+    load:function(fname){
     	this.type = fname.substring(fname.length-3,fname.length);
 
     	var _this = this;
@@ -123,10 +121,6 @@ BVH.Reader.prototype = {
     	geo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, 6 ) );
     	var mat = new THREE.MeshNormalMaterial();
 
-
-    	//var mat = new THREE.LineBasicMaterial( { color: 0xffff00 } );
-    	//var pos = new THREE.Vector3( 0, 0, 0 );
-
     	for(var i=0; i<n; i++){
     		node = this.nodes[i];
     		if ( node.name !== 'Site' ){
@@ -134,16 +128,8 @@ BVH.Reader.prototype = {
 	    		this.skeletonBones[i].name = node.name;
 	    		this.squeleton.add(this.skeletonBones[i])
     	    }
-    		//pos = new THREE.Vector3( 0, 0, 0 );
-    		//pos.setFromMatrixPosition( this.nodes[i].matrix );
-    		//pos = this.nodes[i].position;
-    		//geo.vertices.push( pos );
     		
     	}
-		//geo.vertices.push( new THREE.Vector3( 0, 10, 0 ) );
-
-    	//this.squeleton = new THREE.Line( geo, mat, THREE.LinePieces );
-    	//this.root.add( this.squeleton );
     	scene.add( this.squeleton );
 
     },
@@ -163,31 +149,6 @@ BVH.Reader.prototype = {
 	    		}
 	    	}
     	}
-    	/*var pos = new THREE.Vector3();
-    	var pos2 = new THREE.Vector3();
-    	var geo = this.squeleton.geometry;
-
-    	var np = 0;
-    	if(geo.vertices.length === (n*2)-2){
-
-	    	for(var i=1; i<n; i++){
-	    		//this.nodes[i-1].updateMatrixWorld();
-	    		pos = new THREE.Vector3()
-	    		pos.setFromMatrixPosition( this.bones[i-1].matrixWorld );
-	    		//pos = this.nodes[i-1].position;
-	    		geo.vertices[np].set( pos.x, pos.y, pos.z );
-	    		np++
-	    		//this.nodes[i].updateMatrixWorld();
-	    		pos = new THREE.Vector3()
-	    		pos.setFromMatrixPosition( this.bones[i].matrixWorld );
-	    		//pos = this.nodes[i].position;
-	    		geo.vertices[np].set( pos.x, pos.y, pos.z  );
-	    		np++;
-
-geo.verticesNeedUpdate = true;
-	    	}
-	    	
-	    }*/
     },
     addDebugNode:function ( name ) {
 
@@ -260,11 +221,6 @@ geo.verticesNeedUpdate = true;
 
 		if(this.debug) node = this.addDebugNode( name );
 		else node = new THREE.Object3D();
-		//node.rotation.order = this.order;//'ZXY';
-		//node.matrixAutoUpdate = false;
-		//node.rotation.order = 'XYZ';
-		//node.rotation.order = 'ZYX';
-		//node.rotation.order = 'YXZ';
 		node.name = name;
 
 		done = false;
@@ -436,6 +392,5 @@ geo.verticesNeedUpdate = true;
     	if(this.frame<0)this.frame = this.numFrames;
     	this.animate();
     }
-
 
 }
