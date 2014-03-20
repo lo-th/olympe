@@ -285,7 +285,9 @@
 		var BVHset = {ax:"x", ay:"y", az:"z", dx:1, dy:1, dz:1, rx:0, ry:0, rz:0, order:"XYZ"};
 		var BVHanimConfig = {
 			debug:true,
-			speed:0.25
+			speed:0.25,
+			size:1,
+			px:0, py:0, pz:0
 		}
 
 		function initBVH() {
@@ -348,8 +350,16 @@
             f5.add( BVHanimConfig, 'next' );
             f5.add( BVHanimConfig, 'prev' );
 
+            f5.add( BVHanimConfig, 'size', 1, 5 ).onChange( function() { bvhReader.reScale(BVHanimConfig.size) });
+            f5.add( BVHanimConfig, 'px', -100, 100 ).onChange( function() { positionBVH() });;
+            f5.add( BVHanimConfig, 'py', -100, 100 ).onChange( function() { positionBVH() });;
+            f5.add( BVHanimConfig, 'pz', -100, 100 ).onChange( function() { positionBVH() });;
+
 			f5.open();
 
+		}
+		function positionBVH() {
+			bvhReader.rePosition(new THREE.Vector3( BVHanimConfig.px || 0, BVHanimConfig.py|| 0, BVHanimConfig.pz|| 0 ))
 		}
 
 		function updateBVH() {

@@ -84,7 +84,7 @@ BVH.Reader.prototype = {
 				if(this.debug){ 
 					scene.add(this.root);
 					this.root.position.copy(this.position);
-					//this.root.scale.set(this.scale,this.scale,this.scale);
+					this.root.scale.set(this.scale,this.scale,this.scale);
 
 					this.addSkeleton( this.nodes.length );
 				}
@@ -103,6 +103,14 @@ BVH.Reader.prototype = {
 		this.getNodeList();
 		this.startTime = Date.now();
 		this.play = true;
+    },
+    reScale:function (s) {
+    	this.scale = s;
+    	this.root.scale.set(this.scale,this.scale,this.scale);
+    },
+    rePosition:function (v) {
+    	this.position = v;
+    	this.root.position.copy(this.position);
     },
     getNodeList:function () {
     	var n = this.nodes.length, node, s = "";
@@ -143,10 +151,14 @@ BVH.Reader.prototype = {
 	    		mtx = node.matrixWorld;
 	    		this.skeletonBones[i].position.setFromMatrixPosition( mtx );
 	    		//this.skeletonBones[i].rotation.setFromRotationMatrix( mtx );
-	    		if(node.parent){
-	    			target = new THREE.Vector3().setFromMatrixPosition( node.parent.matrixWorld );
+	    		if(node.children.length){
+	    			target = new THREE.Vector3().setFromMatrixPosition( node.children[0].matrixWorld );
 	    			this.skeletonBones[i].lookAt(target);
 	    		}
+	    		/*if(node.parent){
+	    			target = new THREE.Vector3().setFromMatrixPosition( node.parent.matrixWorld );
+	    			this.skeletonBones[i].lookAt(target);
+	    		}*/
 	    	}
     	}
     },
@@ -155,7 +167,7 @@ BVH.Reader.prototype = {
 		var material = new THREE.MeshNormalMaterial( {});//{ opacity: 0.5, side: THREE.DoubleSide, transparent: true } );
 		var geometry, axis;
 		if ( name === 'Site' ) {
-			geometry = new THREE.SphereGeometry( 0.3 );
+			geometry = new THREE.SphereGeometry( 0.4 );
 			axis = new THREE.AxisHelper(2);
 		} else if(name==="Head"){
 			geometry = new THREE.BoxGeometry( 2, 2, 2 );
@@ -164,7 +176,7 @@ BVH.Reader.prototype = {
 			axis = new THREE.AxisHelper(1)
 		}
 		var node = new THREE.Mesh(geometry, material);
-		node.add(axis);
+		//node.add(axis);
 		this.bones.push(node);
 		return node;
 	},
@@ -266,9 +278,13 @@ BVH.Reader.prototype = {
     	var ch;
 		var n =  this.frame % this.numFrames * this.channels.length;
 		var ref = this.channels;
+		var isRoot = false;
 
 		for ( var i = 0, len = ref.length; i < len; i++) {
 			ch = ref[ i ];
+			if(ch.node.name === "Hips") isRoot = true;
+			else isRoot = false;
+
 
 			switch ( ch.prop ) {
 				case 'Xrotation':
@@ -284,13 +300,16 @@ BVH.Reader.prototype = {
 					//ch.node.rotation.z = (parseFloat(this.data[n])) * BVH.TO_RAD;
 					break;
 				case 'Xposition':
-					ch.node.position.x = ch.node.offset.x + parseFloat(this.data[n]);
+				    if(isRoot) ch.node.position.x = ch.node.offset.x + parseFloat(this.data[n])+ this.position.x;
+					else ch.node.position.x = ch.node.offset.x + parseFloat(this.data[n]);
 					break;
 				case 'Yposition':
-					ch.node.position.y = ch.node.offset.y + parseFloat(this.data[n]);
+				    if(isRoot) ch.node.position.y = ch.node.offset.y + parseFloat(this.data[n])+ this.position.y;
+					else ch.node.position.y = ch.node.offset.y + parseFloat(this.data[n]);
 					break;
 				case 'Zposition':
-					ch.node.position.z = ch.node.offset.z + parseFloat(this.data[n]);
+				    if(isRoot) ch.node.position.z = ch.node.offset.z + parseFloat(this.data[n])+ this.position.z;
+					else ch.node.position.z = ch.node.offset.z + parseFloat(this.data[n]);
 				break;
 			}
 
