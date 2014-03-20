@@ -94,14 +94,29 @@
 
             if(SeaStandard)lightPos.horizontal+=180;
 
-			imput = document.getElementById("editor");
+			/*imput = document.getElementById("editor");
 			output = document.getElementById("output");
-			oldOutput = document.getElementById("oldOutput");
+			oldOutput = document.getElementById("oldOutput");*/
 			debug = document.getElementById("debug");
+
+			document.getElementById('files').addEventListener('change', handleFileSelect, false);
 
 			addGUI();
 
 			initScene3D();
+
+			
+		}
+
+		function handleFileSelect(evt) {
+		 	var f = evt.target.files[0];
+		 	var reader = new FileReader();
+		 	reader.onload = (function(theFile) {
+		 		return function(e) {
+		 			bvhReader.parseData(e.target.result.split(/\s+/g));
+		 		};
+		 	})(f);
+		 	reader.readAsText(f);
 		}
 
 		function debugTell(s) {
@@ -479,6 +494,8 @@
 		    e.preventDefault();
 		}
 
+		
+
 		window.onload = init;
 
 	</script>
@@ -491,6 +508,7 @@
 			<div id="copy">
 				BVH player <a href="http://3dflashlo.wordpress.com/" target="_blank">&nbsp;&nbsp;&nbsp;loth 2014&nbsp;&nbsp;&nbsp;</a>
 			</div>
+			<input type="file" id="files" />
 		</div>
 		<div id="BVHhubs">
 
@@ -498,6 +516,8 @@
 		
 		<div id="output1"></div>
 		<div id="output2"></div>
+
+		
 
 	</body>
 </html>

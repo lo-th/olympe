@@ -55,6 +55,17 @@ body {
   text-shadow: 1px 1px 0px #000;
 }
 
+#files {
+  position: absolute;
+  bottom:5px;
+  left:10px;
+  color: #a2a2a2;
+  text-align: left;
+  font-size:12px;
+  font-weight:normal;
+  text-shadow: 1px 1px 0px #000;
+}
+
 a { color: #e0e0ef; text-decoration:none; cursor: pointer}
 a:visited { color: #e0e0ef; text-decoration:none}
 
