@@ -139,6 +139,7 @@ BVH.Reader.prototype = {
     		node = this.nodes[i];
     		if ( node.name !== 'Site' ){
     			bone = new THREE.Mesh(geo, this.material);
+    			bone.castShadow = true;
 	    		bone.name = node.name;
 	    		this.skeleton.add(bone);
 	    		this.bones[i] = bone;
