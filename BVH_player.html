@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>ONKBA</title>
+	<meta charset="utf-8">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<meta http-equiv="X-UA-Compatible" content="IE=11,chrome=1">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta property="og:image" content="http://lo-th.github.io/olympe/res/img/logo.png"/>
+	<meta property="og:title" content="Advanced Morphing"/>
+	<meta property="og:url" content="http://lo-th.github.io/olympe/"/>
+	<meta property="og:site_name" content="LOTH"/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:description" content="Experiment full morphing in webGl"/>
+	<meta name="language" content="en-us" />
+	<link rel="shortcut icon" href="res/img/favicon.ico" type="image/x-icon" />
+	<link href="css/dianna.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="history/history.css" />
+
+</head>
+
+	<script src="js/three.min.66.js"></script>
+	<script src="js/BufferGeometryUtils.66.js"></script>
+
+	<script src="js/Bvh.js"></script>
+
+	<script src="js/loadersNew/sea3d/SEA.js"></script>
+	<script src="js/loadersNew/sea3d/SEA3D.js"></script>
+	<script src="js/loadersNew/sea3d/SEA3DLoader.js"></script>
+	<script src="js/loadersNew/sea3d/SEA3DDeflate.js"></script>
+	<script src="js/loadersNew/sea3d/SEA3DLZMA.js"></script>
+
+	<script src='js/libs/dat.gui.min.js'></script>
+
+	<script>
+		var vsize = { x:100, y:100, z:0 };
+		var mouse = { x:0, y:0 };
+		var lightPos, camPos;
+
+		var inRender = true, inResize = false, isNeedPause = false;
+		var FAR = 2000;
+
+		var ToRad = Math.PI / 180;
+		var ToDeg = 180 / Math.PI;
+
+		var camera, container, scene, renderer, composer, renderPass, delta, center, centerLight;
+		var ambient, hemiLight, pointLight, light;
+		var body, suit, bodyNeck, bodyHead, head, neck, hair, eyeR, eyeL, teethUp, teethDown, eyeTop, tongue, troat, headBase, fakeNeck, eyesTarget;
+	
+		var materials = []; 
+		var clock = new THREE.Clock();
+		var ground;
+
+		var gui;
+		var animConfig = {
+			current:"none",
+			//neckmove:false, 
+			idle:false,
+			walk:true,
+			salut:false,
+			speed:0.8
+		}
+
+		var viewConfig = {
+			squeleton:false,
+			antialias:false,
+			withEffect:false,
+			withNormal:false,
+			withBump:true
+		};
+
+		var sky;
+		var skyCube;
+
+		var debug;
+
+		var bvhReader = null;
+
+		var displayModel = true;
+		var squeleton;
+		var bonesReference = [];
+
+
+		var SeaStandard = false;
+		var BonesRevers = true;
+
+		function init() {
+
+			out1 = document.getElementById("output1");
+			out2 = document.getElementById("output2");
+
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight;
+			vsize.z = vsize.x / vsize.y;
+
+			camPos = { horizontal: 90, vertical: 80, distance: 200, automove: false };
+			lightPos = { horizontal: 135, vertical: 35, distance: 200 };
+            mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, down:false, over:false, moving:true, dx:0, dy:0 };
+
+            if(SeaStandard)lightPos.horizontal+=180;
+
+			imput = document.getElementById("editor");
+			output = document.getElementById("output");
+			oldOutput = document.getElementById("oldOutput");
+			debug = document.getElementById("debug");
+
+			addGUI();
+
+			initScene3D();
+		}
+
+		function debugTell(s) {
+			debug.innerHTML = s;
+		}
+
+		function initScene3D() {
+			
+			// RENDERER
+			renderer = new THREE.WebGLRenderer({  antialias: false });
+			renderer.setSize( vsize.x, vsize.y );
+			renderer.autoClear = false;
+			//renderer.sortObjects = false;
+			renderer.gammaInput = true;
+			renderer.gammaOutput = true;
+			renderer.shadowMapEnabled = true;
+			//renderer.shadowMapCullFace = THREE.CullFaceBack;
+			renderer.shadowMapType = THREE.PCFSoftShadowMap;
+
+			container = document.getElementById("viewport");
+            container.appendChild( renderer.domElement );
+			renderer.domElement.style.top = 0 + "px";
+			renderer.domElement.style.left = 0 + "px";
+			renderer.domElement.style.position = "absolute";
+
+			// SCENE
+			scene = new THREE.Scene();
+
+			// CAMERA
+			camera = new THREE.PerspectiveCamera( 45, vsize.z, 1, FAR );
+			//camera.position.set( 0, 30, 100 );
+		    center = new THREE.Vector3(0,30,0);
+		    centerLight =  new THREE.Vector3(0,-45,0);
+		    moveCamera();
+
+
+			addBasicObject();
+
+			initLightAndSky();
+
+			//importBody();
+
+			window.addEventListener( 'resize', resize, false );
+			container.addEventListener( 'mousemove', onMouseMove, false );
+		    container.addEventListener( 'mousedown', onMouseDown, false );
+		    container.addEventListener( 'mouseout', onMouseUp, false );
+		    container.addEventListener( 'mouseup', onMouseUp, false );
+
+		    var body = document.body;
+		    if( body.addEventListener ){
+		        body.addEventListener( 'mousewheel', onMouseWheel, false ); //chrome
+		        body.addEventListener( 'DOMMouseScroll', onMouseWheel, false ); // firefox
+		    }else if( body.attachEvent ){
+		        body.attachEvent("onmousewheel" , onMouseWheel); // ie
+		    }
+		    animate();
+
+		    initBVH();
+		}
+
+		//-----------------------------------------------------
+		//
+		//  RENDER LOOP
+		//
+		//-----------------------------------------------------
+
+		function animate() {
+			requestAnimationFrame( animate );
+			render();
+		}
+
+		function render() {
+			updateBVH();
+			renderer.clear();
+			renderer.render( scene, camera );
+		}
+
+		//-----------------------------------------------------
+		//  LISTENER
+		//-----------------------------------------------------
+
+		function resize( event ) {
+			vsize.x = window.innerWidth;
+			vsize.y = window.innerHeight;
+			vsize.z = vsize.x / vsize.y;
+			camera.aspect = vsize.z;
+			camera.updateProjectionMatrix();
+			renderer.setSize( vsize.x, vsize.y );
+		}
+
+
+
+		//-----------------------------------------------------
+		//  LIGHT & SKY
+		//-----------------------------------------------------
+
+		function initLightAndSky(){
+
+			ambient = new THREE.AmbientLight( 0x202020 );
+			scene.add( ambient );
+
+			hemiLight = new THREE.HemisphereLight( 0x202020, 0xffffff, 1 );
+			hemiLight.position.set( 0, 20, 0 );
+			scene.add( hemiLight );
+
+			pointLight = new THREE.PointLight( 0xFFFFFF, 1, 600 );
+			scene.add( pointLight );
+
+			light = new THREE.SpotLight( 0xFFFFFF, 1, 0, Math.PI/2, 1 );
+			light.castShadow = true;
+			light.onlyShadow = false;
+			light.shadowCameraNear = 50;
+			light.shadowCameraFar = 500;
+			//light.shadowCameraFov = 35;
+			light.shadowBias = -0.005;
+			light.shadowMapWidth = light.shadowMapHeight = 1024;
+			light.shadowDarkness = 0.35;
+
+			moveLight();
+			
+			//light.shadowCameraVisible = true; 
+
+			scene.add( light );
+		}	
+
+		function moveLight() {
+		    light.position.copy(Orbit(centerLight, lightPos.horizontal, lightPos.vertical, lightPos.distance));
+		    pointLight.position.copy(Orbit(centerLight, lightPos.horizontal+180, lightPos.vertical+180, lightPos.distance));
+		    light.lookAt(centerLight);
+		}
+		
+		function lightColors( cc ){
+			ambient.color.setHex(cc[2]);
+
+			hemiLight.color.setHex( cc[2] );
+			hemiLight.groundColor.setHex( cc[0] );
+
+			pointLight.color.setHex( cc[1] );
+
+			light.color.setHex( cc[3] );
+
+			currentColors = cc;
+		}
+
+		function addBasicObject() {
+			var skyMaterial = new THREE.MeshBasicMaterial( { color: 0x161616, side: THREE.BackSide, depthWrite: false } );
+		    sky = new THREE.Mesh( new THREE.BoxGeometry( FAR, FAR, FAR ), skyMaterial );
+			scene.add( sky );
+
+			var groundMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, transparent: true } );
+			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
+			groundMaterial.blending = THREE[ blendings[ 4 ] ];
+			ground = new THREE.Mesh(new THREE.PlaneGeometry( 1000, 1000, 4, 4 ), groundMaterial);
+			ground.position.set( 0, 0, 0 );
+			ground.rotation.x = - Math.PI / 2;
+			ground.receiveShadow = true;
+			scene.add( ground );
+
+			var helper2 = new THREE.GridHelper( 100, 50 );
+			helper2.setColors( 0x00ff00, 0x888888 );
+			scene.add( helper2 );
+		}
+
+		//-----------------------------------------------------
+		//
+		//  SEA3D IMPORT
+		//
+		//-----------------------------------------------------
+		
+
+		function importBody(){
+			var loader = new THREE.SEA3D( SeaStandard );
+			var dir;
+			if(SeaStandard){
+				dir = 1; 
+				camera.scale.set(-1,1,1);
+				ground.scale.set(-1,1,1);
+				sky.scale.set(-1,1,1);
+			}
+			else {dir = -1}
+			loader.onComplete = function( e ) {
+
+				var geoSuit = loader.getMesh("Suit").geometry;
+				var geoBody = loader.getMesh("Body").geometry;
+
+				// base mesh
+				body = new THREE.SkinnedMesh ( geoBody, materials[0] , false );
+				body.scale.set( 1, 1, dir );
+				scene.add( body );
+
+				suit = new THREE.SkinnedMesh ( geoSuit, materials[1] , false );
+				suit.scale.set( 1, 1, dir );
+				scene.add( suit );
+
+				// for shadow
+				var mat  = new THREE.MeshBasicMaterial({skinning: true, transparent:true, opacity:0 });
+				bodyShadow = new THREE.SkinnedMesh ( geoBody, mat , false );
+				bodyShadow.scale.set( 1, 1, dir );
+				scene.add( bodyShadow );
+
+				// bone reference for head
+				/*bodyNeck = new THREE.Object3D();
+	            var bone = body.bones[17];
+	            bodyNeck.matrix = bone.skinMatrix;
+	            bodyNeck.matrixAutoUpdate = false;
+	            body.add( bodyNeck );*/
+
+	            bodyHead = new THREE.Object3D();
+
+	            bone = body.bones[20];
+	            bodyHead.matrix = bone.skinMatrix;
+	            bodyHead.matrixAutoUpdate = false;
+	            body.add( bodyHead );
+
+	            // new eye
+				var geometry = new THREE.IcosahedronGeometry( 0.8, 4 );
+				eyeGeoL = new THREE.Mesh( geometry, materials[2] );
+				bodyHead.add(eyeGeoL);
+				eyeGeoR = new THREE.Mesh( geometry, materials[2] );
+				bodyHead.add(eyeGeoR);
+				eyeGeoR.scale.set( 1, 1, -1 );
+				eyeGeoL.scale.set( 1, 1, -1 );
+				eyeGeoR.rotation.y = 180*ToRad;
+			    eyeGeoL.rotation.y = 180*ToRad;
+
+				eyeGeoR.position.y = 1.78;
+				eyeGeoL.position.y = -1.78;
+
+				eyeGeoR.position.x =  eyeGeoL.position.x = 5.6;
+				eyeGeoR.position.z =  eyeGeoL.position.z = 4.3;
+
+
+				body.castShadow = false;
+				bodyShadow.castShadow = true;
+				body.receiveShadow = true;
+				bodyShadow.receiveShadow = false;
+
+				// animation
+				bodyAnim = new SEA.Animator(body, "Body");
+				bodyAnim.add("idle", true);
+				bodyAnim.add("walk", true);
+				bodyAnim.add("boneref", false);
+
+				suitAnim = new SEA.Animator(suit, "Body");
+				suitAnim.add("idle", true);
+				suitAnim.add("walk", true);
+				suitAnim.add("boneref", false);
+
+				shadAnim = new SEA.Animator(bodyShadow, "Body");
+				shadAnim.add("idle", true);
+				shadAnim.add("walk", true);
+				shadAnim.add("boneref", false);
+
+				playAnimation( "boneref" );
+				stopAnimation();
+				//playAnimation( "walk" );
+
+				// bones TEST
+				squeleton = new THREE.Object3D();
+				squeleton.scale.set( 1, 1, dir );
+				scene.add( squeleton );
+
+				var nBone  
+				var geoBone = new THREE.BoxGeometry( 1, 1, 1 );
+				var geoBone2 = new THREE.BoxGeometry( 6, 3, 3 );
+				geoBone2.applyMatrix( new THREE.Matrix4().makeTranslation( 3, 0, 0 ) );
+
+				var matBone;
+				var matBoneX = new THREE.MeshBasicMaterial( {color:0xff0000} );
+				var matBone0 = new THREE.MeshBasicMaterial( {color:0xffff00} );
+				var matBone2 = new THREE.MeshBasicMaterial( {color:0xff0000} );
+				var matBone1 = new THREE.MeshBasicMaterial( {color:0x808080} );
+
+				var matBoneR = new THREE.MeshBasicMaterial( {color:0x00ff00} );
+				var matBoneR0 = new THREE.MeshBasicMaterial( {color:0x30ff30} );
+				var matBoneR1 = new THREE.MeshBasicMaterial( {color:0x60ff60} );
+				var matBoneR2 = new THREE.MeshBasicMaterial( {color:0x90ff90} );
+
+				var matBoneL = new THREE.MeshBasicMaterial( {color:0x0000ff} );
+				var matBoneL0 = new THREE.MeshBasicMaterial( {color:0x3030ff} );
+				var matBoneL1 = new THREE.MeshBasicMaterial( {color:0x6060ff} );
+				var matBoneL2 = new THREE.MeshBasicMaterial( {color:0x9090ff} );
+
+				bonesNames = [
+				    "Hips", "LeftUpLeg", "Spine1", "RightUpLeg", "LeftLowLeg",
+				    "RightLowLeg", "Chest", "Chest2", "LeftFoot", "RightFoot",
+				    "LeftCollar", "LeftToe", "RightCollar", "RightToe", "Spine3", 
+				    "LeftUpArm", "Neck", "RightUpArm", "LeftLowArm", "RightLowArm" ,
+				    "Head", "RightLowArm2", "LeftLowArm2", "RightHand", "LeftHand",
+
+				    "FR20", "FL00", "FR10", "FR00", "FL20",
+				    "FL10", "FL20", "FR10", "FR30", "FL30",
+
+				    "FL31", "FR31", "FL11", "FL41", "FR21",
+				    "FR41", "FR01", "FL01", "FL21", "FR11",
+
+				    "FR12", "FR02", "FL42", "FR22", "FL32",
+				    "FL22", "FR32", "FL12", "FL02", "FR42"
+				];
+
+				bonesNamesRevers = [
+				    "Hips", "RightUpLeg", "Spine1", "LeftUpLeg", "RightLowLeg",
+				    "LeftLowLeg", "Chest", "Chest2", "RightFoot", "LeftFoot",
+				    "RightCollar", "RightToe", "LeftCollar", "LeftToe", "Spine3", 
+				    "RightUpArm", "Neck", "LeftUpArm", "RightLowArm", "LeftLowArm" ,
+				    "Head", "LeftLowArm2", "RightLowArm2", "LeftHand", "RightHand",
+
+				    "FR20", "FL00", "FR10", "FR00", "FL20",
+				    "FL10", "FR20", "FL10", "FL30", "FR30",
+
+				    "FR31", "FL31", "FR11", "FR41", "FL21",
+				    "FL41", "FL01", "FR01", "FR21", "FL11",
+
+				    "FL12", "FL02", "FR42", "FL22", "FR32",
+				    "FR22", "FL32", "FR12", "FR02", "FL42"
+				];
+
+				var bone;
+
+				
+				//suit.matrixWorldNeedsUpdate = false;
+
+				for (var i=0, l=body.bones.length; i !== l; i++){
+
+					bone = body.bones[i];
+					//bone.rotation.order = "YXZ";
+					
+					if(BonesRevers) bone.name = bonesNamesRevers[i];
+					else bone.name = bonesNames[i];
+
+					if(i<25){
+						bonesReference[i] = { name:bone.name, x:(bone.rotation.x*ToDeg).toFixed(2), y:(bone.rotation.y*ToDeg).toFixed(2), z:(bone.rotation.z*ToDeg).toFixed(2), order:bone.rotation.order,
+						quat:bone.quaternion.clone(),
+						mtx:bone.matrix.clone()
+						 }
+						
+						//bone.rotation.set(bonesReference[i].z, bonesReference[i].x, bonesReference[i].y)
+					}
+					//console.log(bonesReference[i]);
+					//suit.bones[i].name = bonesNames[i];
+
+					//bone.rotation.order = 'ZXY';
+
+					var axis = new THREE.AxisHelper(1);
+					var addAxis;
+
+					//console.log(bone.rotation.order)
+		
+	
+
+					//if(!displayModel){
+						addAxis = true;
+						matBone = matBone1;
+						var bn = bone.name.substring(0,2);
+						var n = bone.name.substring(3,4);
+						if(bn === "Le" || bn === "FL"){
+							if(n==="0"){matBone = matBoneL0;addAxis=false;}
+							else if(n==="1"){matBone = matBoneL1; addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+							else if(n==="2"){matBone = matBoneL2;  addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+						    else matBone = matBoneL;
+						}
+						else if(bn === "Ri" || bn === "FR"){ 
+							if(n==="0"){matBone = matBoneR0;addAxis=false;}
+							else if(n==="1"){matBone = matBoneR1; addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+							else if(n==="2"){matBone = matBoneR2;  addAxis=false;//bone.rotation.y = -45*ToRad;
+							 }
+						    else matBone = matBoneR;
+						}
+						else{ matBone = matBone0; }
+
+						// bone test
+						if(i === 20){ nBone = new THREE.Mesh( geoBone2, matBone ); }
+					    else if(i === 30){ nBone = new THREE.Mesh( geoBone, matBoneX ); }
+						else { nBone = new THREE.Mesh( geoBone, matBone ); }
+						nBone.matrix = bone.skinMatrix;
+						nBone.matrixAutoUpdate = false;
+						//body.add( nBone );
+						squeleton.add( nBone );
+						if( addAxis ) nBone.add(axis)
+						//
+					//}
+
+					// update bone
+					//bone.matrixAutoUpdate = true;
+			        //bone.matrixWorldNeedsUpdate = true;
+				}
+
+				modelOrBones();
+
+				document.getElementById('loading').style.visibility = 'hidden';		
+
+
+					
+				//bodyShadow.visible = false;
+				//suit.visible = false;
+				//body.visible = false;
+				//document.getElementById('loading').style.visibility = 'hidden';	
+				
+				addGUIAnimation();
+
+				playAnimation( "walk" );
+
+				// BVH test
+				initBVH();
+		
+			};
+			
+			loader.load( 'res/models/onkba2.sea' );
+
+		}
+
+	
+		//-----------------------------------------------------
+		//  BVH TEST
+		//-----------------------------------------------------
+
+		var BVHset = {ax:"x", ay:"y", az:"z", dx:1, dy:1, dz:1, rx:0, ry:0, rz:0, order:"XYZ"};
+		var BVHanimConfig = {
+			debug:true,
+			speed:0.25
+		}
+
+		function initBVH() {
+			bvhReader = new BVH.Reader();
+			bvhReader.speed = BVHanimConfig.speed;
+
+			loadBVH("action", 'XYZ');
+
+			initBVHGui();
+
+		}
+
+		function loadBVH(name, Order, NoCompress) {
+			var noCompress = NoCompress || false;
+			var order = Order || "ZXY";
+			if(noCompress) bvhReader.load("res/bvh/"+name+".bvh", order);
+			else bvhReader.load("res/bvh/"+name+".png", order);
+		}
+
+		function initBVHGui() {
+			
+
+			var f5 = gui.addFolder('BVH Animation BETA');
+			
+			//f5.add( BVHanimConfig, 'debug' ).listen().onChange( function() {bvhReader.debug = this});
+
+			//f5.add( BVHset, 'order', [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ] );
+
+			BVHanimConfig.calibration = function() { loadBVH("calibration", 'ZXY'); };
+            BVHanimConfig.ballet = function() { loadBVH("ballet", 'ZXY'); };
+            BVHanimConfig.shoot = function() { loadBVH("shoot", 'ZXY'); };
+            BVHanimConfig.sprint = function() { loadBVH("sprint", 'ZXY'); };
+            BVHanimConfig.exsize = function() { loadBVH("exsize", 'ZXY'); };
+            BVHanimConfig.test = function() { loadBVH("test", 'ZYX'); };
+            BVHanimConfig.big = function() { loadBVH("big", 'ZYX'); };
+
+            BVHanimConfig.c11A = function() { loadBVH("c11A", 'ZXY'); };
+            BVHanimConfig.c11B = function() { loadBVH("c11B", 'ZXY'); };
+
+            BVHanimConfig.story = function() { loadBVH("story", 'YXZ'); };
+            BVHanimConfig.action = function() { loadBVH("action", 'XYZ'); };
+
+            BVHanimConfig.stop = function() {  bvhReader.play = false; };
+            BVHanimConfig.play = function() { bvhReader.oldFrame = bvhReader.frame; bvhReader.startTime = Date.now(); bvhReader.play = true; };
+            BVHanimConfig.next = function() { bvhReader.next(); };
+            BVHanimConfig.prev = function() { bvhReader.prev(); };
+
+
+            f5.add( BVHanimConfig, 'calibration' );
+            f5.add( BVHanimConfig, 'ballet' );
+            f5.add( BVHanimConfig, 'shoot' );
+            f5.add( BVHanimConfig, 'sprint' );
+            f5.add( BVHanimConfig, 'exsize' );
+            f5.add( BVHanimConfig, 'test' );
+            f5.add( BVHanimConfig, 'big' );
+
+            f5.add( BVHanimConfig, 'c11A' );
+            f5.add( BVHanimConfig, 'c11B' );
+
+            f5.add( BVHanimConfig, 'story' );
+            f5.add( BVHanimConfig, 'action' );
+
+            f5.add( BVHanimConfig, 'speed', 0.1, 1 ).onChange( function() { bvhReader.speed = BVHanimConfig.speed; });;
+
+            f5.add( BVHanimConfig, 'stop' );
+            f5.add( BVHanimConfig, 'play' )
+            f5.add( BVHanimConfig, 'next' );
+            f5.add( BVHanimConfig, 'prev' );
+
+			f5.open();
+
+		}
+
+		function updateBVH() {
+			if(bvhReader !== null && bvhReader.play){
+
+				bvhReader.update();
+			}
+		}
+
+ 
+		function toAngles(o) {
+			var q = o.quaternion.clone();
+			var x = q.x, 
+				y = q.y, 
+				z = q.z, 
+				w = q.w;
+			
+			var a = 2 * (w * y - z * x);
+			
+			if (a < -1) a = -1;
+			else if (a > 1) a = 1; 
+			
+			return {
+				x : Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)) * 1,
+				y : Math.asin(a) * 1,
+				z : Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)) * 1
+			}
+		}
+
+		function traceMatrix(o, n) {
+				var e = o.matrix.elements
+				var s = o.name+"<br>";
+				var q = o.quaternion.clone();
+				//s+=( q.x ).toFixed(2)+ "_"+ ( q.y ).toFixed(2) +  "_"+ (q.z).toFixed(2)+ "_"+  (q.w).toFixed(2);
+				//s+=( b.rot.x * ToDeg ).toFixed(2)+ "_"+ ( b.rot.y * ToDeg ).toFixed(2) +  "_"+ ( b.rot.z * ToDeg ).toFixed(2);
+
+				//s+= "<br>"
+
+				s+=( o.rotation.x * ToDeg ).toFixed(2)+ "_"+ ( o.rotation.y * ToDeg ).toFixed(2) +  "_"+ ( o.rotation.z * ToDeg ).toFixed(2)+ "_"+ o.rotation.order;
+
+				s+= "<br>"
+
+				s += "_"+ e[0].toFixed(2) + "_" + e[1].toFixed(2) + "_"+ e[2].toFixed(2) + "_" + e[3] + "<br>";
+				s += "_"+ e[4].toFixed(2) + "_" + e[5].toFixed(2) + "_"+ e[6].toFixed(2) + "_" + e[7] + "<br>";
+				s += "_"+ e[8].toFixed(2) + "_" + e[9].toFixed(2) + "_"+ e[10].toFixed(2) + "_" + e[11] + "<br>";
+				s += "_"+ e[12] + "_" + e[13] + "_"+ e[14] + "_" + e[15] + "<br>";
+				
+				if(n===1) out1.innerHTML = s;
+				else out2.innerHTML = s;
+			}
+
+
+
+		//-----------------------------------------------------
+		//  GUI
+		//-----------------------------------------------------
+
+		function addGUI() {
+			gui = new dat.GUI({autoPlace:false, width:204});
+			document.getElementById('gui').appendChild(gui.domElement);
+		}
+		
+		function tell(s){
+			document.getElementById("debug").innerHTML = s;
+		}
+
+		
+
+		//-----------------------------------
+		// MATH
+		//-----------------------------------
+
+		function Orbit(origine, horizontal, vertical, distance) {
+		    var p = new THREE.Vector3();
+		    var phi = vertical*ToRad;
+		    var theta = horizontal*ToRad;
+		    p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+		    p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+		    p.y = (distance * Math.cos(phi)) + origine.y;
+		    return p;
+		}
+
+		//-----------------------------------
+		// MOUSE & NAVIGATION 
+		//-----------------------------------
+
+		var changeView = function (h, v, d) {
+			TweenLite.to(camPos, 3, {horizontal: h, vertical: v, distance: d, onUpdate: moveCamera });
+			camPos.automove = true;
+		}
+
+		function moveCamera() {
+		    camera.position.copy(Orbit(center, camPos.horizontal, camPos.vertical, camPos.distance));
+		    camera.lookAt(center);
+		}
+
+		function onMouseDown(e) {
+		    e.preventDefault();
+		    mouse.ox = e.clientX;
+		    mouse.oy = e.clientY;
+		    mouse.h = camPos.horizontal;
+		    mouse.v = camPos.vertical;
+		    mouse.down = true;
+		}
+
+		function onMouseUp(e) {
+		    mouse.down = false;
+		    document.body.style.cursor = 'auto';
+		}
+
+		function onMouseMove(e) {
+		    e.preventDefault();
+		    if (mouse.down ) {
+		        document.body.style.cursor = 'move';
+		        if(SeaStandard)camPos.horizontal = (-(e.clientX - mouse.ox) * 0.3) + mouse.h;
+		        else camPos.horizontal = ((e.clientX - mouse.ox) * 0.3) + mouse.h;
+		        camPos.vertical = (-(e.clientY - mouse.oy) * 0.3) + mouse.v;
+
+		        moveCamera();
+		    } else {
+		    	mouse.ox = e.clientX;
+			    mouse.oy = e.clientY;
+		    }
+		}
+
+		function onMouseWheel(e) {
+		    var delta = 0;
+		    if(e.wheelDelta){delta=e.wheelDelta*-1;}
+		    else if(e.detail){delta=e.detail*20;}
+		    camPos.distance+=(delta/10);
+
+		    moveCamera();   
+		    e.preventDefault();
+		}
+
+		window.onload = init;
+
+	</script>
+
+	<body>
+		<div id="viewport"></div>
+		<div id="hubs">
+			<div id="debug"></div>
+			<div id="guiContener"><div id="gui"></div></div>
+			<div id="copy">
+				BVH player <a href="http://3dflashlo.wordpress.com/" target="_blank">&nbsp;&nbsp;&nbsp;loth 2014&nbsp;&nbsp;&nbsp;</a>
+			</div>
+		</div>
+		<div id="BVHhubs">
+
+		</div>
+		
+		<div id="output1"></div>
+		<div id="output2"></div>
+
+	</body>
+</html>

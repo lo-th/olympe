@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="js/three.min.66.js"></script>
+</head>
+<body>
+<script>
+// Demo of new THREE.js Rotation Coversion Routines
+// WestLangley
+
+var info,
+    scene,
+    camera,
+    renderer,
+    ambientLight,
+    directionalLight,
+    material,
+    geometry,
+    materials = [],
+    mesh,
+    object = [],
+    floor,
+    i, j, m, idx,
+    angle = 0,
+    axis = new THREE.Vector3( 1, 0, 0 ),
+    orders = [ 'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX' ];
+
+
+// info
+info = document.createElement( 'div' );
+info.style.position = 'absolute';
+info.style.top = '30px';
+info.style.width = '100%';
+info.style.textAlign = 'center';
+info.style.color = '#fff';
+info.style.backgroundColor = 'transparent';
+info.style.zIndex = '1'; // renderer domElement covers it up
+info.innerHTML = 'Three.js Rotation Conversions';
+document.body.appendChild( info );
+
+// renderer
+renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+// scene
+scene = new THREE.Scene();
+
+// camera
+camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
+camera.position.set( 400, 200, 0 );
+camera.lookAt( scene.position );
+scene.add( camera );
+
+// ambient light
+ambientLight = new THREE.AmbientLight( 0x555555 );
+scene.add( ambientLight );
+
+// directional light
+directionalLight = new THREE.DirectionalLight( 0xffffff );
+directionalLight.position = camera.position;
+scene.add( directionalLight );
+
+// material
+material = new THREE.MeshFaceMaterial( );
+
+// face colors
+for ( i = 0; i < 6; i ++ ) {
+    m = new THREE.MeshLambertMaterial();
+    m.color.setHex( Math.random()*0xffffff );
+    m.ambient = m.color;
+    materials.push( m );
+}
+
+// geometry
+geometry = new THREE.CubeGeometry( 20, 60, 10, 2, 6, 1, materials );
+geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 30, 0 ) );
+
+// meshes
+for ( i = 0; i < 3; i++ ) {
+    for ( j = 0; j < 3; j++ ) {
+        idx = i * 3 + j;
+        object[ idx ] = new THREE.Mesh( geometry, material );
+        object[ idx ].position.set( 100 * ( i - 1 ), 0, 100 * ( j - 1 ) );
+        scene.add( object[ idx ] );
+    }
+}
+
+// floor
+floor = new THREE.Mesh( 
+    new THREE.PlaneGeometry( 250, 250, 10, 10 ), 
+    new THREE.MeshBasicMaterial( { color: 0xcccccc, wireframe: true } ) 
+);
+floor.position.set( 0, 0, 0 );
+scene.add(floor);
+
+// listener
+document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+// event handlers
+function onDocumentMouseMove( event ) {
+
+    var mouse = { x: 0, y: 0 };
+    mouse.x = 2 * event.clientX / window.innerWidth  - 1;
+    mouse.y = 2 * event.clientY / window.innerHeight - 1;
+        
+    // rotate camera
+    camera.position.set( 400 * Math.cos( 8 * mouse.x ), 200, 400 * Math.sin( 8 * mouse.x ) );
+    camera.lookAt( scene.position );
+
+}
+
+// -----------------------------------------------------------------------------
+
+// rotate
+(function rotate() {
+
+    var mat = new THREE.Matrix4(),
+        v = new THREE.Vector4(),
+        q = new THREE.Quaternion(),
+        e = new THREE.Vector3(),
+    
+        // random Euler order
+        order = orders[ Math.floor( Math.random() * 5.99999 ) ];
+        
+        // axis follows a random walk
+        axis.set( axis.x + 0.1 * ( Math.random() - 0.5 ), 
+                  axis.y + 0.1 * ( Math.random() - 0.5 ), 
+                  axis.z + 0.1 * ( Math.random() - 0.5 ) ).normalize();
+        
+        // so does angle
+        angle = ( angle + 1.0 * ( Math.random() - 0.5 ) ) % ( Math.PI * 4 );
+        
+        // alternatively, angle is a multiple of pi / 4
+        //angle = ( Math.floor( 40 * ( Math.random() - 0.5 ) ) ) * ( Math.PI / 4 );
+    
+    window.setTimeout( rotate, 200 );
+        
+    // aa -> rm -> e
+    mat.makeRotationAxis( axis, angle );
+    e.rotation.setFromRotationMatrix( mat, order );
+    object[ 0 ].rotation.Order = order;
+    object[ 0 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> q -> rm -> e
+    q.setFromAxisAngle( axis, angle );
+    mat.setRotationFromQuaternion( q );
+    e.setFromRotationMatrix( mat, order );
+    object[ 1 ].rotation.Order = order;
+    object[ 1 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> q -> e
+    q.setFromAxisAngle( axis, angle );
+    e.setEulerFromQuaternion( q, order );
+    object[ 2 ].rotation.Order = order;
+    object[ 2 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> q -> aa -> rm -> e
+    q.setFromAxisAngle( axis, angle );
+    v.setAxisAngleFromQuaternion( q );
+    mat.makeRotationAxis( axis, angle );
+    e.setFromRotationMatrix( mat, order );
+    object[ 3 ].rotation.Order = order;
+    object[ 3 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> rm -> q -> e
+    mat.makeRotationAxis( axis, angle );
+    q.setFromRotationMatrix( mat );
+    e.setEulerFromQuaternion( q, order );
+    object[ 4 ].rotation.Order = order;
+    object[ 4 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> rm -> e -> q -> e
+    mat.makeRotationAxis( axis, angle );
+    e.setEulerFromRotationMatrix( mat, order );
+    q.setFromEuler( e, order );
+    e.setEulerFromQuaternion( q, order );
+    object[ 5 ].rotation.Order = order;
+    object[ 5 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> rm -> e -> rm -> e
+    mat.makeRotationAxis( axis, angle );
+    e.setFromRotationMatrix( mat, order );
+    mat.setRotationFromEuler( e, order );
+    e.setEulerFromRotationMatrix( mat, order );
+    object[ 6 ].rotation.Order = order;
+    object[ 6 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> rm -> aa -> rm -> e
+    mat.makeRotationAxis( axis, angle );
+    v.setAxisAngleFromRotationMatrix( mat );
+    mat.makeRotationAxis( axis, angle );
+    e.setEulerFromRotationMatrix( mat, order );
+    object[ 7 ].rotation.Order = order;
+    object[ 7 ].rotation.set( e.x, e.y, e.z );
+    
+    // aa -> rm -> q -> rm -> e
+    mat.makeRotationAxis( axis, angle );
+    q.setFromRotationMatrix( mat );
+    mat.setRotationFromQuaternion( q );
+    e.setEulerFromRotationMatrix( mat, order );
+    object[ 8 ].rotation.Order = order;
+    object[ 8 ].rotation.set( e.x, e.y, e.z );
+
+}());
+
+// -----------------------------------------------------------------------------
+
+// render
+function render() {
+
+    renderer.render(scene, camera);
+}
+
+// animate
+function animate() {    
+
+    requestAnimationFrame( animate );
+    
+    render();
+}
+
+animate();
+
+</script>
+    </body>
+</html>

@@ -22,9 +22,10 @@ input{ margin:10px; padding:10px; }
 #title{ position: absolute; left:10px; top:20px; width:300px; height:30px; font-size: 200%;}
 #imageSizeX{ position: absolute; left:300px; top:10px; width: 50px;}
 #imageSizeY{ position: absolute; left:400px; top:10px; width: 50px;}
-#but01{ position: absolute; left:500px; top:10px;  }
-#but02{ position: absolute; left:600px; top:10px; }
-#but03{ position: absolute; left:710px; top:10px; }
+#but01{ position: absolute; left:500px; top:10px; width: 60px; }
+#but02{ position: absolute; left:564px; top:10px; width: 60px;}
+#but03{ position: absolute; left:628px; top:10px; width: 60px;}
+#but04{ position: absolute; left:692px; top:10px; width: 80px;}
 #xtxt{ position: absolute; left:300px; top:30px; margin-left:-8px; width: 20px; }
 #ytxt{ position: absolute; left:400px; top:30px; margin-left:-8px; width: 20px; }
 
@@ -41,11 +42,12 @@ a{color:#ff8800;text-decoration:none;}
 </style>
 <div id='interface'>
     <div id="title"> BVH to PNG </div>
-    <div id="xtxt">X</div> <input type="number" name="quantity" min="32" max="2048" value="1024"  id='imageSizeX'>
-    <div id="ytxt">Y</div> <input type="number" name="quantity" min="32" max="2048" value="1024"  id='imageSizeY'>
-    <input type="submit" onClick=update(0) value="Update Fixe" id="but01">
-    <input type="submit" onClick=update(1) value="Update Fixe X" id="but02">
-    <input type="submit" onClick=update(2) value="Update AutoSize" id="but03">
+    <div id="xtxt">X</div> <input type="number" name="quantity" min="32" max="4096" value="512"  id='imageSizeX'>
+    <div id="ytxt">Y</div> <input type="number" name="quantity" min="32" max="4096" value="512"  id='imageSizeY'>
+    <input type="submit" onClick=update(0) value="Fixe" id="but01">
+    <input type="submit" onClick=update(1) value="Fixe X" id="but02">
+    <input type="submit" onClick=update(2) value="Fixe Y" id="but03">
+    <input type="submit" onClick=update(3) value="AutoSize" id="but04">
     <div id="inputtxt">INPUT</div><textarea name="input" id="input">Open .bvh in text editor and past text here.
 save red border png image drag to png compression app</textarea>
     <div id="outputtxt">OUTPUT</div><textarea name="output" id="output" disabled></textarea>
@@ -65,11 +67,14 @@ function update(n) {
     if(n===0){ 
   	    size = [document.getElementById('imageSizeX').value, document.getElementById('imageSizeY').value];
   	} else if(n===1){ 
-         s = Math.ceil(str.length/document.getElementById('imageSizeX').value);
-         size = [document.getElementById('imageSizeX').value, s]; }
-    else {
-         s = Math.ceil(Math.sqrt(str.length));
-         size = [s, s];
+        s = Math.ceil(str.length/document.getElementById('imageSizeX').value);
+        size = [document.getElementById('imageSizeX').value, s]; 
+    } else if(n===2){
+    	s = Math.ceil(str.length/document.getElementById('imageSizeY').value);
+    	size = [s, document.getElementById('imageSizeY').value];
+    } else {
+        s = Math.ceil(Math.sqrt(str.length));
+        size = [s, s];
     }
 
     createDemo(str);
@@ -87,7 +92,9 @@ function createDemo(str) {
     var c;
     
     for(i = 0, l= image.data.length; i < l; i+=4) {
-        c = str.charCodeAt(i-n) || 31;
+    	//c = str.charCodeAt(i-n) || 31;
+        c = str.charCodeAt(i-n) || 32;
+        c = c-32;
         img[i+0] = c;
         img[i+1] = c;
         img[i+2] = c;
