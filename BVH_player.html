@@ -287,7 +287,8 @@
 			debug:true,
 			speed:0.25,
 			size:1,
-			px:0, py:0, pz:0
+			px:0, py:0, pz:0,
+			boneSize:1.5
 		}
 
 		function initBVH() {
@@ -354,6 +355,8 @@
             f5.add( BVHanimConfig, 'px', -100, 100 ).onChange( function() { positionBVH() });;
             f5.add( BVHanimConfig, 'py', -100, 100 ).onChange( function() { positionBVH() });;
             f5.add( BVHanimConfig, 'pz', -100, 100 ).onChange( function() { positionBVH() });;
+
+            f5.add( BVHanimConfig, 'boneSize', 0.5, 5 ).onChange( function() { bvhReader.boneSize = BVHanimConfig.boneSize; });
 
 			f5.open();
 

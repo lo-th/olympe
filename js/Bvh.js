@@ -13,7 +13,7 @@ BVH.Reader = function(){
 	this.play = false;
 	this.channels = null;
 	this.lines = "";
-	this.bones = [];
+	
 	this.speed = 1;
 
 	this.nodes = null;
@@ -28,8 +28,11 @@ BVH.Reader = function(){
 	this.tmpOrder = "";
 	this.tmpAngle = [];
 
-	this.squeleton = null;
-	this.skeletonBones = null;
+	this.skeleton = null;
+	this.bones = [];
+	this.boneSize = 1.5;
+
+	this.material = new THREE.MeshNormalMaterial();//new THREE.MeshBasicMaterial({ color:0xffffff });
 }
 
 BVH.Reader.prototype = {
@@ -79,13 +82,12 @@ BVH.Reader.prototype = {
 			switch (this.data.shift()) {
 			case 'ROOT':
 			    if(this.root !== null) this.clearNode();
-			    this.bones = [];
-				this.root = this.parseNode(this.data);
-				if(this.debug){ 
-					scene.add(this.root);
-					this.root.position.copy(this.position);
-					this.root.scale.set(this.scale,this.scale,this.scale);
 
+				this.root = this.parseNode(this.data);
+				this.root.position.copy(this.position);
+				this.root.scale.set(this.scale,this.scale,this.scale);
+
+				if(this.debug){
 					this.addSkeleton( this.nodes.length );
 				}
 				break;
@@ -123,45 +125,46 @@ BVH.Reader.prototype = {
 
 
     addSkeleton:function ( n ) {
-    	this.squeleton = new THREE.Object3D();
-    	this.skeletonBones = [];
+    	this.skeleton = new THREE.Object3D();
+    	this.bones = [];
 
-    	var n = this.nodes.length, node;
+    	var n = this.nodes.length, node, bone;
     	//var geo = new THREE.CubeGeometry( 0.2, 0.2, 10 );//new THREE.Geometry();
-    	var geo = new THREE.CubeGeometry( 2, 2, 1);
+    	var geo = new THREE.CubeGeometry( this.boneSize, this.boneSize, 1);
     	//geo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, 6 ) );
     	geo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, 0.5 ) );
-    	var mat = new THREE.MeshNormalMaterial();
+    	//var mat = new THREE.MeshNormalMaterial();
 
     	for(var i=0; i<n; i++){
     		node = this.nodes[i];
     		if ( node.name !== 'Site' ){
-	    		this.skeletonBones[i] = new THREE.Mesh(geo, mat);
-	    		this.skeletonBones[i].name = node.name;
-	    		this.squeleton.add(this.skeletonBones[i])
+    			bone = new THREE.Mesh(geo, this.material);
+	    		bone.name = node.name;
+	    		this.skeleton.add(bone);
+	    		this.bones[i] = bone;
     	    }
-    		
     	}
-    	scene.add( this.squeleton );
+    	scene.add( this.skeleton );
 
     },
     updateSkeleton:function (  ) {
-    	var mtx, node, skel;
+    	var mtx, node, bone;
     	var n = this.nodes.length;
     	var target;
     	for(var i=0; i<n; i++){
     		node = this.nodes[i];
-    		skel = this.skeletonBones[i];
+    		bone = this.bones[i];
 
     		if ( node.name !== 'Site' ){
 	    		mtx = node.matrixWorld;
-	    		skel.position.setFromMatrixPosition( mtx );
+	    		bone.position.setFromMatrixPosition( mtx );
 	    		//this.skeletonBones[i].rotation.setFromRotationMatrix( mtx );
 	    		if(node.children.length){
 	    			target = new THREE.Vector3().setFromMatrixPosition( node.children[0].matrixWorld );
-	    			skel.lookAt(target);
+	    			bone.lookAt(target);
 
-	    			skel.scale.z = BVH.DistanceTest(skel.position, target);
+	    			if(bone.name==="Head")bone.scale.set(this.boneSize*2,this.boneSize*2,BVH.DistanceTest(bone.position, target)*(this.boneSize*1.5));
+	    			else bone.scale.set(this.boneSize,this.boneSize,BVH.DistanceTest(bone.position, target));
 	    		}
 	    		/*if(node.parent){
 	    			target = new THREE.Vector3().setFromMatrixPosition( node.parent.matrixWorld );
@@ -170,24 +173,6 @@ BVH.Reader.prototype = {
 	    	}
     	}
     },
-    addDebugNode:function ( name ) {
-
-		var material = new THREE.MeshNormalMaterial( {});//{ opacity: 0.5, side: THREE.DoubleSide, transparent: true } );
-		var geometry, axis;
-		if ( name === 'Site' ) {
-			geometry = new THREE.SphereGeometry( 0.4 );
-			axis = new THREE.AxisHelper(2);
-		} else if(name==="Head"){
-			geometry = new THREE.BoxGeometry( 2, 2, 2 );
-		} else { // use generic
-			geometry = new THREE.BoxGeometry( 1, 1, 1 );
-			axis = new THREE.AxisHelper(1)
-		}
-		var node = new THREE.Mesh(geometry, material);
-		//node.add(axis);
-		this.bones.push(node);
-		return node;
-	},
 	transposeName:function(name){
 		if(name==="hip") name = "Hips";
 		if(name==="abdomen") name = "Spine1";
@@ -238,9 +223,7 @@ BVH.Reader.prototype = {
     	var name, done, n, node, t;
 		name = data.shift();
 		name = this.transposeName(name);
-
-		if(this.debug) node = this.addDebugNode( name );
-		else node = new THREE.Object3D();
+		node = new THREE.Object3D();
 		node.name = name;
 
 		done = false;
@@ -264,22 +247,26 @@ BVH.Reader.prototype = {
 					done = true;
 			}
 		}
-		//if ( name !== 'Site' ){
-			this.nodes.push(node);
-			//node.castShadow = true;
-		//}
+		this.nodes.push(node);
 		return node;
     },
     clearNode:function(){
-    	if(this.debug && this.bones.length){ 
-    	for (var i=0; i<this.bones.length; i++){
-			this.bones[i].geometry.dispose();
+    	var i;
+
+    	for (i=0; i<this.nodes.length; i++){
+			this.nodes[i] = null;
 		}
-    	scene.remove(this.root);
-       }
+		this.nodes.length = 0;
 
-       scene.remove( this.squeleton );
-
+		if(this.bones.length > 0){
+	    	for ( i=0; i<this.bones.length; i++){
+				if(this.bones[i]){
+					this.bones[i].geometry.dispose();
+				}
+			}
+			this.bones.length = 0;
+	        scene.remove( this.skeleton );
+	   }
     },
     animate:function(){
     	//debugTell("frame" +  this.frame);
@@ -324,7 +311,7 @@ BVH.Reader.prototype = {
 			n++;
 		}
 
-		this.updateSkeleton();
+		if(this.bones.length > 0) this.updateSkeleton();
 		
     },
     autoDetectRotation:function(Obj, Axe, Angle){
@@ -427,5 +414,6 @@ BVH.DistanceTest = function( p1, p2 ){
     var y = p2.y-p1.y;
     var z = p2.z-p1.z;
     var d = Math.sqrt(x*x + y*y + z*z);
+    if(d<=0)d=0.1;
     return d;
 }
