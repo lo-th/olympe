@@ -50,4 +50,4 @@ img.onload = function() {
 
 	sourceLoaded(LoadInfo);
 };
-img.src = "img/full.png";
+img.src = "res/code/full.png";
