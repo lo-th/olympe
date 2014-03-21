@@ -101,6 +101,19 @@ SEA.Animator.prototype = {
             }
         }
     },
+    playFrame:function(name, n){
+        for(var i=0, l=this.animation.length; i<l; i++ ){
+                if(this.animation[i].name === name){
+                    this.animation[i].play( n );
+                    this.animation[i].stop();
+                } 
+            }
+      //  this.current.play(n);
+       // this.current.pause();
+    },
+    pause:function(){
+        this.current.pause();
+    },
     stop:function(){
         if(this.current.name!==""){
          this.current.stop();

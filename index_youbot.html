@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Kuk-a-droid</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta property="og:title" content="Kuk-a-droid - WebGL"/>
+		<meta property="og:description" content="Robot simulation 3D demo"/>
+		<meta name="author" content="Loth 2013" />
+		<meta name="language" content="en-us" />
+		<style>
+			body {
+				font-family: 'Trebuchet MS', Geneva, sans-serif;
+				background-color: #4D4D4D;
+				overflow: hidden;
+				font-size: 11px;
+				color: #9D9D9D;
+				height: 100%;
+				margin: 0px;
+			}
+			#info {
+				top: 5px;
+				width: 300px;
+				height: 300px;
+				margin-left:20px;
+				position: absolute;
+				pointer-events: none;
+			}
+			#copy {
+				color: #888;
+				bottom: 6px;
+				width: 150px;
+				margin-left:20px;
+				position: absolute;
+				pointer-events: none;
+			}
+			#loading {
+			    top: 50%;
+			    left: 50%;
+			    position: fixed;
+			    pointer-events: none;
+			}
+			.unselectable{
+				-o-user-select: none;
+			    -ms-user-select: none;
+			    -moz-user-select: none;
+			    -khtml-user-select: none;
+			    -webkit-user-select: none;
+			}
+			#stats #fps { background: transparent !important }
+			#stats #fps #fpsText { color: #888 !important }
+			#stats #fps #fpsGraph { display: none }
+		</style>
+	</head>
+
+	<body>
+	    <div id="container" class="unselectable"></div>
+	    <div id="copy" class="unselectable">Mesh &amp; map by Loth</div>
+		<div id="info" class="unselectable"></div>
+		<div id="gui" class="unselectable"></div>
+		<div id="loading" class="unselectable"><img src="res/img/loader.gif" alt="Loading youbot robot"></div>
+
+		<script src="js/three.min.66.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/CameraLoth.js"></script>
+		<script src='js/libs/stats.min.js'></script>
+		<script src='js/libs/dat.gui.min.js'></script>
+		<script src="js/BufferGeometryUtils.66.js"></script>
+
+		<script src="js/loadersNew/sea3d/SEA.js"></script>
+		<script src="js/loadersNew/sea3d/SEA3D.js"></script>
+		<script src="js/loadersNew/sea3d/SEA3DLoader.js"></script>
+		<script src="js/loadersNew/sea3d/SEA3DDeflate.js"></script>
+		<script src="js/loadersNew/sea3d/SEA3DLZMA.js"></script>
+
+		<script src="js/effects/CopyShader.js"></script>
+		<script src="js/effects/EffectComposer.js"></script>
+		<script src="js/effects/ShaderPass.js"></script>
+		<script src="js/effects/RenderPass.js"></script>
+		<script src="js/effects/MaskPass.js"></script> 
+		<script src="js/effects/sketch.js"></script>
+
+		<script src="js/greensock/TweenLite.min.js"></script>
+		<script src="js/greensock/TimelineLite.min.js"></script>
+		<script src="js/greensock/easing/EasePack.min.js"></script>
+		
+		<script>
+		    var AssetsFolder = "res/textures/youbot/";
+		    var ToRad = Math.PI / 180;
+		    var ToDeg = 180 / Math.PI;
+			var container, info, gui;
+			var scene, renderer, camera, clock, delta, cam;
+			var sunLight, pointLight, ambient;
+			var stats;
+			// geometry
+			var wheel_geo_r, wheel_geo_l;
+			// object3d
+			var plane, matGround;
+			var youbot;
+			var content;
+			var floor;
+			var materials = [];
+			// mesh
+			var wheels = [];
+			var base, plate, arm_base, arm_joint_1, arm_joint_2, arm_joint_3, arm_joint_4, arm_joint_5, right_finger, left_finger, portable, ecran;
+			var rope_0_1, rope_1_2, rope_2_3, rope_3_4;
+
+			var droidTarget;
+			var isMoveMode = false;
+			var projector, raycaster;
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			window.onload = init;
+			
+			function init() {
+			    container = document.getElementById('container');
+				container.style.position = "absolute";
+				
+				clock = new THREE.Clock();
+
+				// Scene and camera
+				scene = new THREE.Scene();
+				cam = new CameraLoth(container);
+				setViewSize(window.innerWidth, window.innerHeight);
+				camera.scale.set(-1, 1, 1);
+
+				projector = new THREE.Projector();
+				raycaster = new THREE.Raycaster();
+
+				// Lights and shadow
+				ambient = new THREE.AmbientLight(0x101010);
+				scene.add( ambient );
+
+				var hemiLight = new THREE.HemisphereLight( 0x505050, 0xffffff, 1 );
+				hemiLight.position.set( 0, 20, 0 );
+				scene.add( hemiLight );
+
+				pointLight = new THREE.PointLight( 0xfeffe6, 2.6, 500 );
+				pointLight.color.setHSL( 0.05, 1, 0.95 );
+				pointLight.position.set( -120, -200, -100 );
+				scene.add( pointLight );
+
+				//sunLight = new THREE.DirectionalLight( 0xe6f3ff );
+				sunLight = new THREE.SpotLight( 0xe6f3ff, 1.3, 0, Math.PI/2, 10 );
+				sunLight.scale.set(-1, 1, 1);
+				//sunLight.intensity = 1.3;
+				sunLight.castShadow = true;
+				sunLight.shadowCameraFov = 70;
+				//sunLight.shadowDarkness = 0.35;
+
+				sunLight.shadowCameraNear = 150;
+				sunLight.shadowCameraFar = 400;
+				
+				sunLight.shadowMapBias = 0.01;
+				sunLight.shadowMapDarkness = 0.5;
+				sunLight.shadowMapWidth =1024;
+				sunLight.shadowMapHeight =1024;
+
+				sunLight.position.set(120, 200, 100);
+				sunLight.target.position.set(0, 0, 0 );
+				
+				scene.add(sunLight);
+				
+				// Renderer
+				renderer = new THREE.WebGLRenderer({precision: "lowp", antialias:true});				
+				//renderer.physicallyBasedShading = true;
+				renderer.shadowMapEnabled = true;
+				renderer.shadowMapSoft = true;
+				renderer.gammaOutput = true;
+				renderer.gammaInput = true;
+				renderer.shadowMapCullFace = THREE.CullFaceBack;
+				renderer.setClearColor( 0x4D4D4D, 1 );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+				
+				window.addEventListener( 'resize', onResize, false );
+				
+				// ground
+				var geometry = new THREE.PlaneGeometry( 10000,10000,2,2 );
+				var groundMap = new THREE.ImageUtils.loadTexture( AssetsFolder + "ground.jpg" );
+				groundMap.repeat.set( 2000, 2000 );
+				groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
+				//matGround = new THREE.MeshLambertMaterial( { color: 0xeeeeee, map:groundMap , shininess:2, specular:0x606060, transparent:true, opacity:0.8, blending: THREE.MultiplyBlending } );
+				matGround = new THREE.MeshBasicMaterial( { color: 0x505050, map:groundMap, transparent:true, opacity:0.2 } );
+				plane = new THREE.Mesh( geometry, matGround );
+				plane.rotation.x = 90*ToRad;
+				plane.receiveShadow = true;
+				plane.castShadow = false;
+				plane.scale.set(1,1,-1);
+				floor = new THREE.Object3D();
+				floor.add(plane);
+				scene.add(floor);
+
+				content = new THREE.Object3D();
+				scene.add(content);
+
+				droidTarget = new THREE.Object3D();
+				scene.add(droidTarget);
+
+				var geoo1 = new THREE.CylinderGeometry( 3,3,0.1,24 );
+				var geoo2 = new THREE.CylinderGeometry( 1,0.05,2,24 );
+				var geoo3 = new THREE.CylinderGeometry( 0.2,0.2,6,6 );
+				var matCible = new THREE.MeshPhongMaterial( { color:0xffff00 , shininess:20, specular:0x606060 } );
+				var cible = new THREE.Mesh( geoo1, matCible );
+				
+				var cibleArrow = new THREE.Mesh( geoo2, matCible );
+				var cibleArrow2 = new THREE.Mesh( geoo3, matCible );
+				cible.scale.set(1,1,-1);
+				cibleArrow.scale.set(1,1,-1);
+				cibleArrow2.scale.set(1,1,-1);
+				cible.position.y = 0.2;
+				cibleArrow.position.y = 1.1;
+				cibleArrow2.position.y = 4.1;
+				droidTarget.add(cible);
+				droidTarget.add(cibleArrow);
+				droidTarget.add(cibleArrow2);
+
+				cible.receiveShadow = true;
+				cible.castShadow = true;
+				cibleArrow.receiveShadow = true;
+				cibleArrow.castShadow = true;
+				cibleArrow2.receiveShadow = true;
+				cibleArrow2.castShadow = true;
+
+				cible.visible = false;
+				cibleArrow.visible = false;
+				cibleArrow2.visible = false;
+
+				// load sea3d model
+				var loader = new THREE.SEA3D( true );
+				
+				loader.onComplete = function( e ) {
+					for (var i=0; i !== loader.meshes.length; i++){
+						if(loader.meshes[i].name === "base_frame" ) base = loader.meshes[i];
+						if(loader.meshes[i].name === "bot_wheel_R" ) wheel_geo_r = THREE.BufferGeometryUtils.fromGeometry(loader.meshes[i].geometry);
+						if(loader.meshes[i].name === "bot_wheel_L" ) wheel_geo_l = THREE.BufferGeometryUtils.fromGeometry(loader.meshes[i].geometry);
+						if(loader.meshes[i].name === "rope_0_1" ) rope_0_1 = new THREE.Mesh( loader.meshes[i].geometry,  null );
+						// test
+						if(loader.meshes[i].name === "rope_3_4" ) rope_3_4 = new THREE.SkinnedMesh ( loader.meshes[i].geometry, null , false );
+						if(loader.meshes[i].name === "rope_2_3" ) rope_2_3 = new THREE.SkinnedMesh ( loader.meshes[i].geometry, null , false );
+						if(loader.meshes[i].name === "rope_1_2" ) rope_1_2 = new THREE.SkinnedMesh ( loader.meshes[i].geometry, null , false );
+					}
+					document.getElementById('loading').style.visibility = 'hidden';
+					createRobot();
+				};
+				loader.load( "res/models/youbot.sea" );
+
+				stats = new Stats();
+				stats.domElement.style.position	= 'absolute';
+				stats.domElement.style.right	= '10px';
+				stats.domElement.style.bottom	= '6px';
+				document.body.appendChild( stats.domElement );
+			}
+
+			var animSize = [];
+			var animFrame = [];
+			var animator = [];
+
+			function createRope() {
+				rope_0_1.material = materials[13];
+				rope_1_2.material = materials[12];
+				rope_2_3.material = materials[12];
+				rope_3_4.material = materials[12];
+
+				rope_1_2.position.set(0,0,0);
+				rope_2_3.position.set(0,0,0);
+				rope_3_4.position.set(0,0,0);
+
+				rope_1_2.rotation.x = -180*ToRad;
+				rope_2_3.rotation.x = -90*ToRad;
+				rope_2_3.rotation.z = -90*ToRad;
+				rope_3_4.rotation.x = -90*ToRad;
+				rope_3_4.rotation.z = -180*ToRad;
+
+				/*rope_0_1.castShadow = true;
+				rope_0_1.receiveShadow = true;
+				rope_1_2.castShadow = true;
+				rope_1_2.receiveShadow = true;
+				rope_2_3.castShadow = true;
+				rope_2_3.receiveShadow = true;
+				rope_3_4.castShadow = true;
+				rope_3_4.receiveShadow = true;*/
+
+				arm_joint_1.add(rope_0_1);
+				arm_joint_1.add(rope_1_2);
+				arm_joint_2.add(rope_2_3);
+				arm_joint_3.add(rope_3_4);
+
+				animator[0] = new SEA.Animator(rope_1_2, "rope_1_2");
+				animator[0].add("rotate", true);
+
+				animator[1] = new SEA.Animator(rope_2_3, "rope_2_3");
+				animator[1].add("rotate", true);
+
+				animator[2] = new SEA.Animator(rope_3_4, "rope_3_4");
+				animator[2].add("rotate", true);
+
+				animSize[0] = animator[0].animation[0].data.length;
+				animFrame[0] = animSize[0]/155;
+
+				animSize[1] = animator[1].animation[0].data.length;
+				animFrame[1] = animSize[1]/297;
+
+				animSize[2] = animator[2].animation[0].data.length;
+				animFrame[2] = animSize[2]/205;
+
+				updateRope();
+			}
+
+			function updateRope() {
+				animator[0].playFrame("rotate", animSize[0] - (animFrame[0]*(jointConfig.joint_2+65)) );
+				animator[1].playFrame("rotate", animSize[1] - (animFrame[1]*(jointConfig.joint_3+151)) );
+				animator[2].playFrame("rotate", animSize[2] - (animFrame[2]*(jointConfig.joint_4+102.5)) );
+			}
+
+			function createRobot() {
+				// object3d
+				youbot = new THREE.Object3D();
+				scene.add(youbot);
+
+				// detect mesh
+				var i, name;
+				for(i = 0; i!== base.children.length; i++){
+					name = base.children[i].name;
+					if(name === "arm_base_frame") arm_base = base.children[i];
+					if(name === "plate") plate = base.children[i];
+				}
+				portable = plate.children[0];
+				ecran = portable.children[0];
+
+				arm_joint_1 = arm_base.children[0];
+				arm_joint_2 = arm_joint_1.children[0];
+				arm_joint_3 = arm_joint_2.children[0];
+				arm_joint_4 = arm_joint_3.children[0];
+				arm_joint_5 = arm_joint_4.children[0];
+				for(i = 0; i!== arm_joint_5.children.length; i++){
+					name = arm_joint_5.children[i].name;
+					if(name === "right_finger") right_finger = arm_joint_5.children[i];
+					if(name === "left_finger") left_finger = arm_joint_5.children[i];
+				}
+
+				// texture
+				var textures = [];
+				textures[0] = new THREE.ImageUtils.loadTexture( AssetsFolder + "wheel.jpg" );
+				textures[1] = new THREE.ImageUtils.loadTexture( AssetsFolder + "base.jpg" );
+				textures[2] = new THREE.ImageUtils.loadTexture( AssetsFolder + "plate.jpg" );
+				textures[3] = new THREE.ImageUtils.loadTexture( AssetsFolder + "base_frame.jpg" );
+				textures[4] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint1.jpg" );
+				textures[5] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint2.jpg" );
+				textures[6] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint3.jpg" );
+				textures[7] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint4.jpg" );
+				textures[8] = new THREE.ImageUtils.loadTexture( AssetsFolder + "joint5.jpg" );
+				textures[9] = new THREE.ImageUtils.loadTexture( AssetsFolder + "portable.jpg" );
+				textures[10] = new THREE.ImageUtils.loadTexture( AssetsFolder + "rope.jpg" );
+				textures[11] = new THREE.ImageUtils.loadTexture( AssetsFolder + "tube_n.png" );
+
+				for(i = 0; i!== textures.length; i++){
+					textures[i].repeat.set( 1, -1 );
+				    textures[i].wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+				    textures[i].anisotropy = renderer.getMaxAnisotropy();
+				    textures[i].format = THREE.RGBFormat;
+				}
+
+				// material
+				var shine = 10;
+				var specular = 0x606060;
+				materials[0] = new THREE.MeshPhongMaterial( { map: textures[0], shininess:shine, specular:specular } );
+				materials[1] = new THREE.MeshPhongMaterial( { map: textures[1], shininess:shine, specular:specular } );
+				materials[2] = new THREE.MeshPhongMaterial( { map: textures[2], shininess:shine, specular:specular } );
+				materials[3] = new THREE.MeshPhongMaterial( { map: textures[3], shininess:shine, specular:specular } );
+				materials[4] = new THREE.MeshPhongMaterial( { map: textures[4], shininess:shine, specular:specular } );
+				materials[5] = new THREE.MeshPhongMaterial( { map: textures[5], shininess:shine, specular:specular } );
+				materials[6] = new THREE.MeshPhongMaterial( { map: textures[6], shininess:shine, specular:specular } );
+				materials[7] = new THREE.MeshPhongMaterial( { map: textures[7], shininess:shine, specular:specular } );
+				materials[8] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
+				materials[9] = new THREE.MeshPhongMaterial( { map: textures[8], shininess:shine, specular:specular } );
+				materials[10] = new THREE.MeshPhongMaterial( { map: textures[9], shininess:shine, specular:specular } );
+				camTexture();
+				materials[11] = new THREE.MeshPhongMaterial( { map:finalRenderTarget, shininess:shine, specular:specular } );
+				materials[12] = new THREE.MeshPhongMaterial( { map: textures[10], shininess:shine, specular:specular, skinning:true, normalMap:textures[11], normalScale:{x:2,y:2}  } );
+				materials[13] = new THREE.MeshPhongMaterial( { map: textures[10], shininess:shine, specular:specular, normalMap:textures[11], normalScale:{x:2,y:2}  } );
+
+				// apply material
+				base.material = materials[1];
+				plate.material = materials[2];
+				arm_base.material = materials[3];
+				arm_joint_1.material = materials[4];
+				arm_joint_2.material = materials[5];
+				arm_joint_3.material = materials[6];
+				arm_joint_4.material = materials[7];
+				arm_joint_5.material = materials[8];
+				right_finger.material = materials[9];
+				left_finger.material = materials[9];
+
+				portable.material = materials[10];
+				ecran.material = materials[11];
+				
+				// test cable rope
+				createRope();
+
+				// add root model
+				youbot.add( base );
+
+				// add wheels
+				for(i=0; i!==4; i++){
+					if(i===0 || i===2) wheels[i] = new THREE.Mesh( wheel_geo_r, materials[0]);
+					else wheels[i] = new THREE.Mesh( wheel_geo_l, materials[0]);
+					
+					if(i===0) wheels[i].position.set(-22.5, 5, -15.8);
+					if(i===1) wheels[i].position.set(-22.5, 5, 15.8);
+					if(i===2) wheels[i].position.set(22.5, 5, 15.8);
+					if(i===3) wheels[i].position.set(22.5, 5, -15.8);
+
+					wheels[i].receiveShadow = true;
+					wheels[i].castShadow = true;
+
+					youbot.add( wheels[i] );
+				}
+
+				document.addEventListener( 'keydown', onKeyDown, false );
+				document.addEventListener( 'keyup', onKeyUp, false );
+
+				onThreeChangeView(40, 60, 150);
+
+				animate();
+				addAnimation();
+				addGUI();
+			}
+
+			var controls = { rotation: 0, latspeed: 0, speed: 0, vx: 0, vz: 0, tx: 0, tz: 0, maxSpeed: 100, acceleration: 100, deceleration: 1000, angularSpeed: 2, wheelRotation : 6, lateral:false};
+
+			function moveRobot(delta) {
+				if ( key[7]) controls.lateral = true;
+				else controls.lateral = false;
+	
+				if ( key[0] ) controls.speed = clamp( controls.speed + delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+				if ( key[1] ) controls.speed = clamp( controls.speed - delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+				if ( key[2] ){ 
+					if(!controls.lateral)controls.rotation -= delta * controls.angularSpeed;
+					else controls.latspeed = clamp( controls.latspeed - delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+				}
+				if ( key[3] ){
+				    if(!controls.lateral)controls.rotation += delta * controls.angularSpeed;
+					else controls.latspeed = clamp( controls.latspeed + delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+				}
+				//if ( key[3] || key[2]) controls.speed = clamp( controls.speed + 1 * delta * controls.acceleration, -controls.maxSpeed, controls.maxSpeed );
+
+				// speed decay
+				if ( ! ( key[0] || key[1]) ) {
+					if ( controls.speed > 0 ) {
+						var k = exponentialEaseOut( controls.speed / controls.maxSpeed );
+						controls.speed = clamp( controls.speed - k * delta * controls.deceleration, 0, controls.maxSpeed );
+					} else {
+						var k = exponentialEaseOut( controls.speed / (-controls.maxSpeed) );
+						controls.speed = clamp( controls.speed + k * delta * controls.deceleration, -controls.maxSpeed, 0 );
+					}
+				}
+			
+				if ( ! ( key[2] || key[3]) ) {
+					if ( controls.latspeed > 0 ) {
+						var k = exponentialEaseOut( controls.latspeed / -controls.maxSpeed );
+						controls.latspeed = clamp( controls.latspeed + k * delta * controls.deceleration, 0, controls.maxSpeed );
+					} else {
+						var k = exponentialEaseOut( controls.latspeed / (controls.maxSpeed) );
+						controls.latspeed = clamp( controls.latspeed - k * delta * controls.deceleration, -controls.maxSpeed, 0 );
+					}
+				}
+
+				// displacement
+				var forwardDelta = controls.speed * delta;
+				controls.vx = Math.sin( controls.rotation ) * forwardDelta;
+				controls.vz = Math.cos( controls.rotation ) * forwardDelta;
+
+				var sideDelta = controls.latspeed * delta;
+				controls.tx = Math.sin( controls.rotation+90*ToRad ) * sideDelta;
+				controls.tz = Math.cos( controls.rotation+90*ToRad ) * sideDelta;
+
+				youbot.rotation.y = controls.rotation - 90*ToRad;
+
+				youbot.position.x += controls.vx+controls.tx;
+				youbot.position.z += controls.vz+controls.tz;
+
+				// wheel animation
+				var wSpeed = delta * controls.wheelRotation;
+				for(var i=0; i!==4;i++){
+					if (key[0]) wheels[i].rotation.z -= wSpeed;
+					else if (key[1]) wheels[i].rotation.z += wSpeed;
+					else if (key[3]){
+						if(!controls.lateral){
+							if(i==0 || i==3) wheels[i].rotation.z += wSpeed;
+							else wheels[i].rotation.z -= wSpeed;
+					    } else {
+					    	if(i==1 || i==3) wheels[i].rotation.z += wSpeed;
+							else wheels[i].rotation.z -= wSpeed;
+					    }
+					} else if (key[2]){
+						if(!controls.lateral){
+							if(i==0 || i==3) wheels[i].rotation.z -= wSpeed;
+							else wheels[i].rotation.z += wSpeed;
+					    } else {
+					    	if(i==1 || i==3) wheels[i].rotation.z -= wSpeed;
+							else wheels[i].rotation.z += wSpeed;
+					    }
+					}
+				}
+
+				// camera and sun follow
+				if(!camPos.automove)cameraFollow(youbot.position);
+				if(sunLight){
+					sunLight.position.set(youbot.position.x+120, 200, youbot.position.z+100);
+					sunLight.target.position.set(youbot.position.x, 0, youbot.position.z );
+					pointLight.position.set( youbot.position.x-120, -200, youbot.position.z-100 );
+				}
+
+				//if(isPhysicsOn) OimoWorker.postMessage({tell:"DROIDMOVE", mx : controls.vx+controls.tx, mz : controls.vz+controls.tz, px:youbot.position.x, pz:youbot.position.z, ry:youbot.rotation.y});
+			}
+
+			function droidMoveTo() {
+				var i;
+				if(isMoveMode){
+					isMoveMode = false;
+					mouse.moving = true;
+					for ( i = droidTarget.children.length - 1; i >= 0 ; i -- ) {
+						droidTarget.children[i].visible = false;
+					}
+				} else {
+					isMoveMode = true;
+					mouse.moving = false;
+					for ( i = droidTarget.children.length - 1; i >= 0 ; i -- ) {
+						droidTarget.children[i].visible = true;
+					}
+				}
+			}
+
+			function rayTest() {
+				var vector = new THREE.Vector3( mouse.mx, mouse.my, 1 );
+				var vcam =  new THREE.Vector3( camera.position.x, camera.position.y, camera.position.z );
+				projector.unprojectVector( vector, camera );
+				raycaster.set(  vcam, vector.sub( vcam ).normalize() );
+				var intersects = raycaster.intersectObjects( floor.children );
+				if ( intersects.length > 0 ) {
+					droidTarget.position.set( intersects[0].point.x, 0, intersects[0].point.z);
+			    }
+			}
+
+			//-----------------------------------------------------
+			//  CAMERA TEXTURE
+			//-----------------------------------------------------
+
+			var textureCamera, finalRenderTarget;
+
+			function camTexture() {
+				textureCamera = new THREE.PerspectiveCamera( 120, 600 /1024, 1, 1000 );
+			    textureCamera.scale.set(-1, 1, 1);
+				arm_joint_5.add(textureCamera);
+				textureCamera.position.set(5, 4, 0);
+				textureCamera.lookAt( new THREE.Vector3(5,10,0) )
+				finalRenderTarget = new THREE.WebGLRenderTarget( 512, 1024, { format: THREE.RGBFormat } );
+			}
+
+			//-----------------------------------------------------
+			//  EVENTS
+			//-----------------------------------------------------
+			
+			function onResize() {
+				setViewSize(window.innerWidth, window.innerHeight);
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				if(isSketch){
+					composer.setSize(window.innerWidth,window.innerHeight);
+					pass.uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
+					colorBuffer=new THREE.WebGLRenderTarget(window.innerWidth,window.innerHeight,parameters);
+			    }
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+
+				delta = clock.getDelta();
+				THREE.AnimationHandler.update( delta );
+				render(delta);
+				
+				displayInfo();
+			}
+
+			function render(delta) {
+				moveRobot(delta);
+				if(isMoveMode) rayTest();
+				if(!isSketch) renderer.render( scene, camera );
+				else {
+					renderer.render(scene,camera,colorBuffer);
+					pass.uniforms.tColor.value=colorBuffer;
+					composer.render();
+			    }
+			    if(textureCamera) renderer.render( scene, textureCamera, finalRenderTarget, true );
+				stats.update();
+			}
+
+			function displayInfo() {
+				info = "<h2>Kuk-a-droid</h2>";
+				info += "<i>WSAD, ZSQD or Arrow key to move</i><br>";
+				info += "<i>press CTRL for lateral mouvement</i><br><br>";
+				info += "Position X: "+ (youbot.position.x*10).toFixed(0) + " mm<br>"
+				info += "Position Z: " + (youbot.position.z*10).toFixed(0)+ " mm<br>"; 
+				info += "Rotation:"+ unwrapDegrees(youbot.rotation.y*ToDeg).toFixed(0)+"°<br>";
+				document.getElementById('info').innerHTML = info;
+			}
+
+			//-----------------------------------------------------
+			//  PHYSICS
+			//-----------------------------------------------------
+
+			var OimoWorker;
+			var isPhysicsOn = false;
+			var geo01 = new THREE.CubeGeometry( 1, 1, 1 );
+			var geo02 = new THREE.SphereGeometry( 1, 6, 4);
+			var mat01 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff } );
+			var mat02 = new THREE.MeshPhongMaterial( { color: 0x909090, shininess:20, specular:0xffffff, transparent:true, opacity:0.1 } );
+			var mat03 = new THREE.MeshPhongMaterial( { color: 0x303030, shininess:20, specular:0xffffff } );
+
+			function startPhysics () {
+        	    if(!isPhysicsOn){
+        	    	OimoWorker = new Worker('js/worker_oimo_dev.js');
+        	    	OimoWorker.postMessage = OimoWorker.webkitPostMessage || OimoWorker.postMessage;
+        	    	OimoWorker.onmessage = physicsMessages;
+        	    	OimoWorker.postMessage({tell:"INITWORLD", dt:1/60, iterations:8, G:-10 });
+        	    }
+        	    else OimoWorker.postMessage({tell:"CLEAR"});
+        	}
+
+        	function physicsMessages(e) {
+    	    	var phase = e.data.tell;
+
+    	    	// create mesh
+	            if(phase === "INIT"){
+	            	createContentObjects(e.data);
+	            	isPhysicsOn = true;
+	            	OimoWorker.postMessage({tell:"UPDATE"});
+				}
+
+				// update three object
+    	    	else if( phase === "RUN"){
+    	    		var max = e.data.sleeps.length;
+    	    		var m = e.data.matrix;
+        	    	var mtx, n, mesh;
+
+        	    	// Update rendering meshes
+        	    	for(var i=0; i!==max; i++){
+        	    		if( content.children[i] && e.data.types[i]!==0){
+            	    		mesh = content.children[i];
+            	    		if( e.data.sleeps[i]==0 ){
+            	    			n = 12*i;
+	            	    		mtx = new THREE.Matrix4(
+	            	    			m[n+0], m[n+1], m[n+2], m[n+3], 
+	            	    			m[n+4], m[n+5], m[n+6], m[n+7],
+	            	    			m[n+8], m[n+9], m[n+10], m[n+11],
+	            	    			0, 0, 0, 1);
+	            	    		mesh.position.setFromMatrixPosition( mtx );
+						    	mesh.rotation.setFromRotationMatrix( mtx );
+						    }
+				        }
+		            }
+	            }
+	            // clear three object
+				else if(phase === "CLEAR") clearContent();
+    	    }
+
+    	    function createContentObjects(data){
+    	    	var boneindex=0;
+    	    	var max = data.types.length;
+    	    	var mesh;
+    	    	var mesh2;
+    	    	var s;
+			    for(var i=0; i!==max; i++){
+			    	s = data.sizes[i] || [50,50,50];
+			    	switch(data.types[i]){
+			    		case 1: mesh=new THREE.Mesh(geo02, mat01); mesh.scale.set(s[0],s[0],-s[0]); break; // sphere
+			    		case 2: mesh=new THREE.Mesh(geo01, mat01); mesh.scale.set(s[0],s[1],-s[2]); break; // box
+			    		case 3: 
+			    		    mesh=new THREE.Mesh(geo01, mat02); mesh.scale.set(s[0],s[1],-s[2]);
+			    		    mesh.visible = true; break; // droid
+			    		case 4: 
+			    		    mesh = new THREE.Object3D(); mesh2=new THREE.Mesh(wheel_geo_r, mat03);
+			    		    mesh.add(mesh2); mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 5: 
+			    		    mesh = new THREE.Object3D(); 
+			    		    mesh2=new THREE.Mesh(wheel_geo_l, mat03); 
+			    		    mesh.add(mesh2); 
+			    		    mesh2.rotation.y = 90*ToRad; break; // droid wheels test
+			    		case 6: 
+			    		    mesh=new THREE.Mesh(geo01, mat02);
+			    		    mesh.scale.set(s[0],s[1],-s[2]);  
+			    		    mesh.visible = true; break; // droid
+			    	}
+			    	if(data.types[i]===2){
+			    		mesh.receiveShadow = true;
+			    		mesh.castShadow = true;
+			    	}
+			    	content.add( mesh );
+			    }
+    	    }
+
+    	    function clearContent(){
+    	    	var obj, i, j;
+			    for ( i = content.children.length - 1; i >= 0 ; i -- ) {
+			    	    obj = content.children[ i ];
+			    	    if(obj.children.length > 0) for ( j = obj.children.length - 1; j >= 0 ; j -- ) {obj.remove(obj.children[j]);}
+						content.remove(obj);
+				}
+				isPhysicsOn = false;
+    	    }
+
+			//-----------------------------------------------------
+			//  KEYBOARD
+			//-----------------------------------------------------
+
+			var key = [0, 0, 0, 0, 0, 0, 0, 0];
+
+			function onKeyDown ( event ) {
+				switch ( event.keyCode ) {
+				    case 38: case 87: case 90: key[0]=1; break; // up, W, Z
+					case 40: case 83:          key[1]=1; break; // down, S
+					case 37: case 65: case 81: key[2]=1; break; // left, A, Q
+					case 39: case 68:          key[3]=1; break; // right, D
+					case 69:                   key[4]=1; break; // E
+					case 82:                   key[5]=1; break; // R
+					case 32:                   key[6]=1; break; // space
+					case 17: case 67:          key[7]=1; break; // ctrl, C
+				}
+				sendKey();
+			}
+
+			function onKeyUp ( event ) {
+				switch( event.keyCode ) {
+					case 38: case 87: case 90: key[0]=0; break; // up, W, Z
+					case 40: case 83:          key[1]=0; break; // down, S
+					case 37: case 65: case 81: key[2]=0; break; // left, A, Q
+					case 39: case 68:          key[3]=0; break; // right, D
+					case 69:                   key[4]=0; break; // E
+					case 82:                   key[5]=0; break; // R
+					case 32:                   key[6]=0; break; // space          
+					case 17: case 67:          key[7]=0; break; // ctrl, C
+				}
+				sendKey();
+			}
+
+			function sendKey(){ if(isPhysicsOn)OimoWorker.postMessage({tell:"KEY", key:key}); }
+
+			//-----------------------------------------------------
+			//  BONES STUCTURE
+			//-----------------------------------------------------
+			
+			var vBones = [];
+
+			function showBones() {
+				var i;
+				if(vBones.length>0){
+					arm_joint_1.remove(vBones[1]);
+					arm_joint_2.remove(vBones[2]);
+					arm_joint_3.remove(vBones[3]);
+					arm_joint_4.remove(vBones[4]);
+					arm_joint_5.remove(vBones[5]);
+					for ( i = vBones.length - 1; i >= 1 ; i -- ) {
+						vBones[i].remove(vBones[i].children[0]);
+						vBones[i].remove(vBones[i].children[1]);
+						vBones.pop();
+					}
+					vBones = [];
+					for(i = 0; i!== materials.length; i++){
+						materials[i].transparent = false;
+						materials[i].opacity = 1;
+					}
+				}else{
+					for( i = 1;i!==6;i++ ){
+						vBones[i] = visibleBones(i);
+					}
+					arm_joint_1.add(vBones[1]);
+					arm_joint_2.add(vBones[2]);
+					arm_joint_3.add(vBones[3]);
+					arm_joint_4.add(vBones[4]);
+					arm_joint_5.add(vBones[5]);
+					for(i = 0; i!== materials.length; i++){
+						materials[i].transparent = true;
+						materials[i].opacity = 0.5;
+					}
+			    }
+			}
+
+			function visibleBones(n){
+				var bone = new THREE.Object3D();
+				bone.add(new THREE.AxisHelper( 2 ));
+				if(n===1)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 10 ));
+				else if(n===2)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 15 ));
+				else if(n===3)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 13.5 ));
+				else if(n===4)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 11.5 ));
+				else if(n===5)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 6 ));
+				//else if(n<3)bone.add(new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), 20 ));
+				//else bone.add(new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 20 ));
+				return bone;
+			}
+
+			//-----------------------------------------------------
+			//  GUI
+			//-----------------------------------------------------
+
+			var jointConfig = { posx:0, posy:0, posz:0, rotation:0, joint_1:0, joint_2:25, joint_3:-10, joint_4:0, joint_5:0, finger:0 };
+			var options = {physics:false, showBones:false, sketchMode:false, MoveToPoint:droidMoveTo};
+			var emotions = {quiet:false, anger:false, frustration:false, fear:false, distress:false, disgust:false, sorrow:false, surprise:false, interest:false, boredom:false, joy:false};
+
+			function addGUI() {
+				gui = new dat.GUI();
+				var f0 = gui.addFolder('ARM');
+				f0.add( jointConfig, 'joint_1', -169, 169 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_2', -65, 90 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_3', -151, 146 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_4', -102.5, 102.5 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'joint_5', -165, 165 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.add( jointConfig, 'finger', 0, 3 ).listen().onChange( function() { animationUpdate(); emotionsStop(); });
+				f0.open();
+
+				var f1 = gui.addFolder('OPTION');
+				f1.add( options, 'physics' ).onChange( function() { startPhysics() });
+				f1.add( options, 'showBones' ).onChange( function() { showBones() });
+				f1.add( options, 'sketchMode' ).onChange( function() { showSketch() });
+				f1.add( options, 'MoveToPoint');
+				f1.open();
+
+				var f2 = gui.addFolder('EMOTIONS');
+				f2.add( emotions, 'quiet' ).onChange( function() { emotionsStart(1); }).listen();
+				f2.add( emotions, 'anger' ).onChange( function() { emotionsStart(2); }).listen();
+				f2.open();
+			}
+
+			//-----------------------------------------------------
+			//  SKETCH MODE
+			//-----------------------------------------------------
+
+			var composer, pass, colorBuffer;
+			var parameters={minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBFormat, stencilBuffer:false};
+			var isSketch = false;
+
+			function showSketch() {
+				if(options.sketchMode){
+					THREE.BlurShader={uniforms:{tDiffuse:{type:'t',value:null},delta:{ type:'v2',value:new THREE.Vector2(.01,.01)}},vertexShader:vs_downsample,fragmentShader:fs_downsample};
+					colorBuffer=new THREE.WebGLRenderTarget(1,1,parameters);
+					blurBuffer=new THREE.WebGLRenderTarget(1,1,parameters);
+
+					composer= new THREE.EffectComposer(renderer);
+					renderPass = new THREE.RenderPass( scene, camera );
+					composer.addPass(new THREE.RenderPass(scene,camera));
+					shader={uniforms:{tDiffuse:{type:'t',value:null},tColor:{ type:'t',value:null},tBlur:{type:'t',value:null},tNoise:{type:'t',value:THREE.ImageUtils.loadTexture(AssetsFolder +'noise.png',null,function(){pass.uniforms.tNoise.value.needsUpdate=true;})},tPaper:{type:'t',value:THREE.ImageUtils.loadTexture(AssetsFolder +'brown5.jpg',null,function(){pass.uniforms.tPaper.value.needsUpdate=true;})},resolution:{ type:'v2',value:new THREE.Vector2(1,1)}},vertexShader:vs_render,fragmentShader:fs_render}
+
+					pass=new THREE.ShaderPass(shader);
+					pass.renderToScreen=true;
+					composer.addPass(pass);
+
+					composer.setSize(window.innerWidth,window.innerHeight);
+					pass.uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
+					colorBuffer=new THREE.WebGLRenderTarget(window.innerWidth,window.innerHeight,parameters);
+
+					renderer.setClearColor(0xffffff);
+					//matGround.emissive.setHex( 0xffffff );
+					//plane.receiveShadow = false;
+					matGround.color.setHex( 0xffffff );
+					//matGround.opacity = 0.05;
+					//matGround.needsUpdate = true;
+					ambient.color.setHex( 0x222222 );
+					sunLight.intensity = 0.8;
+					pointLight.intensity = 2;
+
+					for(var i = 0; i!== materials.length; i++){
+						if(i!==2 && i!==9){
+							materials[i].specular.setHex( 0xDDDDDD );
+							materials[i].emissive.setHex( 0xeeeeee );
+					    } else {
+					    	materials[i].specular.setHex( 0x111111 );
+					    }
+					    //materials[i].needsUpdate = true;
+					}
+
+					isSketch = true;
+				} else {
+					//matGround.emissive.setHex( 0x000000 );
+					//plane.receiveShadow = true
+					matGround.color.setHex( 0x505050);
+					//matGround.opacity = 0.15;
+					//matGround.needsUpdate = true;
+					ambient.color.setHex( 0x505050 );
+					sunLight.intensity = 1.3;
+					pointLight.intensity = 1.5;
+					for(var i = 0; i!== materials.length; i++){
+						if(i!==2 && i!==9){
+							materials[i].specular.setHex( 0x606060 );
+							materials[i].emissive.setHex( 0x000000 );
+					    }
+					    //materials[i].needsUpdate = true;
+					}
+					renderer.setClearColor(0x4D4D4D);
+					isSketch = false;
+				}
+			}
+
+			//-----------------------------------------------------
+			//  ANIMATION TEST
+			//-----------------------------------------------------
+
+			var expTween;
+
+			function addAnimation() {
+				TweenLite.to(jointConfig, 3, {joint_2: -65, joint_3: 80, joint_4:-102.5, delay:5, onUpdate: animationUpdate});
+				TweenLite.to(jointConfig, 0.5, {joint_5:160, finger:3, delay:8, onUpdate: animationUpdate});
+				TweenLite.to(jointConfig, 0.5, {joint_5:0, finger:0, delay:8.5, onUpdate: animationUpdate});
+			}
+
+			function animationUpdate() {
+				arm_joint_1.rotation.y = jointLimite(jointConfig.joint_1, -169, 169) * ToRad;
+				arm_joint_2.rotation.y = (jointLimite(jointConfig.joint_2, -65, 90)+65) * ToRad;
+				arm_joint_3.rotation.y = (jointLimite(jointConfig.joint_3, -151, 146)+100) * ToRad;
+				arm_joint_4.rotation.y = jointLimite(jointConfig.joint_4, -102.5, 102.5) * ToRad;
+				arm_joint_5.rotation.y = jointLimite(jointConfig.joint_5, -165, 165) * ToRad;
+				
+				var fingerMove = jointLimite(jointConfig.finger, 0, 3);
+				right_finger.position.z = fingerMove; 
+				left_finger.position.z = -fingerMove;
+
+				updateRope();
+			}
+
+			function jointLimite(v, min, max){
+				if(v<min)v=min;
+				if(v>max)v=max;
+				return v;
+			}
+
+			function emotionsStop() {
+				if(expTween) expTween.kill();
+				if(emotions.quiet) emotions.quiet=false;
+				if(emotions.anger) emotions.anger=false;
+			}
+
+			function emotionsStart(N) {
+				emotionsStop();
+				var n = N || -1;
+				if(n===1){ animationQuiet(); emotions.quiet=true;}
+				else if(n===2){ animationAnger(); emotions.anger=true};
+			}
+
+			function emotionsLoop() {
+				if(expTween) expTween.restart();
+			}
+
+			//-----------------------------------------------------
+			//  EMOTIONS
+			//-----------------------------------------------------
+
+			function animationQuiet() {
+				var look = -20 + (Math.random()*40);
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look*0.5, joint_2: -65, joint_3: 80, joint_4:-90, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:look, joint_2: -55, joint_3: 70, joint_4:-102, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationQuiet });
+			}
+
+			function animationAnger() {
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:170, joint_2: -50, joint_3: 40, joint_4:-20, joint_5:0, finger:2, delay:0, onUpdate: animationUpdate, ease:Elastic.easeOut});
+				expTween = TweenLite.to(jointConfig, 1, {joint_1:150, joint_2: -40, joint_3: -20, joint_4:-50, joint_5:0,  finger:1, delay:1, onUpdate: animationUpdate, onComplete: animationAnger , ease:Elastic.easeOut});
+			}
+
+			function animationFrustration() {
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:0, joint_2: -65, joint_3: 90, joint_4:-90, joint_5:0, finger:0, delay:0, onUpdate: animationUpdate });
+				expTween = TweenLite.to(jointConfig, 1.5, {joint_1:0, joint_2: -55, joint_3: 80, joint_4:-102, joint_5:0, finger:0.2, delay:1.5, onUpdate: animationUpdate, onComplete: animationFrustration });
+			}
+
+
+
+
+
+			// timeline test
+			/*function animationTimeLine() {
+				//create a TimelineLite instance
+				var tl = new TimelineLite();
+				//append a to() tween
+				tl.to(element, 1, {width:"50%"});
+				//add another sequenced tween (by default, tweens are added to the end of the timeline which makes sequencing simple)
+				tl.to(element, 1, {height:"300px", ease:Elastic.easeOut});
+				//offset the next tween by 0.75 seconds so there's a gap between the end of the previous tween and this new one
+				tl.to(element, 1, {opacity:0.5}, "+=0.75");
+				//overlap the next tween with the previous one by 0.5 seconds (notice the negative offset at the end)
+				tl.to(element, 1, {backgroundColor:"#FF0000"}, "-=0.5");
+				//animate 3 elements (e1, e2, and e3) to a rotation of 60 degrees, and stagger their start times by 0.2 seconds
+				tl.staggerTo([e1, e2, e3], 1, {rotation:60}, 0.2);
+				//then call myFunction()
+				tl.call(myFunction);
+				//now we can control the entire sequence with the standard methods like these:
+				tl.pause();
+				tl.resume();
+				tl.restart();
+				tl.reverse();
+				tl.play();
+				//jump to exactly 2.5 seconds into the animation
+				tl.seek(2.5);
+				//slow down playback to 10% of the normal speed
+				tl.timeScale(0.1);
+				//add a label named "myLabel" at exactly 3 seconds:
+				tl.add("myLabel", 3);
+				//add a tween that starts at "myLabel"
+				tl.add( TweenLite.to(element, 1, {scale:0.5}), "myLabel");
+				//jump to "myLabel" and play from there:
+				tl.play("myLabel");
+			}*/
+
+			//-----------------------------------------------------
+			//  MATH
+			//-----------------------------------------------------
+
+			function unwrapDegrees(r) {
+				r = r % 360;
+				if (r > 180) r -= 360;
+				if (r < -180) r += 360;
+				return r;
+			}
+
+		</script>
+	</body>
+</html>

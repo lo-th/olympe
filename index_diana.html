@@ -460,6 +460,7 @@
 			var groundMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, transparent: true } );
 			var blendings = [ "NoBlending", "NormalBlending", "AdditiveBlending", "SubtractiveBlending", "MultiplyBlending", "AdditiveAlphaBlending" ];
 			groundMaterial.blending = THREE[ blendings[ 4 ] ];
+			
 			ground = new THREE.Mesh(new THREE.PlaneGeometry( 1000, 1000, 4, 4 ), groundMaterial);
 			ground.position.set( 0, -36.6, 0 );
 			ground.rotation.x = - Math.PI / 2;
