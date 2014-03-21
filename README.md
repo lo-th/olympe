@@ -1,12 +1,11 @@
 olympe
 ======
 
-Demo [lo-th.github.io/olympe/](http://lo-th.github.io/olympe/)
+Home page [lo-th.github.io/olympe/](http://lo-th.github.io/olympe/)
 
-Is my 3D work for web with [sea3d format](href='https://code.google.com/p/sea3d/) on Three.js
+Is my 3D book for web with [sea3d format](href='https://code.google.com/p/sea3d/) on Three.js
 
 <br>
-
 
 **DIANA** version 0.2.5
 > Talking character 3d, full phoneme morph<br>
