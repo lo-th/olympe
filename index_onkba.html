@@ -879,8 +879,7 @@
 			bodyAnim.play(name);
 			suitAnim.play(name);
 			shadAnim.play(name);
-			animConfig.current = name;
-			if(name ==="walk") bobsWalk();
+			//animConfig.current = name;
 		}
 
 		function stopAnimation() {
@@ -896,25 +895,20 @@
 		var BVHset = {ax:"x", ay:"y", az:"z", dx:1, dy:1, dz:1, rx:0, ry:0, rz:0, order:"XYZ"};
 		var BVHanimConfig = {
 			debug:true,
-			speed:1
+			speed:0.5
 		}
 
 		function initBVH() {
 			bvhReader = new BVH.Reader();
-			//bvhReader.load("res/bvh/calibration.bvh");
-			//bvhReader.load("res/bvh/calibration.png");
-			//bvhReader.load("res/bvh/ballet11.png");
-			//bvhReader.load("res/bvh/jog.bip");
-
+			bvhReader.speed = BVHanimConfig.speed;
+			
 			initBVHGui();
-			initBoneTools();
+			//initBoneTools();
 		}
 
-		function loadBVH(name, Order, NoCompress) {
-			var noCompress = NoCompress || false;
-			var order = Order || "ZXY";
-			if(noCompress) bvhReader.load("res/bvh/"+name+".bvh", order);
-			else bvhReader.load("res/bvh/"+name+".png", order);
+		function loadBVH(name) {
+			stopAnimation();
+			bvhReader.load("res/bvh/"+name);
 		}
 
 		var bonesConfig = {select: 1, X:0, Y:0, Z:0}
@@ -986,19 +980,19 @@
 
 			f5.add( BVHset, 'order', [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ] );
 
-			BVHanimConfig.calibration = function() { loadBVH("calibration", 'ZXY'); };
-            BVHanimConfig.ballet = function() { loadBVH("ballet", 'ZXY'); };
-            BVHanimConfig.shoot = function() { loadBVH("shoot", 'ZXY'); };
-            BVHanimConfig.sprint = function() { loadBVH("sprint", 'ZXY'); };
-            BVHanimConfig.exsize = function() { loadBVH("exsize", 'ZXY'); };
-            BVHanimConfig.test = function() { loadBVH("test", 'ZYX'); };
-            BVHanimConfig.big = function() { loadBVH("big", 'ZYX'); };
+			BVHanimConfig.calibration = function() { loadBVH("calibration.png"); };
+            BVHanimConfig.ballet = function() { loadBVH("ballet.png"); };
+            BVHanimConfig.shoot = function() { loadBVH("shoot.png"); };
+            BVHanimConfig.sprint = function() { loadBVH("sprint.png"); };
+            BVHanimConfig.exsize = function() { loadBVH("exsize.png"); };
+            BVHanimConfig.test = function() { loadBVH("test.png"); };
+            BVHanimConfig.big = function() { loadBVH("big.png"); };
 
-            BVHanimConfig.c11A = function() { loadBVH("c11A", 'ZXY'); };
-            BVHanimConfig.c11B = function() { loadBVH("c11B", 'ZXY'); };
+            BVHanimConfig.c11A = function() { loadBVH("c11A.png"); };
+            BVHanimConfig.c11B = function() { loadBVH("c11B.png"); };
 
-            BVHanimConfig.story = function() { loadBVH("story", 'YXZ'); };
-            BVHanimConfig.action = function() { loadBVH("action", 'XYZ'); };
+            BVHanimConfig.story = function() { loadBVH("story.png"); };
+            BVHanimConfig.action = function() { loadBVH("action.png"); };
 
             BVHanimConfig.stop = function() {  bvhReader.play = false; };
             BVHanimConfig.play = function() { bvhReader.oldFrame = bvhReader.frame; bvhReader.startTime = Date.now(); bvhReader.play = true; };
@@ -1060,10 +1054,10 @@
 			if(bvhReader !== null && bvhReader.play){
 				var tt="" 
 
-				if(animConfig.current !== "custom" ){
+				/*if(animConfig.current !== "custom" ){
 					stopAnimation();
 					animConfig.current = "custom";
-				}
+				}*/
 
 
 				//parseLine( count );
@@ -1192,6 +1186,9 @@
 								rotateAroundWorldAxis(bone, new THREE.Vector3( 0, 0, 1 ), (node.rotation.z));*/
 								var mtx = new THREE.Matrix4() //bone.skinMatrix.clone();
 								var m1 = new THREE.Matrix4()
+
+								//var q = new THREE.Quaternion().multiplyQuaternions(nodeBase.quaternion.clone(), bone.quaternion.clone() );
+
 								
 								//mtx.multiplyMatrices(bone.skinMatrix, m1.getInverse(node.matrix) )
 								//mtx.multiplyMatrices(bone.matrix, m1.getInverse(node.matrix) )
@@ -1200,15 +1197,15 @@
 								//mtx.multiplyMatrices(bone.matrix, m1.getInverse(node.matrixWorld) )
 
 									//bone.matrixAutoUpdate = false;
-								mtx.makeRotationFromEuler(nodeBase.rotation);
-								//mtx.makeRotationFromQuaternion(node.quaternion)
+								//mtx.makeRotationFromEuler(nodeBase.rotation);
+								mtx.makeRotationFromQuaternion(nodeBase.quaternion.clone().inverse())
 
 								//bone.rotation.setFromRotationMatrix(mtx);
 								bone.setRotationFromMatrix(mtx)
 
-								bone.rotation.x+=ref.x*ToRad;
+								/*bone.rotation.x+=ref.x*ToRad;
 								bone.rotation.y+=ref.y*ToRad;
-								bone.rotation.z+=ref.z*ToRad
+								bone.rotation.z+=ref.z*ToRad*/
 
 								//
 								//bone.setRotationFromMatrix(mtx)
@@ -2368,8 +2365,8 @@
 
 		</div>
 		<div id="play"> <img class="buttonPlay" src="res/img/soundw.png" alt="play sound" onclick="say();" /></div>
-		<div id="output1">yo</div>
-	<div id="output2">yo</div>
+		<div id="output1"></div>
+	<div id="output2"></div>
 
 	</body>
 </html>

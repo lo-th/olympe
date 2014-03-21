@@ -164,6 +164,7 @@ BVH.Reader.prototype = {
 	    		if(node.children.length){
 	    			target = new THREE.Vector3().setFromMatrixPosition( node.children[0].matrixWorld );
 	    			bone.lookAt(target);
+	    			bone.rotation.z = 0;
 
 	    			if(bone.name==="Head")bone.scale.set(this.boneSize*2,this.boneSize*2,BVH.DistanceTest(bone.position, target)*(this.boneSize*1.5));
 	    			else bone.scale.set(this.boneSize,this.boneSize,BVH.DistanceTest(bone.position, target));
@@ -254,6 +255,7 @@ BVH.Reader.prototype = {
     },
     clearNode:function(){
     	var i;
+    	if(out2)out2.innerHTML = "";
 
     	if(this.nodes){
 

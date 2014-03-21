@@ -198,6 +198,7 @@
 
 		var SeaStandard = true;
 		var BonesRevers = false;
+		var out2;
 
 
 		function init() {
@@ -212,7 +213,12 @@
 			lightPos = { horizontal: 115, vertical: 35, distance: 200 };
             mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, down:false, over:false, moving:true, dx:0, dy:0 };
 
-            if(SeaStandard)lightPos.horizontal+=180;
+            if(SeaStandard){
+            	lightPos.horizontal+=180;
+            	camPos.horizontal+=180;
+            }
+
+            out2 = document.getElementById("output2");
 
 			imput = document.getElementById("editor");
 			output = document.getElementById("output");
@@ -257,7 +263,6 @@
 
 			// CAMERA
 			camera = new THREE.PerspectiveCamera( 45, vsize.z, 1, FAR );
-			camera.position.set( 0, 30, 100 );
 		    center = new THREE.Vector3();
 		    centerLight =  new THREE.Vector3(0,-36.6,0);
 		    moveCamera();
@@ -841,7 +846,7 @@
 
 		function playAnimation(name) {
 			if(bvhReader){
-				if(bvhReader.play) bvhReader.play = false;;
+				if(bvhReader.play) bvhReader.play = false;
 				bvhReader.clearNode();
 			}
 			bodyAnim.play(name);
@@ -855,6 +860,7 @@
 			suitAnim.stop();
 			bodyAnim.stop();
 			shadAnim.stop();
+			animConfig.current ="";
 		}
 
 		//-----------------------------------------------------
@@ -863,24 +869,21 @@
 
 		var BVHset = {ax:"z", ay:"y", az:"x", dx:1, dy:1, dz:1, rx:0, ry:0, rz:0, order:"ZXY"};
 		var BVHanimConfig = {
-			debug:true
+			debug:true,
+			speed:0.5
 		}
 
 		function initBVH() {
 			bvhReader = new BVH.Reader();
-			//bvhReader.load("res/bvh/calibration.bvh");
-			//bvhReader.load("res/bvh/calibration.png");
-			//bvhReader.load("res/bvh/ballet11.png");
-			//bvhReader.load("res/bvh/jog.bip");
+			bvhReader.speed = BVHanimConfig.speed;
 
 			initBVHGui();
-			initBoneTools();
+			//initBoneTools();
 		}
 
-		function loadBVH(name, NoCompress) {
-			var noCompress = NoCompress || false;
-			if(noCompress) bvhReader.load("res/bvh/"+name+".bvh");
-			else bvhReader.load("res/bvh/"+name+".png");
+		function loadBVH(name) {
+			stopAnimation();
+			bvhReader.load("res/bvh/"+name);
 		}
 
 		var bonesConfig = {select: 1, X:0, Y:0, Z:0}
@@ -908,17 +911,22 @@
 			
 			f5.add( BVHanimConfig, 'debug' ).listen().onChange( function() {bvhReader.debug = this});
 
-			f5.add( BVHset, 'order', [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ] );
+			
 
-			BVHanimConfig.calibration = function() { loadBVH("calibration", BVHset.order); };
-            BVHanimConfig.ballet = function() { loadBVH("ballet", BVHset.order); };
-            BVHanimConfig.shoot = function() { loadBVH("shoot", BVHset.order); };
-            BVHanimConfig.sprint = function() { loadBVH("sprint", BVHset.order); };
-            BVHanimConfig.exsize = function() { loadBVH("exsize", BVHset.order); };
-            BVHanimConfig.test = function() { loadBVH("test", BVHset.order); };
-            BVHanimConfig.big = function() { loadBVH("big", BVHset.order); };
+            BVHanimConfig.ballet = function() { loadBVH("ballet.png"); };
+            BVHanimConfig.shoot = function() { loadBVH("shoot.png"); };
+            BVHanimConfig.sprint = function() { loadBVH("sprint.png"); };
+            BVHanimConfig.exsize = function() { loadBVH("exsize.png"); };
+            BVHanimConfig.test = function() { loadBVH("test.png"); };
+            BVHanimConfig.big = function() { loadBVH("big.png"); };
+            BVHanimConfig.story = function() { loadBVH("story.png"); };
+            BVHanimConfig.action = function() { loadBVH("action.png"); };
 
-            f5.add( BVHanimConfig, 'calibration' );
+            BVHanimConfig.stop = function() {  bvhReader.play = false; };
+            BVHanimConfig.play = function() { bvhReader.oldFrame = bvhReader.frame; bvhReader.startTime = Date.now(); bvhReader.play = true; };
+            BVHanimConfig.next = function() { bvhReader.next(); };
+            BVHanimConfig.prev = function() { bvhReader.prev(); };
+
             f5.add( BVHanimConfig, 'ballet' );
             f5.add( BVHanimConfig, 'shoot' );
             f5.add( BVHanimConfig, 'sprint' );
@@ -926,7 +934,16 @@
             f5.add( BVHanimConfig, 'test' );
             f5.add( BVHanimConfig, 'big' );
 
-			//f5.add( voiceConfig, 'googleVoise' ).onChange( function() {});
+            f5.add( BVHanimConfig, 'story' );
+            f5.add( BVHanimConfig, 'action' );
+
+            f5.add( BVHanimConfig, 'speed', 0.1, 1 ).onChange( function() { bvhReader.speed = BVHanimConfig.speed; });;
+
+            f5.add( BVHanimConfig, 'stop' );
+            f5.add( BVHanimConfig, 'play' )
+            f5.add( BVHanimConfig, 'next' );
+            f5.add( BVHanimConfig, 'prev' );
+
 
 			f5.add( BVHset, 'ax', [ 'x', 'y', 'z' ] );
 			f5.add( BVHset, 'ay', [ 'x', 'y', 'z' ] );
@@ -959,10 +976,10 @@
 			if(bvhReader !== null && bvhReader.play){
 				var tt="" 
 
-				if(animConfig.current !== "custom" ){
+				/*if(animConfig.current !== "custom" ){
 					stopAnimation();
 					animConfig.current = "custom";
-				}
+				}*/
 
 
 				//parseLine( count );
@@ -2036,6 +2053,8 @@
 
 		</div>
 		<div id="play"> <img class="buttonPlay" src="res/img/soundw.png" alt="play sound" onclick="say();" /></div>
+
+		<div id="output2"></div>
 		
 
 	</body>
