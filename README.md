@@ -35,3 +35,11 @@ Demo [index_Onkba](http://lo-th.github.io/olympe/index_onkba.html)
 > BVH format explore<br>
 [The Player](http://lo-th.github.io/olympe/BVH_player.html)<br>
 [The Compactor](http://lo-th.github.io/olympe/BVHtoPNG.html)
+
+**Assets test** version 0.1
+> SEA format explore<br>
+[assets_3d](http://lo-th.github.io/olympe/test_assets.html)
+
+**Script Compress** version 0.1
+> Worker oimo + rvo + three +sea3d for 167 kb<br>
+[oimo_rvo](http://lo-th.github.io/olympe/test_worker.html)
